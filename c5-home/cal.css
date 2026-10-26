@@ -1,0 +1,131 @@
+/* cal.css: the built-in calendar view (cal.js), the fourth CRM view after Inbox, Pipeline and Home.
+   Ops Console look (10-15, lib/rc-console.css): one white panel on the stage canvas, 1px lines, 8px radius, square-ish
+   controls, Inter only, one filled primary (Book inspection). Light only. No status dots, no badges.
+   Working hours are white cells, the rest of the day is shaded; today's column carries the accent on its header. */
+.cal{display:none}
+body[data-view="calendar"] .rh,body[data-view="calendar"] .steps,body[data-view="calendar"] .main,body[data-view="calendar"] .stick,body[data-view="calendar"] .brandline,body[data-view="calendar"] .crm{display:none!important}
+body[data-view="calendar"]{height:100vh;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+body[data-view="calendar"] .cal{display:flex;flex-direction:column;flex:1;min-height:0;margin:14px 24px 18px;background:#fff;border:1px solid var(--c-line,#D5D9E0);border-radius:8px;overflow:hidden}
+/* the toolbar */
+.calh{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 18px 10px;flex:none}
+.calnav{display:flex;align-items:center;gap:6px;min-width:0;flex:1}
+.calnav h2{font-size:17px;font-weight:600;letter-spacing:-.01em;margin:0 0 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.calnav button,.calseg button,.calbook{height:34px;border-radius:6px;border:1px solid var(--c-line,#D5D9E0);background:#fff;font:inherit;font-size:13px;font-weight:600;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;cursor:pointer;transition:background .12s,border-color .12s}
+.calnav button:hover,.calseg button:hover{background:var(--c-tint,#F1F5FA)}
+.calnav button svg{width:16px;height:16px}
+.calnav button[data-c="prev"],.calnav button[data-c="next"]{width:34px;padding:0}
+.calseg{display:inline-flex;gap:2px;padding:3px;border-radius:6px;background:var(--c-canvas,#EEF0F3);border:1px solid var(--c-line,#D5D9E0)}
+.calseg button{height:28px;border:0;background:transparent;color:var(--slate);border-radius:4px;padding:0 12px}
+.calseg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(11,16,32,.14),0 0 0 1px var(--c-line,#D5D9E0)}
+.calbook{background:var(--ink);border-color:var(--ink);color:#fff;padding:0 16px;white-space:nowrap}
+.calbook:hover{background:var(--ink-2)}
+.calbook .ic{width:15px;height:15px;display:inline-grid}
+.dlg .menu .ic,.dlg .drow .ic{width:16px;height:16px;display:inline-grid;flex:none}
+.cal .ic svg,.dlg .menu .ic svg,.dlg .drow .ic svg{width:100%;height:100%;display:block}
+.calnote{margin:0;padding:0 18px 12px;font-size:12.5px;line-height:1.45;color:var(--slate);flex:none}
+.calnote b{color:var(--ink);font-weight:600}
+/* the week grid: a time column and seven day columns, one row per hour, scrolling under a fixed day header */
+.calw{flex:1;min-height:0;display:flex;flex-direction:column;border-top:1px solid var(--c-line,#D5D9E0)}
+.calhd{display:grid;grid-template-columns:56px repeat(7,minmax(0,1fr));flex:none;border-bottom:1px solid var(--c-line,#D5D9E0);background:#fff}
+.caldh{display:flex;align-items:baseline;gap:6px;padding:8px 10px;border-left:1px solid var(--c-line-2,#E6E8ED);font-size:12px;color:var(--slate);min-width:0}
+.caldh b{font-size:15px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.caldh.today b{background:var(--accent,#2757E6);color:#fff;border-radius:4px;padding:0 6px;line-height:22px}
+.caldh.today small{color:var(--accent-ink,var(--ink));font-weight:600}
+.calgrid{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;display:grid;grid-template-columns:56px repeat(7,minmax(0,1fr));grid-auto-rows:56px;align-content:start}
+.caltc{font-size:11px;color:var(--slate);text-align:right;padding:4px 8px 0 0;font-variant-numeric:tabular-nums;white-space:nowrap;border-bottom:1px solid var(--c-line-2,#E6E8ED);background:#fff}
+.calc{position:relative;border-left:1px solid var(--c-line-2,#E6E8ED);border-bottom:1px solid var(--c-line-2,#E6E8ED);background:var(--c-canvas,#EEF0F3);min-width:0}
+.calc.wk{background:#fff}
+.calc.past{background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(11,16,32,.035) 6px 7px),var(--c-canvas,#EEF0F3)}
+.calc.tod{box-shadow:inset 1px 0 0 color-mix(in srgb,var(--accent,#2757E6) 40%,transparent)}
+.calc[data-open]{cursor:pointer}
+.calc[data-open]:hover,.calc[data-open]:focus-visible{background:var(--c-tint,#F1F5FA);outline:none;box-shadow:inset 0 0 0 1px var(--accent,#2757E6)}
+.calc[data-open]:hover::after{content:"Book";position:absolute;right:6px;top:4px;font-size:11px;font-weight:600;color:var(--accent-ink,var(--ink))}
+.calc.over{background:color-mix(in srgb,var(--accent,#2757E6) 12%,#fff);box-shadow:inset 0 0 0 2px var(--accent,#2757E6)}
+/* one inspection */
+.calev{position:absolute;left:3px;right:3px;top:0;min-height:40px;z-index:2;display:grid;gap:1px;align-content:start;padding:5px 24px 5px 8px;border-radius:6px;background:var(--ink);color:#fff;font-size:11.5px;line-height:1.25;cursor:pointer;overflow:hidden;box-shadow:0 1px 2px rgba(11,16,32,.2);transition:box-shadow .12s}
+.calev b{font-weight:600;font-variant-numeric:tabular-nums}
+.calev .cadr{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.calev small{font-size:10.5px;color:rgba(255,255,255,.78);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.calev:hover,.calev:focus-visible{box-shadow:0 0 0 2px var(--accent,#2757E6);outline:none}
+.calev.done{background:var(--c-slate,#5A6378)}
+.calev.lift{opacity:.5}
+/* no press physics on the wide surfaces (lib/rc-physical.css scales any [role=button] on :active): a 1300px event block
+   shrinking 4% slid its menu button out from under the pointer, so the click landed on the row instead */
+.calev:active,.calc:active,.calm-c:active,.cald-c:active{transform:none!important}   /* !important: the physics rule carries :not() chains, so a plain class loses */
+.calmore{position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:4px;border:0;background:rgba(255,255,255,.14);color:#fff;display:grid;place-items:center;cursor:pointer;padding:0}
+.calmore svg{width:14px;height:14px}
+.calmore:hover{background:rgba(255,255,255,.3)}
+/* day: a list of slots */
+.cald{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;border-top:1px solid var(--c-line,#D5D9E0)}
+.cald-r{display:grid;grid-template-columns:72px minmax(0,1fr);min-height:56px;border-bottom:1px solid var(--c-line-2,#E6E8ED);background:var(--c-canvas,#EEF0F3)}
+.cald-r.wk{background:#fff}
+.cald-r.past{background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(11,16,32,.035) 6px 7px),var(--c-canvas,#EEF0F3)}
+.cald-r .caltc{border:0;background:transparent;padding-top:10px;font-size:12px}
+.cald-c{position:relative;display:flex;align-items:center;gap:8px;padding:6px 12px 6px 0;min-width:0}
+.cald-c .calev{position:relative;left:auto;right:auto;flex:1;min-height:44px;font-size:12.5px;padding:7px 30px 7px 10px}
+.cald-c .calev small{font-size:11.5px}
+.calopen{height:36px;padding:0 14px;border-radius:6px;border:1px dashed var(--c-line,#D5D9E0);background:#fff;font:inherit;font-size:12.5px;font-weight:600;color:var(--accent-ink,var(--ink));cursor:pointer}
+.calopen:hover{border-style:solid;border-color:var(--accent,#2757E6);background:var(--c-tint,#F1F5FA)}
+.calno{font-size:12px;color:var(--slate)}
+/* month: six rows at most */
+.calm{flex:1;min-height:0;display:flex;flex-direction:column;border-top:1px solid var(--c-line,#D5D9E0)}
+.calm-h{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));flex:none;border-bottom:1px solid var(--c-line,#D5D9E0)}
+.calm-h span{padding:6px 10px;font-size:11.5px;font-weight:600;color:var(--slate);border-left:1px solid var(--c-line-2,#E6E8ED)}
+.calm-h span:first-child,.calm-c:nth-child(7n+1){border-left:0}
+.calm-g{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:minmax(96px,1fr)}
+.calm-c{border-left:1px solid var(--c-line-2,#E6E8ED);border-bottom:1px solid var(--c-line-2,#E6E8ED);padding:6px 6px 6px;display:grid;gap:3px;align-content:start;min-width:0;cursor:pointer;background:#fff}
+.calm-c.closed{background:var(--c-canvas,#EEF0F3)}
+.calm-c.off{opacity:.55}
+.calm-c:hover,.calm-c:focus-visible{background:var(--c-tint,#F1F5FA);outline:none;box-shadow:inset 0 0 0 1px var(--accent,#2757E6)}
+.calm-c b{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink);justify-self:start}
+.calm-c.today b{background:var(--accent,#2757E6);color:#fff;border-radius:4px;padding:0 6px;line-height:22px}
+.calm-c small{font-size:11px;color:var(--slate)}
+.calchip{display:block;font-size:11px;font-weight:600;line-height:1.3;padding:3px 6px;border-radius:4px;background:var(--ink);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.calchip.done{background:var(--c-slate,#5A6378)}
+.calchip:hover{box-shadow:0 0 0 2px var(--accent,#2757E6)}
+/* the booking dialog (rec.js's dialog): the home search list */
+.callist{display:grid;gap:4px;max-height:220px;overflow-y:auto;scrollbar-width:thin;border:1px solid var(--c-line,#D5D9E0);border-radius:6px;padding:4px;margin:-4px 0 12px}
+.callist button{display:grid;gap:1px;text-align:left;padding:8px 10px;border-radius:4px;border:0;background:#fff;font:inherit;color:var(--ink);cursor:pointer;width:100%}
+.callist button b{font-size:13.5px;font-weight:600}
+.callist button small{font-size:11.5px;color:var(--slate)}
+.callist button:hover{background:var(--c-tint,#F1F5FA)}
+.callist button[aria-selected="true"]{background:var(--ink);color:#fff}
+.callist button[aria-selected="true"] small{color:rgba(255,255,255,.78)}
+.calnone{font-size:12.5px;color:var(--slate);padding:10px;margin:0}
+.dlg .menu .warn{color:#8A3B00}
+.dlg .pick{margin-bottom:12px}
+@media (max-width:1380px){body[data-view="calendar"] .cal{margin:10px 22px 14px}}
+/* phone: the day list is the default (cal.js); week and month still work, with thinner columns */
+@media (max-width:640px){
+  body[data-view="calendar"]{height:100dvh}
+  body[data-view="calendar"] .cal{margin:8px 8px 0;border-radius:8px 8px 0 0;border-bottom:0}
+  .calh{padding:10px 10px 8px;gap:8px}
+  .calnav{flex-basis:100%}
+  .calnav h2{font-size:15px}
+  .calnav button,.calseg button,.calbook{min-height:40px}
+  .calseg{flex:1}.calseg button{flex:1;height:34px}
+  .calbook{flex:1}
+  .calnote{padding:0 12px 10px;font-size:12px}
+  .calhd,.calgrid{grid-template-columns:40px repeat(7,minmax(0,1fr))}
+  .caldh{padding:6px 4px;flex-direction:column;gap:0;align-items:center}
+  .caldh b{font-size:13px}
+  .caltc{font-size:10px;padding-right:4px}
+  .calev{padding:4px 4px;font-size:10px;left:1px;right:1px}
+  .calev .cadr{font-size:10px}
+  .calev small,.calmore{display:none}
+  .cald-c .calev small{display:block}
+  .cald-c .calmore{display:grid;width:36px;height:36px;top:4px;right:4px}
+  .cald-c .calev{padding-right:44px;min-height:52px}
+  .cald-r{grid-template-columns:62px minmax(0,1fr)}
+  .calopen{min-height:44px}
+  .calm-g{grid-auto-rows:minmax(64px,1fr)}
+  .calm-c{padding:4px}
+  .calchip{font-size:9.5px;padding:2px 4px}
+  .vtabs button .ic{display:none}
+  .vtabs button{padding:0 4px;font-size:12.5px}
+}
+/* Directions for the day (10-19) */
+.calnote .caldir{display:inline-flex;align-items:center;margin-left:6px;font-weight:600;color:var(--accent-ink,#07547A);text-decoration:underline;text-underline-offset:2px}
+
+/* touch screens: day/week/month, earlier/later, today and book at least 44px tall (visual skills gate 10-24: 40px on a phone) */
+@media (pointer:coarse){.calnav button,.calseg button,.calbook,.calopen{min-height:44px}}

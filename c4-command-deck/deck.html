@@ -1,0 +1,1697 @@
+<!doctype html>
+<html lang="en" data-rc="today">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Roof Command</title>
+<script src="../lib/rc-frame-pause.js"></script><!-- parked by the shell = no drawing -->
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="preload" href="fonts/montserrat-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/montserrat-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../vendor/maplibre-gl@4.7.1/maplibre-gl.css">
+<link rel="stylesheet" href="dk.css">
+<link rel="stylesheet" href="features.css">
+<link rel="stylesheet" href="../lib/rc-physical.css">
+<script>try{ if (window.self !== window.top) document.documentElement.classList.add('embed'); }catch(e){ document.documentElement.classList.add('embed'); }</script>
+<style>
+.app{--g:28px;height:100vh;height:100dvh;display:grid;grid-template-rows:64px auto minmax(0,1fr);overflow:hidden}
+.head{display:flex;align-items:flex-end;gap:28px;padding:24px var(--g) 20px}
+.hello{min-width:0;flex:1 1 auto}
+.hello h1{font-weight:400;font-size:42px;letter-spacing:-.035em;line-height:1.02;color:#3A4152}
+.hello h1 b{font-weight:600;color:var(--ink)}
+.hello p{margin-top:8px;color:var(--muted);font-size:14.5px;max-width:640px;line-height:1.5;text-wrap:pretty}
+.hello p strong{color:var(--ink);font-weight:600}
+.head .sp{flex:0 1 0}
+.today{display:flex;align-items:center;gap:22px;flex:none}
+.tstat{display:grid;gap:10px}
+.tstat div{display:flex;align-items:baseline;gap:8px;font-size:13px;color:var(--muted);white-space:nowrap}
+.tstat .tcalled{display:none}   /* the ring is the one "reached" count on a desktop */
+.tstat b{font-size:20px;color:var(--ink);font-weight:700;letter-spacing:-.02em;min-width:26px;text-align:right}
+
+.main{display:grid;grid-template-columns:288px minmax(420px,520px) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:22px;padding:0 var(--g) 22px;min-height:0}
+/* queue */
+.queue{background:var(--panel);box-shadow:var(--shadow-soft);border:1px solid var(--hair-2);border-radius:18px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.qh{display:flex;align-items:baseline;justify-content:space-between;padding:16px 18px 10px}
+.qh b{font-size:14px;font-weight:700}
+.qh small{color:var(--muted);font-size:12px}
+.qlist{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--panel-3) transparent;padding:0 8px 8px;display:grid;gap:2px;align-content:start}
+.qlist.more{-webkit-mask-image:linear-gradient(#000 calc(100% - 22px),transparent);mask-image:linear-gradient(#000 calc(100% - 22px),transparent)}
+.qrow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:12px;padding:9px 10px;border-radius:12px;text-align:left;transition:background .2s}
+.qrow:hover{background:var(--panel-2)}
+.qrow .no{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--hair);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--muted)}
+.qrow .ad{font-size:13.5px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.qrow .mt{font-size:11.5px;color:var(--muted);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.qrow .hz{font-size:12px;font-weight:700;color:var(--ink-2)}
+.qrow.on{background:var(--panel-2);color:var(--ink);box-shadow:inset 3px 0 0 var(--accent)}
+.qrow.on .no{background:var(--accent);border-color:var(--accent);color:#fff}
+.qrow.on .mt{color:var(--slate)}
+.qrow.on .hz{color:var(--accent-ink)}
+.qrow.done{opacity:.45}
+.qrow.done .no{background:var(--panel-2);border-color:transparent}
+.qfoot{flex:none;padding:12px 18px;border-top:1px solid var(--hair-2);font-size:12px;color:var(--muted)}
+
+/* deck */
+.deck{position:relative;min-height:0;--dir:-1}
+.card{position:absolute;inset:0 0 44px 0;transform-origin:50% 100%;display:flex;flex-direction:column;overflow:hidden;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .4s cubic-bezier(.2,.8,.2,1),box-shadow .5s;touch-action:pan-y;user-select:none}
+.card[data-d="1"]{transform:translateY(14px) scale(.955);z-index:2;box-shadow:0 1px 2px rgba(11,16,32,.05),0 10px 24px -12px rgba(11,16,32,.14)}
+.card[data-d="2"]{transform:translateY(28px) scale(.91);z-index:1;box-shadow:0 1px 2px rgba(11,16,32,.04)}
+.card[data-d="0"]{z-index:3}
+.card[data-d="1"] > *,.card[data-d="2"] > *{opacity:0;transition:opacity .25s}
+.card[data-d="1"]{background:#F4F5F8}.card[data-d="2"]{background:#E2E5EB}
+.card[data-d="3"]{opacity:0;transform:translateY(30px) scale(.9);z-index:0}
+.card.out{transform:translateX(calc(var(--dir) * 120%)) rotate(calc(var(--dir) * 9deg))!important;opacity:0}
+.card.drag{transition:none}
+.ph{position:relative;height:216px;flex:1 1 216px;min-height:118px;max-height:340px;overflow:hidden;border-radius:20px 20px 0 0;background:#E9ECF1}
+.ph .tl{position:absolute;left:14px;top:14px;display:flex;gap:6px}
+.ph .tr{position:absolute;right:14px;top:14px}
+.ph .bl{position:absolute;left:14px;bottom:10px;font-size:10.5px;color:var(--muted)}
+.ph .ex{position:absolute;right:12px;bottom:10px;height:30px;padding:0 10px;border-radius:999px;background:rgba(255,255,255,.85);color:var(--ink);font-size:11.5px;font-weight:600;display:none;align-items:center;gap:6px;box-shadow:var(--shadow-soft)}
+.ph .ex .ic{width:13px;height:13px}
+.cb{padding:20px 24px 0;display:flex;flex-direction:column;flex:0 0 auto}
+.cb .act{margin-top:18px}
+.addr{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.addr h2{font-size:27px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.addr p{color:var(--slate);font-size:13.5px;margin-top:5px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);margin-top:18px;border:1px solid var(--rule);border-radius:14px}
+.facts div{padding:12px 14px;min-width:0}
+.facts div+div{border-left:1px solid var(--rule)}
+.facts small{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--slate);font-weight:500;white-space:nowrap}
+.facts small .ic{width:14px;height:14px}
+.facts b{display:block;font-size:20px;font-weight:700;letter-spacing:-.02em;margin-top:5px;white-space:nowrap}
+.facts b i{display:block;font-style:normal;font-size:12px;font-weight:500;color:var(--slate);margin:2px 0 0;white-space:normal;line-height:1.25}
+.why{margin-top:14px;font-size:13.5px;line-height:1.55;color:var(--ink-2)}
+.why b{color:var(--ink);font-weight:700}
+.calls{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.act{padding:8px;display:flex;gap:8px;background:var(--panel-2);border:1px solid var(--hair-2);margin:auto 0 16px;border-radius:16px}
+.act button{height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:600;font-size:15px;color:var(--ink);transition:transform .15s cubic-bezier(.2,.8,.2,1),background .2s,box-shadow .2s}
+.act button:active{transform:scale(.96)}
+.act .pri{flex:1.6;background:var(--accent);color:#fff;box-shadow:0 6px 14px -6px color-mix(in srgb,var(--accent) 70%,transparent)}
+.act .pri:hover{background:var(--accent-hi);box-shadow:0 10px 20px -8px color-mix(in srgb,var(--accent) 80%,transparent)}
+.act .txt{flex:1;background:#fff;border:1px solid var(--hair)}
+.act .txt:hover{border-color:var(--edge)}
+.act .skp{flex:.8;background:transparent;color:var(--muted)}
+.act .skp:hover{background:rgba(11,16,32,.05);color:var(--ink)}
+.act .prf{flex:.9}
+.act .ic{width:19px;height:19px}
+
+/* map */
+.mapwrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--hair-2);box-shadow:var(--shadow-soft);background:#E4E7EC;min-height:0}
+#map{position:absolute;inset:0}
+.mtag{position:absolute;left:14px;top:14px;display:flex;gap:6px;z-index:2;flex-wrap:wrap;right:14px}
+.mtag .pill{background:#fff;color:var(--ink);box-shadow:var(--shadow-soft)}
+.mtag .pill.dk{background:var(--ink);color:#fff}
+/* first paint: the greeting never shows a bare comma (the rep name lands with the profile), and the message count is a
+   shimmer bar until the list is built, not the word Loading */
+#hello .rep:not(:empty)::before{content:", "}
+#hello::after{content:"."}
+.mtag .pill.skel:empty{display:inline-block;min-width:168px;min-height:1.15em;border-radius:999px;background:linear-gradient(90deg,#EEF0F4 25%,#FAFBFC 50%,#EEF0F4 75%);background-size:200% 100%;animation:skel 1.3s linear infinite;box-shadow:none}
+@keyframes skel{from{background-position:200% 0}to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.mtag .pill.skel:empty{animation:none}}
+.mnext{position:absolute;left:14px;right:14px;bottom:14px;z-index:2;background:#fff;color:var(--ink);border-radius:14px;box-shadow:var(--shadow-soft);padding:12px 14px;display:flex;align-items:center;gap:12px}
+.mnext .th{width:56px;height:42px;border-radius:9px;overflow:hidden;flex:none;background:#E9ECF1}
+.mnext .th{box-sizing:border-box;padding:4px;background:radial-gradient(ellipse 80% 90% at 50% 40%,#fff 0%,#EEF1F5 100%)}
+.mnext .th svg{width:100%;height:100%;display:block}   /* the whole roof, fitted, not a cropped corner */
+.mnext > div{min-width:0}
+.mnext b{font-size:13.5px;display:block;line-height:1.3}
+.mnext small{font-size:12px;color:var(--slate);display:block;line-height:1.35;margin-top:1px}
+.mnext .go{margin-left:auto;height:36px;padding:0 14px;border-radius:999px;background:var(--blue);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;gap:7px;flex:none}
+.mnext .go .ic{width:16px;height:16px}
+
+/* pipeline strip */
+.pipe{display:flex;align-items:stretch;gap:0;margin:0 var(--g) 10px;border:1px solid var(--hair-2);border-radius:16px;background:var(--panel);box-shadow:var(--shadow-soft);overflow:hidden}
+.pipe .lead{padding:12px 20px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--hair-2);flex:0 0 300px;min-width:0}
+.pipe .lead b{font-size:13.5px}
+.pipe .lead small{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.35;text-wrap:balance}
+.stg{flex:1 1 0;min-width:0;padding:14px 18px;display:flex;align-items:center;gap:12px;position:relative;text-align:left;transition:background .2s}
+.stg:hover{background:var(--panel-2)}
+.stg + .stg::before{content:"";position:absolute;left:-1px;top:14px;bottom:14px;width:1px;background:var(--hair-2)}
+.stg .c{font-size:22px;font-weight:700;letter-spacing:-.03em}
+.stg .l{font-size:12.5px;color:var(--muted);line-height:1.25;min-width:0}
+.stg .bar2{position:absolute;left:18px;right:18px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--panel-2)}
+.stg .bar2 i{display:block;height:100%;border-radius:inherit;background:#AEB4C2}
+.stg.on{background:var(--panel-2)}
+.stg.on .bar2 i{background:var(--accent)}
+.stg.on .l{color:var(--ink);font-weight:600}
+
+/* 1200 to 1366 desktops: everything stays, tighter */
+@media (max-width:1380px){
+  .bar{gap:14px;padding:0 22px}
+  .tabs{margin-left:10px}.tabs button{padding:7px 12px;font-size:13px}
+  .find{width:150px}
+  .app{--g:22px}
+  .head{padding:18px var(--g) 16px;gap:18px}
+  .hello h1{font-size:36px}.hello p{font-size:13.5px}
+  .today{gap:18px}
+  .ring{width:80px;height:80px}.ring .v b{font-size:22px}
+  .main{grid-template-columns:256px minmax(380px,440px) minmax(0,1fr);gap:16px;padding:0 var(--g) 16px}
+  .qrow{gap:10px;padding:8px 8px}.qrow .ad{font-size:13px}.qrow .hz{font-size:11.5px}
+  .ph{height:188px}.cb{padding:16px 20px 0}.addr h2{font-size:24px}
+  .facts{margin-top:14px}.facts div{padding:10px 12px}.facts b{font-size:18px}
+  .why{margin-top:10px;font-size:13px}
+  .act{margin:auto 0 14px}.act button{height:46px;font-size:14px}
+  .pipe{margin:0 var(--g) 8px}.pipe .lead{flex-basis:250px;padding:10px 16px}.stg{padding:12px 14px;gap:10px}.stg .c{font-size:20px}
+}
+@media (max-height:820px){
+  .head{padding-top:14px;padding-bottom:12px}
+  .hello h1{font-size:32px}.hello p{margin-top:5px}
+  .ring{width:76px;height:76px}.ring .v b{font-size:20px}.ring .v small{font-size:11px}
+  .tstat{gap:6px}.tstat b{font-size:18px}
+  .ph{height:170px}.facts b{font-size:17px}.why{line-height:1.45}
+  .pipe{margin-bottom:8px}.stg{padding:10px 14px}.stg .c{font-size:19px}.pipe .lead{padding:8px 16px}
+  .qrow{padding:7px 8px}
+}
+
+/* phone: designed for the truck */
+.pbar,.peek,.sheet,.scrim,.rsheet{display:none}
+@media (max-width:640px){
+  .app{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+  .bar{height:auto;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;gap:10px;flex:none}
+  .tabs,.find,.sig,.me{display:none}
+  .co .mk{width:34px;height:34px}
+  .co b{font-size:14.5px}.co small{font-size:11.5px}
+  .pbar{display:flex;align-items:center;gap:10px;margin-left:auto}
+  .pbar .ring{width:48px;height:48px}
+  .pbar .ring .disc{inset:6px}
+  .pbar .ring .v b{font-size:14px}
+  .pbar .ring .v small{display:none}
+  .pbar .lbl{font-size:11px;color:var(--muted);text-align:right;line-height:1.25}
+  .pbar .lbl b{color:var(--ink);display:block;font-size:13px;font-weight:700}
+  .head{padding:10px 16px 6px;display:block;flex:none;order:1}
+  .hello h1{font-size:25px}
+  .hello p{font-size:12.5px;margin-top:3px;line-height:1.4}
+  /* stats stay on the phone: one compact line under the greeting */
+  .today{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 14px;margin-top:8px;padding-top:8px;border-top:1px solid var(--hair-2)}
+  .today #ringL{display:none}
+  .tstat{display:flex;gap:16px}.tstat div{font-size:12px;gap:5px}.tstat b{font-size:15px;min-width:0;text-align:left}
+  .main{display:block;padding:0 14px;flex:1;min-height:0}
+  .queue,.mapwrap{display:none}
+  .deck{height:100%}
+  .card{inset:0 0 24px 0;border-radius:22px}
+  .card[data-d="1"]{transform:translateY(9px) scale(.96)}
+  .card[data-d="2"]{transform:translateY(17px) scale(.92)}
+  .ph{height:40%;min-height:160px;border-radius:22px 22px 0 0}
+  .ph .bl{display:none}.ph .ex{display:inline-flex}
+  .cb{padding:14px 16px 0}
+  .addr h2{font-size:22px}
+  .addr p{font-size:12.5px;margin-top:3px}
+  .facts{margin-top:12px}
+  .facts div{padding:9px 10px}
+  .facts b{font-size:17px}
+  .facts b i{font-size:11px}
+  .why{font-size:12.5px;margin-top:10px;line-height:1.45}
+  .calls{margin-top:8px;gap:6px}
+  .act{margin:auto 0 12px;padding:8px}
+  .act button{height:58px;font-size:16px}
+  .act .skp{flex:.7}
+  .pipe,.hint{display:none}
+  /* peek bar + sheets */
+  .peek{display:flex;align-items:center;gap:10px;flex:none;margin:0 14px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -8px 24px -14px rgba(11,16,32,.3);border:1px solid var(--hair-2);border-bottom:0}
+  .peek .grab{position:absolute;left:50%;top:5px;width:36px;height:4px;margin-left:-18px;border-radius:2px;background:var(--panel-3)}
+  .peek{position:relative;padding-top:14px}
+  /* icon + label on one line, the count on its own line under it (three chips in 362px cannot hold "Map 0 of 50 sent" across) */
+  .peek button{min-height:48px;border-radius:12px;display:flex;flex-wrap:wrap;align-items:center;align-content:center;gap:1px 7px;font-size:13.5px;font-weight:600;line-height:1.15;padding:5px 8px;background:var(--panel-2);flex:1 1 0;min-width:0;justify-content:center;white-space:nowrap}
+  .peek button .ic{width:16px;height:16px;color:var(--blue)}
+  .peek button small{flex:0 0 100%;text-align:center;font-size:11.5px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis}
+  .peek button small:empty{display:none}
+  .sheet,.scrim{display:flex}
+  .sheet .pmap{position:relative;height:58dvh;margin:0 14px 14px;border-radius:16px;overflow:hidden;border:1px solid var(--hair-2)}
+  .sheet .pmap #map{position:absolute;inset:0}
+  .sheet .mtag{left:10px;top:10px;right:10px}
+  .sheet .mnext{left:10px;right:10px;bottom:10px}
+  .sheet .mnext .go span:last-child{display:none}.sheet .mnext .go{padding:0 12px}
+  .sheet .pipe{display:grid;margin:0 14px 16px;box-shadow:none}
+  .sheet .pipe .lead{border-right:0;border-bottom:1px solid var(--hair-2);padding:12px 16px}
+  .sheet .stg{padding:12px 16px;justify-content:space-between;flex-direction:row-reverse}
+  .sheet .stg + .stg::before{display:none}
+  .sheet .stg .bar2{left:16px;right:16px}
+  .rsheet{display:flex}
+  .rsheet .roofwrap{height:52vw;max-height:300px;margin:0 14px;border-radius:16px}
+  .rsheet .rchips{padding:12px 14px 4px}
+  .rsheet .rtab{padding:6px 14px 14px;font-size:13px}
+  .rsheet .rtab table{width:100%;border-collapse:collapse}
+  .rsheet .rtab td{padding:8px 0;border-top:1px solid var(--rule)}
+  .rsheet .rtab td:last-child,.rsheet .rtab td:nth-child(3){text-align:right;font-weight:600;white-space:nowrap}
+  .rsheet .rtab tr.sel td{color:var(--accent-ink);font-weight:700}
+  .rsheet .rtab tfoot td{font-weight:700;border-top:2px solid var(--ink)}
+  .rsheet .rtab p{margin-top:8px;font-size:11.5px;color:var(--muted)}
+  .main{order:3}.peek{order:4}
+  .ph .bl{display:inline-flex}
+}
+
+/* round 4: plated roof art (Home screen language) */
+.ph{background:radial-gradient(ellipse 70% 80% at 50% 38%,#FFFFFF 0%,#F3F5F8 45%,#E3E7EE 100%)}
+.ph .rlink{position:absolute;inset:0;display:block;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ph .rlink::before{content:"";position:absolute;left:8%;right:8%;bottom:-6%;height:34%;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,rgba(11,16,32,.16),rgba(11,16,32,.05) 55%,transparent 72%);pointer-events:none}
+.ph .rlink svg{position:relative}
+.ph .rlink svg{width:100%;height:100%;display:block;transition:transform .3s cubic-bezier(.2,.8,.2,1),filter .3s cubic-bezier(.2,.8,.2,1)}
+.ph .rlink:hover svg{transform:translateY(-3px) scale(1.025);filter:drop-shadow(0 10px 14px rgba(11,16,32,.12))}
+.ph .rlink:focus-visible{outline:2px solid var(--blue);outline-offset:-4px;border-radius:20px 20px 0 0}
+.ph .open{position:absolute;right:14px;bottom:10px;font-size:11px;font-weight:600;color:var(--ink-2);background:rgba(255,255,255,.82);border-radius:999px;padding:5px 10px;box-shadow:var(--shadow-soft);opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s;pointer-events:none}
+.ph .rlink:hover ~ .open{opacity:1;transform:none}
+.ph .bl{left:14px;bottom:10px;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--ink-2);background:rgba(255,255,255,.82);border-radius:999px;padding:5px 10px;box-shadow:var(--shadow-soft);pointer-events:none;font-variant-numeric:tabular-nums}
+.ph .bl i{font-style:normal;font-weight:500;color:var(--muted)}
+.ph .bl .sw{width:8px;height:8px;border-radius:2px;background:#A3161F}
+
+/* hierarchy: aligned numbers, the next action leads */
+.qrow .hz,.stg .c,.facts b,.tstat b,.ring .v b,.qrow .no{font-variant-numeric:tabular-nums}
+.qrow .hz{min-width:42px;text-align:right}
+.act .pri{font-size:16px;font-weight:700}
+.qh b{font-size:15px}
+
+/* round 4: card advance */
+.card{transition:transform .38s cubic-bezier(.2,.8,.2,1),opacity .34s cubic-bezier(.2,.8,.2,1),box-shadow .38s}
+.card.out{transform:translateX(calc(var(--dir) * 115%)) translateY(-10px) rotate(calc(var(--dir) * 7deg))!important;opacity:0}
+.card[data-d="0"] > *{opacity:1;transition:opacity .3s cubic-bezier(.2,.8,.2,1) .08s}
+.card.rise .cb{animation:d50rise .4s cubic-bezier(.2,.8,.2,1) both}
+.card.rise .ph svg{animation:d50roof .4s cubic-bezier(.2,.8,.2,1) both}
+@keyframes d50rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes d50roof{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+.qrow{transition:background .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,opacity .3s}
+.qrow.flash{animation:d50flash .7s cubic-bezier(.2,.8,.2,1)}
+@keyframes d50flash{0%{background:color-mix(in srgb,var(--accent) 16%,#fff)}100%{background:var(--panel-2)}}
+.ring .v b{display:inline-block}
+.ring.tick .v b{animation:d50tick .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes d50tick{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+.stop{transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+/* the roof sits clear of the corner pills: below the top pills and above the bottom ones on a laptop; on a phone the
+   photo band is short, so the roof keeps the full height and the pills keep the side corners instead */
+.ph .rlink{inset:48px 20px 42px}
+@media (max-width:640px){.ph .rlink{inset:12px 112px}}
+@media (prefers-reduced-motion:reduce){
+  .card,.card.out,.qrow,.ph .rlink svg,.card[data-d="0"] > *{transition:opacity .15s linear!important}
+  .card.out{transform:none!important}
+  .card.rise .cb,.card.rise .ph svg,.qrow.flash,.ring.tick .v b{animation:none!important}
+  .ph .rlink:hover svg{transform:none}
+}
+
+/* v2: working Daily 50 (same look) */
+.find{cursor:text}
+.find input{flex:1;min-width:0;height:100%;border:0;background:transparent;font:inherit;color:var(--ink);outline:none}
+.find input::placeholder{color:var(--muted)}
+.find:focus-within{border-color:var(--edge);background:#fff}
+.qnone{padding:14px 12px;font-size:12.5px;color:var(--muted);line-height:1.45}
+.pline{padding:0 var(--g) 8px;font-size:12.5px;color:var(--muted);line-height:1.4}
+.pline b{color:var(--ink);font-weight:600}
+.addr h2 .hl{color:inherit;text-decoration:none;border-radius:6px}
+.addr h2 .hl:hover{text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:4px}
+.addr h2 .hl:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+/* action bar (10-09): Text leads (opens the draft), Email second, then Skip; no calls from the app */
+.act .ic{flex:none}
+.alog{flex:1;display:grid;gap:8px;padding:4px 4px 2px;min-width:0}
+.alog .aq{font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.outc{display:flex;flex-wrap:wrap;gap:6px}
+.act .outc button{height:38px;flex:1 1 auto;padding:0 12px;border-radius:999px;border:1px solid var(--hair);background:#fff;font-size:13px;font-weight:600;color:var(--ink)}
+.act .outc button:hover{border-color:var(--edge)}
+.act .outc button.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.adone{flex:1.2;display:flex;align-items:center;gap:8px;padding:0 8px;font-size:13px;font-weight:600;color:var(--ink-2);line-height:1.35;min-width:0}
+.adone .ic{width:16px;height:16px;color:var(--accent);flex:none}
+.act .pri.nxt{flex:1}
+/* desktop: one card, no stacked cards behind it */
+@media (min-width:641px){
+  .card{inset:0}
+  .card[data-d="1"],.card[data-d="2"]{opacity:0;pointer-events:none;transform:translateY(14px) scale(.98)}
+}
+/* map pins: a bigger tap area without a bigger pin */
+/* no position here: maplibre places each marker absolutely; a relative pin sat in flow and drifted down one pin-height per stop */
+.stop::after{content:"";position:absolute;inset:-9px;border-radius:50%}
+.stop.added{border-style:dashed}
+/* dialogs */
+.dlg{border:0;padding:22px;border-radius:20px;background:#fff;color:var(--ink);width:min(440px,calc(100% - 28px));box-shadow:0 30px 60px -20px rgba(11,16,32,.4);font-family:var(--font)}
+.dlg::backdrop{background:rgba(11,16,32,.28)}
+.dlg h3{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.dlg .dsub{margin-top:3px;font-size:13px;color:var(--slate)}
+.dlg .dlab{margin:16px 0 8px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.dgrid.slots{grid-template-columns:repeat(5,1fr)}
+.dgrid button{min-height:44px;border-radius:12px;border:1px solid var(--hair);background:#fff;font-size:13px;font-weight:600;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;padding:4px}
+.dgrid button small{font-size:11px;font-weight:500;color:var(--muted)}
+.dgrid button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.dgrid button.on small{color:rgba(255,255,255,.7)}
+.dlg textarea{margin-top:14px;width:100%;border:1px solid var(--hair);border-radius:12px;padding:10px 12px;font:inherit;font-size:14px;resize:vertical}
+.dlg .optin{margin-top:14px;padding:12px 14px;border-radius:14px;font-size:12.5px;line-height:1.45;color:var(--slate);background:var(--panel-2)}
+.dlg .optin b{display:block;font-size:13.5px;color:var(--ink)}
+.dlg .optin.yes{background:var(--accent-soft)}
+.dlg .optin.yes b{color:var(--accent-ink)}
+.dlg .draft{padding:12px 14px;border-radius:14px;border:1px solid var(--hair-2);font-size:13.5px;line-height:1.5;color:var(--ink-2)}
+.dact{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.dbtn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--hair);background:#fff;font-size:14px;font-weight:600;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.dbtn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.dbtn.pri:hover{background:var(--accent-hi)}
+/* undo toast */
+.toast{position:fixed;left:50%;bottom:22px;z-index:80;transform:translate(-50%,20px);opacity:0;pointer-events:none;display:flex;align-items:center;gap:14px;padding:8px 8px 8px 16px;border-radius:14px;background:var(--ink);color:#fff;font-size:13px;box-shadow:0 14px 30px -12px rgba(11,16,32,.5);transition:opacity .25s,transform .3s cubic-bezier(.2,.8,.2,1);max-width:calc(100% - 28px)}
+.toast.open{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{min-height:36px;padding:0 14px;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:13px}
+@media (max-width:380px){ .facts small{font-size:10.5px;gap:4px} .facts div{padding:9px 8px} .act .skp{flex:.6} }
+@media (max-width:640px){
+  .pline{display:none}
+  .act .outc button{height:44px;font-size:13.5px}
+  .act .pri.nxt{height:58px}
+  .ph .ex{height:44px;padding:0 14px}
+  .mnext .go{height:44px}
+  .sheet .sh button{width:44px;height:44px}
+  .rsheet .rchips button{height:44px;padding:0 16px}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+  .toast button{min-height:44px}
+  /* sheets: solid white, padded, nothing renders on top */
+  .sheet{background:#fff;isolation:isolate;overflow:hidden auto;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+  .rsheet .roofwrap{position:relative;overflow:hidden;background:#F3F5F8}
+  .rsheet .rtab{background:#fff}
+  .scrim{z-index:55}
+}
+
+/* inside the tour shell: the shell is the one roofer-branded header; Find an address moves into the queue */
+@media (min-width:641px){ .embed .app > .bar{display:none} .embed .app{grid-template-rows:auto minmax(0,1fr)} }
+.qh .find{display:none}
+.embed .queue .find{display:flex;width:auto;margin:0 12px 8px;height:40px}
+.tcalled{display:none}
+@media (max-width:640px){
+  .embed .app > .bar{display:none}          /* the shell is the header; the count moves into the stats line */
+  .embed .tstat .tcalled{display:flex}
+  .embed .head{padding:10px 16px 6px}
+  .embed .hello h1{font-size:22px}
+  .embed .hello p{font-size:12.5px;margin-top:2px}
+  .embed .today{margin-top:6px;padding-top:6px;gap:2px 12px}
+  .embed .tstat{gap:14px;flex-wrap:wrap}
+  .embed .tstat .lng{display:none}
+  .embed .concept{display:none}
+  .embed .main{overflow:hidden}
+  .embed .ph{height:auto;flex:1 1 36%;min-height:124px;max-height:46%}
+  .embed .cb{flex:0 0 auto}
+  .embed .ph .tl{display:none}   /* hail is in the facts row; the sub-line already says sample */
+  .embed .cb{padding:12px 16px 0}
+  .embed .why{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  /* Inter sets wider: Why today a touch larger and tighter (the roof band's height is in rc-console.css) */
+  .embed .why{font-size:14px;line-height:1.4}
+  .embed .act{margin-bottom:10px}
+}
+
+/* short frames (laptop inside the tour shell): the roof art gives way so the action bar always fits */
+@media (min-width:641px) and (max-height:700px){
+  .head{padding-top:10px;padding-bottom:10px}
+  .hello h1{font-size:28px}
+  .ph{min-height:78px}
+  .ph .rlink{inset:8px 150px}   /* short band: the roof sits between the corner pills */
+  .cb{padding-top:12px}
+  .facts{margin-top:10px}.facts div{padding:8px 12px}
+  .why{margin-top:8px;line-height:1.4}
+  .calls{margin-top:8px}
+  .act{margin-bottom:12px}
+  .alog{gap:5px;padding-top:2px}
+  .act .outc button{height:34px}
+}
+/* map: pins stay under the overlay cards; the map credit sits just above the stop card */
+#map{z-index:0}
+/* map credit: the compact "i" button only, the text opens on hover or focus, so it never sits on a pin */
+.maplibregl-ctrl-attrib.maplibregl-compact:not(:hover):not(:focus-within) .maplibregl-ctrl-attrib-inner{display:none}
+.maplibregl-ctrl-attrib.maplibregl-compact:not(:hover):not(:focus-within){padding:0;min-height:24px;min-width:24px}
+.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button{display:block}
+@media (max-width:400px){ .embed .ph .bl i{display:none} }
+.mnext .go{text-decoration:none}
+.mapwrap .maplibregl-ctrl-bottom-right{bottom:calc(var(--mnh,66px) + 22px)}
+.sheet .pmap .maplibregl-ctrl-bottom-right{bottom:calc(var(--mnh,66px) + 18px)}
+
+/* Today v2 (Jack 10-08): Homes-screen layout language. Same panel radius (22), header pattern (h1 38/500, panel heads
+   15/600 with an underline tab row), filter pills and type scale as c5-home, so Today and Homes read as one product. */
+.app{grid-template-rows:64px auto minmax(0,1fr)}
+.head{padding:22px var(--g) 18px;align-items:flex-end}
+.hello h1{font-size:38px;font-weight:500;letter-spacing:-.03em;line-height:1.04;color:var(--ink)}
+.main{grid-template-columns:300px minmax(400,480px) minmax(0,1fr);grid-template-columns:300px minmax(400px,480px) minmax(0,1fr);gap:20px}
+.queue,.mapwrap,.card.paper{border-radius:22px}
+.queue{border:0;box-shadow:0 24px 60px rgba(11,16,32,.10),0 1px 2px rgba(11,16,32,.05)}
+.mapwrap{border:0;box-shadow:0 24px 60px rgba(11,16,32,.10),0 1px 2px rgba(11,16,32,.05)}
+.ph{border-radius:22px 22px 0 0}
+/* left panel head: tabs on the left, the count on the right */
+.qh{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:14px 20px 0;border-bottom:1px solid var(--rule);margin:0 0 8px}
+.qh small{font-size:12.5px;color:var(--muted);padding-bottom:11px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ltabs{display:flex;gap:2px}
+.ltabs button{position:relative;height:38px;padding:0 8px;font-size:15px;font-weight:500;color:var(--slate);display:inline-flex;align-items:center;gap:6px;border-radius:8px 8px 0 0;transition:color .2s,background .2s;white-space:nowrap}
+@media (hover:hover){ .ltabs button:hover{color:var(--ink);background:var(--panel-2)} }
+.ltabs button.on{color:var(--ink);font-weight:600}
+.ltabs button::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2px;background:transparent;transition:background .2s}
+.ltabs button.on::after{background:var(--ink)}
+.ltabs button i{font-style:normal;font-size:11px;font-weight:600;color:var(--slate);background:var(--panel-2);border-radius:999px;min-width:18px;height:18px;padding:0 5px;display:inline-grid;place-items:center}
+.ltabs button.on i{background:var(--ink);color:#fff}
+.ltabs button i[hidden]{display:none}
+/* cards that slid off (done stops) or wait behind never take clicks: an off-screen card used to sit over the Up next rows */
+.card.out,.card[data-d="3"],.card[data-d="x"]{pointer-events:none}
+.lpane{display:none;flex:1 1 auto;min-height:0;flex-direction:column}
+.lpane.on{display:flex}
+.embed .queue .find{margin:0 12px 8px}
+/* inbox */
+.ifil{display:flex;gap:3px;padding:3px;border-radius:999px;background:var(--panel-2);margin:2px 12px 8px;flex:none;overflow-x:auto;scrollbar-width:none}
+.ifil::-webkit-scrollbar{display:none}
+.ifil button{height:30px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--slate);flex:1 0 auto;white-space:nowrap}
+.ifil button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(11,16,32,.1)}
+.ilist{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--panel-3) transparent;padding:0 8px 10px;display:grid;gap:2px;align-content:start}
+.irow{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:start;padding:10px 10px;border-radius:12px;text-align:left;width:100%;transition:background .2s}
+.irow:hover{background:var(--panel-2)}
+.ich{display:grid;justify-items:center;gap:3px;padding-top:2px}
+.ich .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--panel-2);color:var(--ink-2)}
+.ich .ic svg{width:16px;height:16px}
+.ich b{font-size:10.5px;font-weight:600;color:var(--slate);letter-spacing:.01em}
+.ich[data-ch="text"] .ic{background:#E3F2F9;color:#0D6C99}
+.ich[data-ch="email"] .ic{background:#ECE9F7;color:#5B4BA8}
+.ich[data-ch="call"] .ic{background:#F6EEDD;color:#8A5A00}
+.ich[data-ch="booking"] .ic{background:var(--accent-soft);color:var(--accent-ink)}
+.ibody{display:grid;gap:1px;min-width:0}
+.itop{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.iad{font-size:13.5px;font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.itop time{font-size:11.5px;color:var(--muted);white-space:nowrap;flex:none;font-variant-numeric:tabular-nums}
+.iwho{font-size:12px;color:var(--slate);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ilast{font-size:12.5px;color:var(--ink-2);line-height:1.35;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.icount{color:var(--muted);font-size:11.5px;white-space:nowrap}
+.inone{padding:14px 14px;font-size:13px;color:var(--muted);line-height:1.5}
+@media (max-width:1380px){
+  .main{grid-template-columns:272px minmax(380px,440px) minmax(0,1fr);gap:16px}
+  .hello h1{font-size:34px}
+}
+@media (max-height:820px){ .head{padding-top:14px;padding-bottom:12px} .hello h1{font-size:30px} }
+@media (min-width:641px) and (max-height:700px){ .hello h1{font-size:26px} }
+@media (max-width:640px){
+  .hello h1{font-size:24px}
+  .embed .hello h1{font-size:22px}
+  .peek button{padding:5px 6px;gap:1px 6px;font-size:13px}
+  #sheetList #lpanel{display:flex;box-shadow:none;margin:0 14px 14px;border:1px solid var(--hair-2);height:min(68dvh,560px)}
+  #sheetList .qrow,#sheetList .irow{min-height:52px}
+  #sheetList .ltabs button{height:44px}
+  #sheetList .ifil button{height:36px}
+}
+/* scheduled texts (Jack 10-08): reminders that send from the user's phone; texting is not connected */
+.dbtn .ic{width:16px;height:16px;margin-right:6px;display:inline-grid}
+.dbtn.off{color:var(--muted);background:var(--panel-2);border-color:transparent;cursor:not-allowed}
+.dact{flex-wrap:wrap}
+.snote{margin-top:10px;font-size:12.5px;line-height:1.45;color:var(--slate)}
+.snote[hidden]{display:none}
+.snote.on{color:#0B47A8}
+#dWhy{padding:10px 12px;border-radius:12px;background:#FFF4E5;color:#7A4A00}
+.dhint{font-weight:500;color:var(--muted);margin-left:6px}
+label.dlab{display:block}
+.dsel{width:100%;min-height:44px;border:1px solid var(--hair);border-radius:12px;padding:0 12px;font:inherit;font-size:14px;color:var(--ink);background:#fff}
+.dlg textarea + .dact,.dlg .dsel{margin-top:0}
+.dconf{margin-top:16px;padding:12px 14px;border-radius:14px;background:var(--panel-2);display:grid;gap:2px;font-size:12.5px;color:var(--slate)}
+.dconf b{font-size:14px;color:var(--ink)}
+.qsch{display:inline-flex;align-items:center;gap:4px;color:#0B47A8;font-weight:600;font-variant-numeric:tabular-nums}
+.qsch .ic{width:12px;height:12px;display:inline-grid}
+.qrow .mt .qsep{color:var(--muted)}
+.pill.sch{background:#EAF2FE;color:#0B47A8;display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+.pill.sch .ic{width:13px;height:13px;display:inline-grid}
+.ihead{padding:8px 10px 2px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.srow{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:start;padding:10px;border-radius:12px;background:#F3F7FE;border:1px solid rgba(31,111,224,.14)}
+.srow .ich .ic{background:#E1ECFD;color:#0B47A8}
+.srow .scd{font-size:13px;font-weight:700;color:#0B47A8;white-space:nowrap;font-variant-numeric:tabular-nums;margin-top:1px}
+.srow .snote2{font-size:11.5px;color:var(--slate);line-height:1.35}
+.srow .sact{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.srow .sact button{height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--hair);background:#fff;font-size:12px;font-weight:600;color:var(--ink)}
+.srow .sact button:hover{border-color:var(--edge)}
+.srow .sact button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.srow.due{background:#FFF7EA;border-color:#F0C97A}
+.srow.due .scd{color:#8A5A00}
+@media (max-width:640px){ .srow .sact button{height:40px;padding:0 14px} }
+/* phone inside the shell: Nimbus floats just above the peek bar, bottom right. The card ends above him so Text, Email,
+   Skip and Next stop never sit under the orb (the stacked cards behind still peek out below). */
+@media (max-width:640px){ .embed .card{inset:0 0 70px 0} .embed .dlg{max-height:calc(100dvh - 170px);overflow:auto}
+  .embed .dlg .dact{position:sticky;bottom:-22px;background:#fff;margin:14px -22px -22px;padding:10px 22px 16px;box-shadow:0 -8px 16px -12px rgba(11,16,32,.25)}
+  .embed .dlg .dhint{display:block;margin:2px 0 0}
+  /* the map sheet: the map takes the sheet's height, the legend keeps to the lines (the base is labelled on the map) */
+  .sheet .pmap{height:calc(88dvh - 92px)}
+  .sheet .mleg .k:first-child,.sheet .mleg .k.pins{display:none}
+  .sheet .mleg{padding:6px 10px}
+  .sheet #mLeg{display:none}
+}
+/* Daily 50 engine + CRM inbox (10-09) */
+.dlg{margin:auto}   /* the page reset zeroes margins, which pinned every dialog to the top left corner */
+.qload{padding:18px 12px}
+.qload-card{padding:8px 0 20px}.qload-card b{font-size:18px;display:block}.qload-card p{margin-top:6px;color:var(--slate);font-size:13.5px;line-height:1.5}
+.qdue{display:inline-block;margin-top:3px;font-size:11px;font-weight:700;color:#0B47A8;background:#EAF2FE;border-radius:999px;padding:1px 8px;line-height:17px}
+.qdue.late{color:#8A3B00;background:#FFF1E2}
+.qdue{display:none!important}   /* Jack 10-17: no follow-up / due badges on the list */
+.qrow .mt{-webkit-line-clamp:2}
+.why b{font-weight:700;color:var(--ink)}
+.dtop{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.dseg{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--panel-2);flex:none}
+.dseg button{height:30px;padding:0 12px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--slate)}
+.dseg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(11,16,32,.1)}
+.dlg .optin.no{background:#FFF4E5;color:#7A4A00}.dlg .optin.no b{color:#5E3800}
+.dlg input.dsel{padding:0 12px}
+.dlg .dsubj{margin-top:4px}
+.dlg textarea#eBody{min-height:180px;font-size:13px;line-height:1.45}
+.dlg textarea[readonly],.dlg input[readonly]{background:var(--panel-2);color:var(--ink-2)}
+#eWhy{padding:10px 12px;border-radius:12px;background:#F4F6FA;color:#465065}   /* a quiet note, not a warning: the draft is still his to edit */
+/* inbox */
+.iwrap{display:flex;flex-direction:column;min-height:0;flex:1 1 auto}
+.iwrap[hidden],.ithread[hidden]{display:none}
+/* the five inbox filters wrap to two rows in the narrow column instead of scrolling sideways */
+#paneInbox .ifil{flex-wrap:wrap;border-radius:14px;overflow:visible}
+#paneInbox .ifil button{flex:1 0 auto;padding:0 9px}
+.isearch{display:flex;align-items:center;gap:8px;height:38px;margin:2px 12px 6px;padding:0 12px;border-radius:12px;background:var(--panel-2);border:1px solid transparent;flex:none}
+.isearch:focus-within{background:#fff;border-color:var(--edge)}
+.isearch .ic{width:15px;height:15px;color:var(--muted);display:inline-grid}
+.isearch input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:13px;color:var(--ink);outline:none;height:100%}
+.ifil button i{font-style:normal;font-size:10.5px;font-weight:700;background:var(--panel-3,#DDE1E8);color:var(--ink-2);border-radius:999px;padding:0 6px;margin-left:3px}
+.ifil button[aria-pressed="true"] i{background:var(--ink);color:#fff}
+.imeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px}
+.icad{font-size:11.5px;font-weight:600;color:var(--slate)}
+.icad.c-due{color:#0B47A8}.icad.c-late{color:#8A3B00}.icad.c-stop{color:var(--muted)}
+.istg{font-size:10.5px;font-weight:600;color:var(--ink-2);background:var(--panel-2);border-radius:999px;padding:1px 7px}
+.irow.rep{box-shadow:inset 3px 0 0 #0B47A8}
+.ich[data-ch="reply"] .ic{background:#E1ECFD;color:#0B47A8}
+.ithread{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 14px 16px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin}
+.ith-h{display:flex;align-items:flex-start;gap:8px;padding-top:2px}
+.iback{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none;color:var(--ink)}
+.iback:hover{background:var(--panel-2)}
+.iback .ic{width:18px;height:18px;display:inline-grid}
+.ith-t{min-width:0;padding-top:5px}.ith-t b{font-size:15px;display:block;line-height:1.25}.ith-t small{font-size:12px;color:var(--slate);line-height:1.35;display:block;margin-top:2px}
+.ith-m{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ith-a{display:flex;gap:6px;flex-wrap:wrap}
+.ithread .dbtn{min-height:36px;padding:0 12px;font-size:12.5px;border-radius:10px}
+.ithread .dbtn.warn{color:#8A3B00}
+.ithread .dbtn[disabled]{opacity:.45;cursor:not-allowed}
+.ithread .dbtn.off{color:var(--muted);background:var(--panel-2);border-color:transparent;cursor:not-allowed}
+.inext,.isugg,.ireply{border:1px solid var(--hair-2);border-radius:14px;padding:12px;display:grid;gap:8px;background:#fff}
+.isugg{background:#F3F7FE;border-color:rgba(31,111,224,.18)}
+.inext.nx-stop{background:var(--panel-2)}
+.ilab{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink)}
+.ilab .dseg button{height:26px;padding:0 10px;font-size:12px}
+.isubj{font-size:13px;font-weight:600}
+.ithread textarea{width:100%;border:1px solid var(--hair);border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;line-height:1.45;resize:vertical;background:#fff}
+.ithread textarea[readonly]{background:var(--panel-2);color:var(--ink-2)}
+.iact{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.iact .dbtn.pri{margin-left:auto}
+.inote{font-size:12px;color:var(--slate);line-height:1.4;flex:1 1 160px}
+.ihist ol{list-style:none;display:grid;gap:10px;margin-top:8px}
+.hitem{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;align-items:start}
+.hitem .ich .ic{width:28px;height:28px}
+.htop{display:flex;justify-content:space-between;gap:8px;font-size:12.5px}
+.htop b{font-weight:600;min-width:0}
+.htop time{color:var(--muted);font-size:11.5px;white-space:nowrap;flex:none}
+.hbody{margin-top:4px;font-size:12.5px;line-height:1.45;color:var(--ink-2);background:var(--panel-2);border-radius:10px;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.hbody.in{background:#EAF2FE;color:#0B2E66}
+@media (max-width:640px){ .ithread .dbtn{min-height:44px} .dseg button{height:36px} .isearch{height:44px} }
+
+/* Jack 10-17, Today reads at a glance (rc-console.css nests its card rules, so these carry one more class to win):
+   1. the map keeps its pill row at the top and loses the key that hung under it (lines, homes, All/Today);
+   2. the roof band shows two labels in the body font, no hail chip (hail is in the facts row);
+   3. the facts are three short cells, plain labels, the value and its note on one line; no status pills under Why today. */
+.mtag .mleg,.mtag .mleg-tog,.mtag .mleg-br{display:none!important}
+.app .deck .card .ph .tl{display:none}
+.app .deck .card .ph .bl,.app .deck .card .ph .open,.app .deck .card .ph .ex{font-family:var(--font);font-size:12px;font-weight:600;letter-spacing:0}
+.app .deck .card .ph .bl i{font-weight:500}
+/* phone (10-23): the roof chip sat on top of the "Home 1 of 50" badge; it goes bottom left, clear of Measure, and wraps */
+@media (max-width:640px){ .app .deck .card .ph .bl{top:auto;bottom:12px;left:12px;max-width:calc(100% - 160px);white-space:normal;line-height:1.3;border-radius:12px;z-index:4} }
+.app .deck .card .ph .tr .pill{font-size:12.5px;height:28px}
+.app .deck .card .cb .addr p{font-size:13.5px;line-height:1.45;margin-top:4px}
+.app .deck .card .cb .facts{margin-top:12px;grid-template-columns:repeat(3,1fr)}
+.app .deck .card .cb .facts div{padding:9px 12px}
+.app .deck .card .cb .facts small{font-family:var(--font);font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--slate);font-weight:500}
+.app .deck .card .cb .facts b{font-size:16px;margin-top:3px;white-space:normal;line-height:1.3}
+.app .deck .card .cb .facts b i{display:inline;font-family:var(--font);font-size:12px;font-weight:500;color:var(--slate);margin:0 0 0 5px}
+.app .deck .card .cb .why{margin-top:12px;font-size:14px;line-height:1.5}
+@media (max-width:640px){
+  .app .deck .card .cb .facts div{padding:8px 9px}
+  .app .deck .card .cb .facts b{font-size:14px}
+  .app .deck .card .cb .facts b i{display:block;margin:1px 0 0;font-size:11.5px}
+  .app .deck .card .cb .addr p{font-size:13px;line-height:1.4}
+}
+/* visual check (10-23): phone chip shows the squares only (the full note stays on desktop and on the record); the
+   four card buttons fit at 390px; the tidbit sits right under the greeting */
+.app .deck .card .ph .bl{max-width:calc(100% - 28px);white-space:normal;line-height:1.35;border-radius:12px;align-items:flex-start}.app .deck .card .ph .bl .sw{display:none}   /* the red square meant 'red took the hail'; no plane is drawn red any more (visual check fixes 10-24) */
+.app .deck .card .ph .bl em{font-style:normal}.app .deck .card .ph .bl .ls{display:none}   /* '~43.5 sq est.' is the phone's short chip */
+/* phone (visual check polish 10-24): the 3D house had a 220 x 58 slot under the squares chip; the chip moves to the top row
+   beside "Home 1 of 50", the house gets the middle of the strip, and the card's tidbit is one line (tap shows it all and its
+   source), which gives the strip back about 20px */
+@media (max-width:640px){
+  .app .deck .card .ph .bl{top:14px;bottom:auto;max-width:calc(100% - 150px);z-index:5}
+  .app .deck .card .ph .rlink{inset:30px 56px 0}
+  .app .deck .card .ph .bl .lw{display:none}.app .deck .card .ph .bl .ls{display:inline}
+  .app .deck .card .rc-tip.in span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .app .deck .card .rc-tip.in[aria-expanded="true"] span{white-space:normal}
+}
+@media (max-width:640px){ .app .deck .card .ph .bl i{display:none}
+  .act{gap:6px}.act button{gap:6px;padding:0 6px;font-size:15px}.act .ic{width:17px;height:17px} }
+</style>
+<link rel="stylesheet" href="../lib/rc-console.css"><!-- polish direction B: Ops Console -->
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div class="co"><span class="mk" data-logo></span><div><b data-r="name"></b><small data-r="area"></small></div></div>
+    <nav class="tabs" aria-label="Sections"><button class="on">Today</button><button>Pipeline</button><button>Map</button><button>Homes</button><button>Storms</button></nav>
+    <span class="sp"></span>
+    <label class="find"><span class="ic" data-i="search"></span><input id="findIn" type="search" placeholder="Find an address" autocomplete="off" aria-label="Find an address in today's list"></label>
+    <div class="sig">Powered by <span class="wm" data-wing="#5B82FF"></span><b>Wing Digital</b></div>
+    <div class="me" id="me"></div>
+  </header>
+
+  <section class="head">
+    <div class="hello">
+      <h1 id="hello"><span id="greet">Good morning</span><span class="rep" data-r="rep"></span></h1>
+    </div>
+  </section>
+
+  <main class="main">
+    <aside class="queue" aria-label="Today's list and inbox" id="lpanel">
+      <div class="qh"><div class="ltabs" role="tablist" aria-label="Left panel"><button type="button" role="tab" id="tabNext" data-tab="next" aria-selected="true" aria-controls="paneNext">Up next</button><button type="button" role="tab" id="tabInbox" data-tab="inbox" aria-selected="false" aria-controls="paneInbox">Inbox<i id="inN" hidden></i></button><button type="button" role="tab" id="tabRadar" data-tab="radar" aria-selected="false" aria-controls="paneRadar" title="Streets where roofs are being replaced right now">Radar</button></div><small id="qLeft"></small></div>
+      <div class="lpane on" id="paneNext" role="tabpanel" aria-labelledby="tabNext">
+        <div class="qlist" id="qlist"></div>
+        <div class="qfoot" id="qfoot">The homes most likely to say yes today come first.</div>
+      </div>
+      <div class="lpane" id="paneInbox" role="tabpanel" aria-labelledby="tabInbox"></div>
+      <div class="lpane" id="paneRadar" role="tabpanel" aria-labelledby="tabRadar"></div><!-- radar.js: Turnover Radar (Jack 10-23) -->
+    </aside>
+    <section class="deck" id="deck" aria-label="Today's homes"></section>
+    <section class="mapwrap" aria-label="Messages map" id="mapHost">
+      <div id="map"></div>
+      <div class="mtag"><span class="pill dk">Messages today</span><span class="pill skel" id="mStops" aria-label="Counting today's messages"></span><span class="pill" id="mLeg"></span><button class="mexp" id="mExp" type="button" aria-pressed="false" aria-label="Expand the map"><span class="ic" data-i="expand"></span><span class="t">Expand</span></button></div>
+      <div class="bpop hpop" id="hpop" role="dialog" aria-label="Home on the map" hidden></div>
+    </section>
+  </main>
+
+  <div class="peek" id="peek"><span class="grab"></span><button id="openList"><span class="ic" data-i="note"></span>Inbox <small id="peekIn"></small></button><button id="openRoute"><span class="ic" data-i="map"></span>Map <small id="peekDist"></small></button><button id="openPipe"><span class="ic" data-i="layers"></span>Pipeline <small id="peekPipe"></small></button></div>
+</div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheetList"><span class="grab"></span><div class="sh"><b>Up next, inbox and radar</b><button data-close><span class="ic" data-i="close"></span></button></div><div id="listHost"></div></div>
+<div class="sheet" id="sheetRoute"><span class="grab"></span><div class="sh"><b>Messages map</b><button data-close><span class="ic" data-i="close"></span></button></div><div class="pmap" id="pmapHost"></div></div>
+<div class="sheet" id="sheetPipe"><span class="grab"></span><div class="sh"><b>Pipeline</b><button data-close><span class="ic" data-i="close"></span></button></div><div id="pipeHost"><nav class="pipe" aria-label="Pipeline" id="pipe"></nav></div></div>
+<dialog class="dlg" id="dlg" aria-labelledby="dlgT"></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="sheet rsheet" id="sheetRoof"><span class="grab"></span><div class="sh"><b id="rsAddr">Roof</b><button data-close><span class="ic" data-i="close"></span></button></div><div class="roofwrap" id="rsRoof"></div><div class="rchips" id="rsChips"></div><div class="rtab" id="rsTab"></div></div>
+
+<!-- the list's data first (rc-queue starts its download as soon as it runs), then the 2 MB of map libraries -->
+<script src="../lib/rc-state.js"></script>
+<script>/* the right time of day before anything else paints */ try { document.getElementById('greet').textContent = RC.greeting(); } catch (e) {}</script>
+<script src="data/routes-dfw.js"></script>
+<script src="../lib/brand.js"></script>
+<script src="../lib/rc-copy.js"></script>
+<script src="../lib/rc-proof.js"></script><!-- Proof Page: Send proof page from the card (Bet 3, 10-23) -->
+<script src="../lib/st-homes.js"></script>
+<script src="../lib/rc-queue.js"></script>
+<!-- the 2 MB of map libraries download now but run only after the list is on screen (MAPLIBS below) -->
+<link rel="preload" as="script" href="../vendor/maplibre-gl@4.7.1/maplibre-gl.js">
+<link rel="preload" as="script" href="../vendor/deck.gl@9.0.38/dist.min.js">
+<script src="dk.js"></script>
+<script src="reach.js"></script>
+<script src="inbox.js"></script>
+<script>
+const KEY = DK.rooferKey(), DATA = DK.dataKey(KEY);   // the roofer, and whose route is drawn (its own)
+const R = DK.theme(KEY);
+document.getElementById('me').textContent = R.rep[0];
+const DSTATE = (DK.ROOFERS[DATA] || R).state || 'TX';   // state of the addresses on screen (the data's, not the brand's)
+const I = DK.I, esc = RC.esc;
+const phone = matchMedia('(max-width:640px)').matches;
+const RM = matchMedia('(prefers-reduced-motion: reduce)');
+let TOTAL = 0, LEFT = 0;   // the stops actually in today's queue (set by buildList), so the header, the cards and the footer agree
+const showcase = R.storm.iso === RC.SHOWCASE;
+
+// ---------- the list: today's Daily 50 (lib/rc-queue.js RC.daily), then homes added from the storm map ----------
+// RC.daily() picks the day's 50 real homes (cadence follow-ups due first, then the homes most likely to say yes, scored over every house in the area, storm or not) and
+// keeps the same 50 all day. Each home's roof comes from its own building outline (RealRoof.mapEntry). People and
+// phones are sample; the owner comes from the private county roll when it is loaded (RC.owner), else "Owner not loaded".
+const hash = s => { let h = 7; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+const OWNDATA = !!(R.ownData || (window.activeRoofer && activeRoofer().dataRoot));
+const roofAgeOf = (permit, year) => permit ? 'Reroof permit '+String(permit).slice(0,4) : year ? `Built ${year}, no reroof permit on file` : 'No reroof permit on file, year built not on file';
+let QREADY = false, QERR = null, QDAY = '';
+// no sample phone numbers (10-22): a home has a phone only when the rep added one (record > Add phone) or a record holds one
+function specFor(gi, seed){
+  const got = gi!=null && window.RealRoof ? RealRoof.mapCached(gi) : null;
+  if (got === undefined) return Object.assign(RealRoof.none(seed), { loading:true, label:'Loading the outline' });
+  return got ? RealRoof.spec(got, { seed }) : RealRoof.none(seed);
+}
+function withSpec(h){
+  h.spec = specFor(h.gi, h.seed); h.M = DK.roofMeasure(h.spec);
+  const real = h.spec && !h.spec.none;
+  h.sq = real ? h.M.squares : (h.pick && h.pick.squares != null ? Math.round(h.pick.squares*10)/10 : null);
+  h.pitch = real ? h.M.predominant || null : null; h.pitchMeasured = !!(h.spec && h.spec.pitchMeasured);
+  return h;
+}
+function pickHomes(){
+  const picks = RC.daily();
+  QDAY = new Date().toDateString();
+  return picks.map((p,i)=>{
+    const seen = RC.recall(p.id) || {}, line = p.street || (p.address ? p.address.split(',')[0] : null) || seen.addr || 'Home on file';
+    const h = { id:p.id, n:i+1, pick:p, addr:line, short:DK.short(line), street:line, loc: isFinite(p.lon) && isFinite(p.lat) ? [+p.lon, +p.lat] : null,
+      city:p.city || seen.city || R.city, zip:p.zip || seen.zip || '', hail: p.hail!=null ? (+p.hail).toFixed(2) : null,
+      year:p.yearBuilt || null, permit:p.permit || null, roofAge:roofAgeOf(p.permit, p.yearBuilt), storm:p.storm, gi:p.gi, subdivision:p.subdivision || null,
+      seed:900 + hash(p.id)%5000, person:null, phone:seen.phone && !/5550\d{3}$/.test(String(seen.phone)) ? seen.phone : null,
+      // opted in / past customer only when a record on this device says so (the check page, the Home screen); the 50 are cold
+      optin:!!(seen.optin || seen.optIn), past:!!(seen.past || seen.pastCustomer), textConsent:!!seen.textConsent, added:false };
+    return withSpec(h);
+  });
+}
+// where an added home came from: the storm map, Ask Nimbus, or a neighbor of a home on the record (10-19)
+const addedLine = h => h.addedFrom==='neighbors' ? 'Neighbor, same storm' : h.addedFrom==='ask nimbus' ? 'Added from Ask Nimbus' : 'Added from the storm map';
+function addedHomes(start){
+  return (RC.addedOpen ? RC.addedOpen() : RC.added()).map((a,k)=>{
+    const seen = RC.recall(a.id) || {}, seed = 900 + hash(a.id)%5000, spec = RealRoof.none(seed), M = DK.roofMeasure(spec);
+    const hail = a.hail != null ? (+a.hail).toFixed(2) : seen.hail != null ? (+seen.hail).toFixed(2) : null;
+    const addr = a.addr || seen.addr || 'Home from the storm map';
+    return { id:a.id, n:start+k+1, addr, short:DK.short(addr), street:'', loc:[+a.lon, +a.lat], hail, year:seen.year||null, permit:null,
+      roofAge:seen.roofAge||'Checking the county record', sq:M.squares, pitch:M.predominant, spec, M, seed,
+      person:seen.person || null, phone:seen.phone || null, optin:!!seen.optin, past:!!seen.past, textConsent:!!seen.textConsent, added:true, addedFrom:a.from || 'storm map',
+      city:seen.city || a.county || R.city, zip:seen.zip || '' };
+  });
+}
+let HOMES = [];
+function buildList(){
+  const keep = {}; HOMES.forEach(h=>{ if (h.owner) keep[h.id] = h.owner; });
+  // an opted-out home leaves today's list (RC.daily keeps it as closed; the Inbox's Opted out filter still has it)
+  const base = QREADY ? pickHomes().filter(h=>!(h.pick.status==='closed' && h.pick.closedBy==='opted out')) : [];
+  HOMES = base.concat(addedHomes(base.length).filter(a=>!base.some(b=>b.id===a.id) && isFinite(a.loc[0]) && isFinite(a.loc[1])));
+  HOMES.forEach(h=>{ if (keep[h.id]) h.owner = keep[h.id]; });
+  TOTAL = QREADY ? RC.daily().length + HOMES.filter(h=>h.added).length : 0; if (QREADY) RC.queue(TOTAL);
+  HOMES.forEach(h=>{ const was = RC.recall(h.id) || {};
+    // remember once (each write is a storage event in every frame): the facts Home and the Inbox read back
+    if (was.addr === h.addr && was.gi === (h.gi!=null?h.gi:null) && was.phone === h.phone && was.lon === (h.loc?h.loc[0]:null)) return;
+    RC.remember({ id:h.id, gi:h.gi!=null?h.gi:null, addr:h.addr, city:h.city, zip:h.zip, hail:hailOk(h.hail)?+h.hail:null, year:h.year, permit:h.permit||null, roofAge:h.roofAge||null,
+      phone:h.phone, storm:h.storm||null, lon:h.loc?h.loc[0]:null, lat:h.loc?h.loc[1]:null, sample:true, from:h.added?'storm map':'daily50' }); });
+}
+// roofs: every home's own outline, the open stop first, then the rest of the list (tiles are shared, so this is quick)
+let roofQ = 0;
+function loadRoofs(){
+  if (!window.RealRoof || !RealRoof.mapEntry) return;
+  const want = HOMES.filter(h=>!h.added && h.gi!=null && h.loc && RealRoof.mapCached(h.gi) === undefined);
+  const first = HOMES[cur] && want.includes(HOMES[cur]) ? [HOMES[cur]] : [];
+  const one = h => RealRoof.mapEntry(h.gi, h.loc[0], h.loc[1]).then(()=>{ const i = HOMES.indexOf(h); if (i < 0) return; withSpec(h); paintRoof(i); });
+  Promise.all(first.map(one)).then(()=>Promise.all(want.filter(h=>!first.includes(h)).map(one))).then(()=>{ if (!roofQ++) renderQueue(false); }).catch(()=>{});
+}
+// ---------- skips (this device; Undo removes them) ----------
+const SK = 'rc.t.d50skip';
+const skips = () => { try { return JSON.parse(localStorage.getItem(SK)) || {}; } catch(e){ return {}; } };
+const setSkips = m => { try { localStorage.setItem(SK, JSON.stringify(m)); } catch(e){} };
+const today = iso => new Date(iso).toDateString() === new Date().toDateString();
+const skippedToday = id => { const s = skips()[id]; return s && today(s.at) ? s : null; };
+// reached today on this device (a text or an email draft opened): the Daily 50 counts that home as done
+let RTSET = null;
+RC.on(()=>{ RTSET = null; });
+const reachedToday = id => { if (!RTSET){ const d = new Date().toDateString(); RTSET = new Set(RC.activity().filter(a=>a.dir==='out' && (a.ch==='text'||a.ch==='email') && new Date(a.at).toDateString()===d).map(a=>a.id)); RTSET.day = d; }
+  if (RTSET.day !== new Date().toDateString()){ RTSET = null; return reachedToday(id); } return RTSET.has(id); };
+const isDone = h => reachedToday(h.id) || !!skippedToday(h.id) || RC.stage(h.id) === 'won' || !!(RC.pipeline()[h.id]||{}).archived;
+const fmtTime = iso => new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}).toLowerCase();
+// can a text go to this home right now (opt-out, phone on file, the roofer's texting hours: RC.textWindow)
+const canTextH = h => RC.canText(h.id, h.phone || null);
+
+// ---------- header ----------
+let cur = 0;
+const actState = {};   // id -> 'skip' | {done:'...'}
+function stageCounts(){ const c = {}; RC.STAGES.forEach(s=>c[s[0]]=0); HOMES.forEach(h=>{ const s = RC.stage(h.id); c[s] = (c[s]||0)+1; }); return c; }
+function renderHeader(){
+  // the queue's own count: stops not yet texted, emailed, skipped or won today (works for any size of list)
+  LEFT = HOMES.filter(h=>!isDone(h)).length;
+  paintCount();
+  document.getElementById('greet').textContent = RC.greeting();
+  const c = stageCounts(), booked = c.inspection;
+  document.getElementById('peekPipe').textContent = booked+' booked';
+  const st = R.storm, tot = Math.max(1, HOMES.length);
+  document.getElementById('pipe').innerHTML = `<div class="lead"><b>${st.homes} homes hit</b><small>Newest storm, ${st.date}: ${st.max} in max, ${st.county}, 1 in and up. The stages are for today's list.</small></div>` +
+    RC.STAGES.map(s=>`<div class="stg"><span class="c">${c[s[0]]}</span><span class="l">${s[1]}</span><span class="bar2"><i style="width:${Math.max(4,Math.sqrt(c[s[0]]/tot)*100)}%"></i></span></div>`).join('');
+}
+
+// ---------- card ----------
+function why(h,i){
+  // Why today, kept to one or two short lines (Jack 10-15): the engine's two strongest reasons in a few words, never a fact
+  // the tiles above already show (hail size, year built, pitch, squares). The source note lives on the pitch tile's tooltip.
+  const short = w => { let m;
+    if (/^Day \d+ follow-up/.test(w)) return w;
+    if ((m = w.match(/^Roof is about (\d+) years old/))) return `Roof about ${m[1]} years old`;
+    if ((m = w.match(/^Older home, built/))) return 'Older home, no reroof permit';
+    if (/^[\d.]+ in hail on /.test(w)) return w;   // size and date: the date is not in the tiles
+    if ((m = w.match(/^(\d+) neighbors? within about a block re-roofed/))) return `${m[1]} neighbor${m[1]==='1'?'':'s'} within a block re-roofed in the last 90 days`;   // Turnover Radar (10-23)
+    if (/^Owner lives here/.test(w)) return 'Owner lives here';
+    if ((m = w.match(/^Hit by (\d+) storms/))) return `Hit by ${m[1]} storms of 1 in+`;
+    return null;   // roof size and pitch: already in the tiles
+  };
+  // the home's hail (size and date) always leads when it has some, then the strongest other reason
+  const all = (h.pick && h.pick.why || []).map(short).filter(Boolean), hail = all.filter(w=>/ in hail on /.test(w));
+  const r = hail.concat(all.filter(w=>!/ in hail on /.test(w))).slice(0, 2);
+  const parts = [];
+  if (r.length) parts.push('<b>Why today:</b> '+r.map(esc).join('. ')+'.');
+  else if (!hailOk(h.hail)) parts.push('No 1 in+ hail here in the last 24 months.');
+  if (h.past) parts.push('Past customer.');
+  if (h.added) parts.push('You added this home from the storm map.');
+  if (h.optin) parts.push('Said yes to texts.');
+  // tidbit (Jack 10-23): what 2+ re-roofs nearby has meant in the held-out back-test, quiet, tap for the source
+  return parts.join(' ');
+}
+// the card's quiet tidbit, under Why today (outside its 2-line clamp on a phone)
+function tipFor(h){
+  const nb = h.pick && h.pick.neighbours, lf = nb >= 2 && window.RCTIP ? RCTIP.lift(nb) : null, parts = [];
+  if (lf) parts.push(RCTIP.lineHTML({ text: `Homes with ${nb >= 4 ? '4 or more' : '2 to 3'} re-roofs nearby re-roofed about ${Math.round(lf)}x as often in our test on ${RCTIP.proof().since} to ${new Date().getFullYear()} permits.`, src: 'Turnover Radar back-test on public re-roof permits, months the score never saw.' }, 'in'));
+  return parts.join(' ');
+}
+// plated top-down roof, Home screen palette: cobalt planes, roofer red where hail hit, soft per-plane light.
+// All vector: shingle courses are hairlines clipped to each plane (no <pattern> tiles, which Chrome rasterises
+// at tile size and then upscales into blocky stripes). Hairlines use non-scaling strokes, so they stay one
+// device pixel sharp at any size and devicePixelRatio. opt.courses:false for thumbnails (lines would turn to mush).
+let PR=0;
+function platedRoof(spec, opt){
+  opt = opt || {};
+  const id='pr'+(PR++), xs=spec.fp.map(p=>p[0]), ys=spec.fp.map(p=>p[1]);
+  const w=Math.max(...xs)-Math.min(...xs), hgt=Math.max(...ys)-Math.min(...ys), pad=Math.max(w,hgt)*.06;
+  const x0=Math.min(...xs)-pad, y0=Math.min(...ys)-pad, vw=w+pad*2, vh=hgt+pad*2+pad*.4;
+  const L=[-0.6,-0.8], fp=spec.fp.map(p=>p.join(',')).join(' '), f=n=>+n.toFixed(2);
+  const gap=opt.courses===false ? Infinity : Math.max(w,hgt)/26;   // ~26 courses across the roof: shingle rows, never noise
+  let defs=`<filter id="${id}s" x="-30%" y="-30%" width="160%" height="170%" color-interpolation-filters="sRGB"><feDropShadow dx="0" dy="${f(pad*.25)}" stdDeviation="${f(pad*.3)}" flood-color="#0B1020" flood-opacity=".2"/></filter>`;
+  let body='';
+  spec.planes.forEach((pl,i)=>{
+    const hit=spec.hit.includes(pl.id), b=pl.dir[0]*L[0]+pl.dir[1]*L[1];
+    const [h,sat,l]=hit?[355,62,41+b*9]:[226,58,53+b*13];
+    const pts=pl.pts.map(p=>p[0]+','+p[1]).join(' ');
+    const cx=pl.pts.reduce((a,p)=>a+p[0],0)/pl.pts.length, cy=pl.pts.reduce((a,p)=>a+p[1],0)/pl.pts.length;
+    const dl=Math.hypot(pl.dir[0],pl.dir[1])||1, dx=pl.dir[0]/dl, dy=pl.dir[1]/dl, tx=-dy, ty=dx;
+    defs+=`<linearGradient id="${id}g${i}" gradientUnits="userSpaceOnUse" x1="${f(cx-dx*8)}" y1="${f(cy-dy*8)}" x2="${f(cx+dx*8)}" y2="${f(cy+dy*8)}"><stop offset="0" stop-color="hsl(${h} ${sat}% ${Math.min(78,l+9)}%)"/><stop offset="1" stop-color="hsl(${h} ${sat}% ${l-4}%)"/></linearGradient>`;
+    let lines='', hi='';
+    if (isFinite(gap)){
+      // course lines run across the slope (perpendicular to the fall line), clipped to the plane
+      const u=pl.pts.map(p=>(p[0]-cx)*dx+(p[1]-cy)*dy), v=pl.pts.map(p=>(p[0]-cx)*tx+(p[1]-cy)*ty);
+      const v0=Math.min(...v)-1, v1=Math.max(...v)+1;
+      for (let k=Math.ceil(Math.min(...u)/gap); k*gap<=Math.max(...u); k++){
+        const ox=cx+dx*k*gap, oy=cy+dy*k*gap, seg=(o)=>`M${f(ox+dx*o+tx*v0)} ${f(oy+dy*o+ty*v0)}L${f(ox+dx*o+tx*v1)} ${f(oy+dy*o+ty*v1)}`;
+        lines+=seg(0); hi+=seg(gap*.35);
+      }
+      defs+=`<clipPath id="${id}c${i}"><polygon points="${pts}"/></clipPath>`;
+    }
+    body+=`<polygon points="${pts}" fill="url(#${id}g${i})"/>`+
+      (lines?`<g clip-path="url(#${id}c${i})"><path d="${lines}" stroke="rgba(8,14,40,.2)" stroke-width="1" vector-effect="non-scaling-stroke" fill="none"/><path d="${hi}" stroke="rgba(255,255,255,.1)" stroke-width="1" vector-effect="non-scaling-stroke" fill="none"/></g>`:'')+
+      `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".9" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;
+  });
+  const edges=spec.edges.filter(e=>e.type!=='eave').map(e=>`<line x1="${e.a[0]}" y1="${e.a[1]}" x2="${e.b[0]}" y2="${e.b[1]}" stroke="${e.type==='valley'?'rgba(8,14,40,.45)':'rgba(255,255,255,.9)'}" stroke-width="${e.type==='ridge'?2:1.4}" vector-effect="non-scaling-stroke" stroke-linecap="round"/>`).join('');
+  return `<svg viewBox="${f(x0)} ${f(y0)} ${f(vw)} ${f(vh)}" preserveAspectRatio="xMidYMid meet" shape-rendering="geometricPrecision" role="img" aria-label="Roof drawing, hail-hit planes in red"><defs>${defs}</defs>
+    <polygon points="${fp}" fill="#F7F8FA" stroke="#fff" stroke-width="3.2" stroke-linejoin="round" filter="url(#${id}s)" vector-effect="non-scaling-stroke"/>
+    <polygon points="${fp}" fill="#1A2650"/>
+    <g>${body}</g><g>${edges}</g>
+    <polygon points="${fp}" fill="none" stroke="#C9D0DD" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+}
+/* a hail value is real only when it is a finite number (a cloud row or a remembered home can carry the string 'null') */
+function hailOk(v){ return v!=null && v!=='' && v!=='null' && isFinite(+v); }
+const homeHref = h => '#home-'+encodeURIComponent(h.id);   // every way out goes through RC.go (click handler); no raw page links
+const pretty = p => p ? `(${p.slice(2,5)}) ${p.slice(5,8)}-${p.slice(8)}` : '';
+function phHTML(h){
+  // Jack 10-17: the roof band carries two labels only, "Home n of 50" and the squares line; hail is in the facts row below
+  return `<a class="rlink" href="${homeHref(h)}" data-a="home" aria-label="Open home: ${esc(h.addr)}">${platedRoof(h.spec)}</a><span class="open">Open home</span><div class="tr"><span class="pill glass">Home ${h.n} of ${TOTAL}</span></div><div class="bl"><span class="sw"></span>Red planes<i>took the hail</i></div><button class="ex" data-a="roof"><span class="ic">${I.expand}</span>Measure</button>`;
+}
+function actHTML(h){
+  // Text leads: one tap opens the day's draft (RC.copy); Email second; Skip. After a hand-off: what went, then Next stop.
+  const st = actState[h.id];
+  if (st === 'skip') return `<div class="alog"><span class="aq">Why skip this home?</span><div class="outc"><button data-skip="No one home">No one home</button><button data-skip="Not a fit">Not a fit</button><button data-skip="Try later">Try later</button><button class="ghost" data-a="cancel">Cancel</button></div></div>`;
+  if (st && st.done) return `<div class="adone"><span class="ic">${I.check}</span><span>${esc(st.done)}</span></div><button class="pri nxt" data-a="next">Next stop</button>`;
+  return `<button class="pri" data-a="text"><span class="ic">${I.text}</span>Text</button><button class="txt" data-a="email"><span class="ic">${I.mail}</span>Email</button>${h.gi!=null && window.RCP ? `<button class="txt prf" data-a="proof" title="Send the Proof Page: this home's storm record"><span class="ic">${I.doc||''}</span>Proof</button>` : ''}<button class="skp" data-a="skip"><span class="ic">${I.skip}</span>Skip</button>`;
+}
+// the last text or email this device handed off to the home (old call records are history only)
+const lastTouch = id => RC.activity().find(a=>a.id===id && a.dir==='out' && (a.ch==='text' || a.ch==='email')) || null;
+function touchHTML(h){
+  const can = canTextH(h), lt = lastTouch(h.id), b = RC.booking(h.id), sk = skippedToday(h.id);
+  const out = [lt ? `<span class="pill line">Last: ${lt.ch}, ${today(lt.at) ? fmtTime(lt.at) : esc(new Date(lt.at).toLocaleDateString('en-US',{month:'short',day:'numeric'}))}</span>` : `<span class="pill line">No texts or emails yet</span>`];
+  if (b) out.push(`<span class="pill acc">Inspection ${esc(RC.when(b))}</span>`);
+  const sc = RC.scheduledFor(h.id); if (sc) out.push(`<span class="pill sch"><span class="ic">${I.clock}</span>Text ${esc(fmtTime(sc.due))}, <span data-due="${esc(sc.due)}" data-fmt="short">${esc(RC.countdown(sc.due,'short'))}</span></span>`);
+  // Proof Page (Bet 3): opened / consent / inspection asked, from lib/rc-proof.js
+  const ps = h.gi!=null && window.RCP ? RCP.status(h.gi) : null;
+  if (ps && ps.ask) out.push(`<span class="pill acc">Asked for an inspection on the Proof Page</span>`);
+  else if (ps && ps.consent && ps.consent.text) out.push(`<span class="pill acc">Proof Page: said yes to texts</span>`);
+  else if (ps && ps.opens.length) out.push(`<span class="pill acc">Proof Page opened${ps.opens.length>1?' '+ps.opens.length+' times':''}</span>`);
+  else if (ps && ps.sends.length) out.push(`<span class="pill line">Proof Page sent, not opened yet</span>`);
+  if (sk) out.push(`<span class="pill line">Skipped: ${esc(sk.reason.toLowerCase())}</span>`);
+  if (h.added) out.push(`<span class="pill line">${addedLine(h)}</span>`);
+  if (!can.ok) out.push(`<span class="pill line">${esc(can.reason)}</span>`);
+  return out.join('');
+}
+function cbHTML(h,i){
+  // Jack 10-17: the card reads in one glance. One plain line under the address (town, who lives there, the sample
+  // phone), three short facts with their note on the same line, Why today, then the buttons. The status pills that
+  // sat under Why today (last touch, texting hours, skipped) are gone from the card: the Text dialog still says them.
+  const who = OWNDATA ? (h.owner ? RC.blurHTML(h.owner) : RC.OWNER_NONE) : h.person ? esc(h.person) : 'Owner not on file yet';
+  const ph = h.phone ? pretty(h.phone) : '';
+  // a no-permit claim only where the city's re-roof list is complete (McKinney about 2015 on, Allen about 2017 on), 10-23
+  const fullList = /^mckinney$/i.test(h.city || '') ? '2015' : /^allen$/i.test(h.city || '') ? '2017' : '';
+  const roof = h.permit ? `Re-roofed ${esc(String(h.permit).slice(0,4))}<i>permit on file</i>` : h.year ? `Built ${esc(String(h.year))}<i>${new Date().getFullYear() - h.year} yrs${fullList ? ', no re-roof permit since ' + fullList : ''}</i>` : `No record<i>year not on file</i>`;
+  return `<div class="addr"><div><h2>${phone ? esc(h.addr) : `<a class="hl" href="${homeHref(h)}" data-a="home">${esc(h.addr)}</a>`}</h2><p>${esc(h.city)}${h.zip?', '+DSTATE+' '+h.zip:''}. ${who}${ph?'. '+ph:''}${/\.$/.test(ph || who) ? '' : '.'}</p></div><span class="pill acc">${RC.stageName(RC.stage(h.id))}</span></div>
+    <div class="facts">
+      <div><small>Hail here</small><b>${hailOk(h.hail)?h.hail+' in':'None'}<i>${hailOk(h.hail)?'radar':'on file'}</i></b></div>
+      <div><small>Roof</small><b>${roof}</b></div>
+      <div><small title="Estimated from public building outlines and 2018 LiDAR. Verify on site.">Pitch</small><b>${esc(h.pitch||'6/12')}<i>${h.pitchMeasured?'LiDAR est.':'est.'}</i></b></div>
+    </div>
+    <p class="why">${why(h,i)}</p>${tipFor(h)}
+    <div class="act">${actHTML(h)}</div>`;
+}
+const deck = document.getElementById('deck');
+function buildCards(){
+  deck.innerHTML = '';
+  if (!QREADY || !HOMES.length){ deck.innerHTML = `<article class="card paper" data-d="0"><div class="ph"></div><div class="cb"><div class="qload-card"><b>${QERR ? "Today's list could not be built" : !QREADY ? "Picking today's 50 homes" : 'No homes to reach today'}</b><p>${QERR ? esc(QERR)+'.' : !QREADY ? "Scoring the storm's hit homes by hail, roof age, storm recency, roof size and distance from your base." : 'Every storm home on file is reached, closed or waiting for its next follow-up day.'}</p></div></div></article>`; return; }
+  HOMES.forEach((h,i)=>{ const c=document.createElement('article'); c.className='card paper'; c.dataset.i=i; c.dataset.id=h.id;
+    c.innerHTML=`<div class="ph">${phHTML(h)}</div><div class="cb">${cbHTML(h,i)}</div>`; deck.appendChild(c); });
+}
+// only touch the DOM when the card really changed (other screens write to the shared state often)
+function paintRoof(i){ const c = deck.querySelector(`.card[data-i="${i}"]`); if (c){ const ph = c.querySelector('.ph'); if (ph) ph.innerHTML = phHTML(HOMES[i]); } refreshCard(i); if (i===cur) renderMapCard(); }
+function refreshCard(i){ if (!HOMES[i]) return; const c = deck.querySelector(`.card[data-i="${i}"]`); if (!c) return; const cb = c.querySelector('.cb'), html = cbHTML(HOMES[i], i); if (cb.__html !== html){ cb.innerHTML = html; cb.__html = html; } }
+
+// ---------- queue, map card, layout ----------
+let query = '';
+// a row's second line: status first when there is one (done, skipped, a stage), then why the home is on today's list
+// (the engine's reasons, short: a cadence pick leads with "Day 3 follow-up" and "due today" or "2 days overdue").
+// the family name for a list row: owners arrive as "Noelle Appel" / "Igor & Alexandra Reznitsky" (RC.ownerDisplay); a company keeps its first word
+const surname = o => { const w = String(o||'').trim().split(/[\s,&]+/).filter(Boolean); if (!w.length) return ''; if (BIZ.test(o)) return w[0]; let s = w[w.length-1]; if (w.length > 2 && /^(jr|sr|ii|iii|iv)\.?$/i.test(s)) s = w[w.length-2]; return s; };
+const shortWhy = w => String(w||'')
+  .replace(/^([\d.]+) in hail on ([A-Z][a-z]{2} \d+(?:, \d{4})?)(, the newest storm)?$/, '$1 in hail $2')
+  .replace(/^Roof is about (\d+) years old.*$/, 'Roof $1 yrs old')
+  .replace(/^Older home, built (\d+).*$/, 'Built $1')
+  .replace(/^(\d+) neighbors? within about a block re-roofed in the last 90 days$/, (m, n) => n+' re-roofed nearby (90 days)')
+  .replace(/^Owner lives here.*$/, 'Owner lives here')
+  .replace(/^(?:Large roof, about|About) (\d+) squares.*$/, '~$1 sq')
+  .replace(/^Steep roof, pitch est\. (\d+)\/12.*$/, 'Steep $1/12')
+  .replace(/^Hit by (\d+) storms of 1 in or more.*$/, '$1 storms')
+  .replace(/ miles from your .* base$/, ' mi from base');
+function cadenceBits(h){
+  const p = h.pick; if (!p || p.reason !== 'cadence') return null;
+  const w = (p.why && p.why[0]) || '', m = /^Day (\d+) follow-up, (.+)$/.exec(w);
+  return m ? { step:'Day '+m[1]+' follow-up', when:m[2] } : { step:'Day '+p.step+' follow-up', when:'due today' };
+}
+function rowMeta(h, d, sk, stg){
+  const p = [];
+  if (h.added && !d && stg==='new') p.push(addedLine(h));
+  else if (sk && !reachedToday(h.id)) p.push('Skipped: '+sk.reason.toLowerCase());
+  else if (d && reachedToday(h.id) && stg==='new') p.push('Reached today');
+  else if (stg !== 'new') p.push(RC.stageName(stg));
+  const o = OWNDATA ? surname(h.owner) : ''; if (o && o.replace(/\./g, '').length > 1) p.push(o);   // initials only (not messaged yet): no bare "R." in the row (10-19)
+  const cb = cadenceBits(h);
+  (h.pick && h.pick.why || []).slice(cb ? 1 : 0).forEach(w=>p.push(shortWhy(w)));
+  if (!h.pick){ if (h.permit) p.push('Re-roof permit '+String(h.permit).slice(0,4)); else if (h.year) p.push('Built '+h.year); }   // never assume the roof is as old as the house (10-22)
+  return p.length ? p.join(' · ') : (hailOk(h.hail) ? h.hail+' in hail' : 'On the list');
+}
+function renderQueue(anim){
+  const q = document.getElementById('qlist'), m = query.trim().toLowerCase();
+  if (!QREADY){ const html = `<div class="qnone qload">${QERR ? "Today's list could not be built: "+esc(QERR)+'.' : "Picking today's 50 homes most likely to say yes..."}</div>`; if (q.__html !== html){ q.innerHTML = html; q.__html = html; } return; }
+  const hz = new Set(HOMES.map(h=>h.hail)).size > 1;   // every stop took the same hail: the right column shows squares instead
+  const rows = HOMES.map((h,i)=>{
+    if (m && !(h.addr.toLowerCase().includes(m) || h.short.toLowerCase().includes(m) || (h.person||'').toLowerCase().includes(m) || (h.owner||'').toLowerCase().includes(m))) return '';
+    const d = isDone(h), sk = skippedToday(h.id), stg = RC.stage(h.id), cb = cadenceBits(h);
+    const meta = rowMeta(h, d, sk, stg);
+    const sc = RC.scheduledFor(h.id);
+    const mt = sc ? `<span class="qsch"><span class="ic">${I.clock}</span>Text <span data-due="${esc(sc.due)}" data-fmt="short">${esc(RC.countdown(sc.due,'short'))}</span></span><span class="qsep">, </span>${esc(meta)}` : esc(meta);
+    const due = cb ? `<span class="qdue${/overdue/.test(cb.when)?' late':''}">${esc(cb.step+', '+cb.when)}</span>` : '';
+    return `<button class="qrow ${i===cur?'on':d?'done':''}" data-go="${i}" data-id="${esc(h.id)}"><span class="no">${d&&i!==cur?'<span class="ic" style="width:12px;height:12px">'+I.check+'</span>':h.n}</span><span style="min-width:0"><div class="ad">${esc(h.short)}</div>${due}<div class="mt">${mt}</div></span><span class="hz">${hz ? (hailOk(h.hail) ? h.hail+'"' : '') : h.sq ? Math.round(h.sq)+' sq' : ''}</span></button>`;
+  }).join('');
+  const html = rows || (HOMES.length ? `<div class="qnone">No stop on today's list matches "${esc(query)}".</div>` : `<div class="qnone">No homes to reach today: every storm home on file is reached, closed or waiting for its next follow-up day.</div>`);
+  if (q.__html !== html){ q.innerHTML = html; q.__html = html; q.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(+b.dataset.go, true)); }
+  const onRow = q.querySelector('.qrow.on');
+  if (onRow && !phone){ const t=onRow.offsetTop-q.offsetTop, bt=t+onRow.offsetHeight; if (t<q.scrollTop||bt>q.scrollTop+q.clientHeight) q.scrollTo({top:Math.max(0,t-8), behavior:anim&&!RM.matches?'smooth':'auto'}); }
+  if (anim && onRow) onRow.classList.add('flash');
+  qMore();
+}
+// the map (Jack 10-10): no card sits over the bottom of the map any more; a home's details show only when its pin is
+// clicked (homePop below). This keeps the open home's pin and roof outline in step with the card column.
+function renderMapCard(){
+  if (!QREADY || !HOMES[cur]) return;
+  if (overlay) overlay.setProps({ layers: fpLayers() });
+  markers.forEach((mk,k)=>{ const i = MI[k], e=mk.getElement(); e.classList.toggle('now',i===cur); e.classList.toggle('done',i!==cur && isDone(HOMES[i])); e.style.zIndex = i===cur?5:1; });
+  if (!hpop.hidden && hpop.__id && !HOMES.some(h=>h.id===hpop.__id)) closeHomePop();
+}
+// ---------- home popover: the pin was clicked ----------
+const hpop = document.getElementById('hpop');
+function homePopHTML(h){
+  const sent = RC.activity().find(a=>a.id===h.id && a.dir==='out' && (a.ch==='text'||a.ch==='email') && today(a.at)), sch = RC.scheduledFor(h.id);
+  const line = sent ? `${sent.ch==='email'?'Email':'Text'} sent ${fmtTime(sent.at)}` : sch ? `Text scheduled, <span data-due="${esc(sch.due)}" data-fmt="short">${esc(RC.countdown(sch.due,'short'))}</span>` : skippedToday(h.id) ? 'Skipped today' : `Home ${h.n} of ${HOMES.length} today`;
+  const facts = [hailOk(h.hail) ? `${h.hail} in hail` : null, h.roofAge || null, h.sq ? `about ${Math.round(h.sq)} squares (est.)` : null].filter(Boolean).join(', ');
+  const who = h.owner || (RC.ownersAllowed && RC.ownersAllowed() ? RC.OWNER_NONE : '');
+  return `<div class="bp-h"><span class="bp-ch"><span class="ic">${I.map || I.text}</span>${esc(line)}</span><button type="button" class="bp-x" aria-label="Close">${I.close}</button></div>` +
+    `<div class="bp-to"><span class="bp-l">Home ${h.n}</span><b>${esc(h.addr)}</b><span class="bp-who">${esc([h.city, h.zip].filter(Boolean).join(' '))}${who ? ', ' + esc(who) : ''}</span></div>` +
+    (facts ? `<div class="bp-b"><p class="bp-sub">${esc(facts)}</p></div>` : '') +
+    `<div class="bp-f hp-f">${sent || sch ? '' : `<button type="button" class="hp-text" data-m="text"><span class="ic">${I.text}</span>Text</button>`}<a href="#" class="bp-open" data-m="open">Open home<span class="ic">${I.go || ''}</span></a></div>`;
+}
+function homePop(h, at){
+  hpop.__id = h.id; hpop.innerHTML = homePopHTML(h); hpop.hidden = false;
+  const wrap = document.getElementById('map').parentElement, W = wrap.clientWidth, H = wrap.clientHeight, w = hpop.offsetWidth, hgt = hpop.offsetHeight;
+  let x = Math.max(10, Math.min(W - w - 10, at.x - w/2)), y = at.y + 18; if (y + hgt > H - 10) y = at.y - hgt - 18; if (y < 10) y = 10;
+  const zx = W - 440, zy = H - 260;   // Nimbus's corner stays clear
+  if (W > 600 && x + w > zx && y + hgt > zy) { if (zy - hgt - 8 >= 10) y = zy - hgt - 8; else x = Math.max(10, zx - w - 8); }
+  if (W > 600 && y + hgt > zy) x = Math.min(x, W - w - 120);   // and the orb itself, which hangs past the zone's right edge
+  hpop.style.left = x + 'px'; hpop.style.top = y + 'px';
+}
+function closeHomePop(){ hpop.hidden = true; hpop.__id = null; }
+hpop.addEventListener('click', e=>{ const b = e.target.closest('[data-m],.bp-x'); if (!b) return; e.preventDefault(); const h = HOMES.find(x=>x.id===hpop.__id); closeHomePop(); if (!h) return;
+  if (b.dataset.m === 'text'){ if (phone) closeSheets(); textDlg(h); }
+  if (b.dataset.m === 'open'){ if (document.documentElement.classList.contains('mapbig')) setBig(false); if (phone) closeSheets(); RC.go('home',{id:h.id}); } });
+document.addEventListener('pointerdown', e=>{ if (!hpop.hidden && !hpop.contains(e.target) && !e.target.closest('.stop')) closeHomePop(); }, true);
+addEventListener('keydown', e=>{ if (e.key==='Escape' && !hpop.hidden){ e.stopImmediatePropagation(); closeHomePop(); } }, true);
+function layout(anim){
+  deck.querySelectorAll('.card').forEach(c=>{ const d=+c.dataset.i-cur; c.dataset.d = d<0?'x':Math.min(d,3); c.classList.toggle('out', d<0); });
+  if (anim){ const c=deck.querySelector('.card[data-d="0"]'); if(c){ c.classList.remove('rise'); void c.offsetWidth; c.classList.add('rise'); setTimeout(()=>c.classList.remove('rise'),450);} }
+  renderQueue(anim); planMessages(); renderMapCard();
+}
+function tellShell(){ if (window.parent && window.parent !== window) try { window.parent.postMessage({ type:'route', screen:'daily', params:{ n:HOMES[cur].n } }, location.origin); } catch(e){} }
+function go(i, anim, quiet){
+  if (!QREADY || i<0 || i>=HOMES.length) return;
+  deck.style.setProperty('--dir', i>cur?-1:1);
+  const moved = i !== cur; cur = i; refreshCard(cur); layout(anim);   // the card states what is true now (texting hours, counts)
+  if (moved && !quiet) tellShell();
+  if (map && anim && HOMES[cur].loc && !inView(HOMES[cur].loc)) map.flyTo({center:HOMES[cur].loc, duration:RM.matches?0:900, curve:1.2, essential:false});   // the stop is already on screen: keep the base and its lines in frame
+}
+function nextOpen(from){ for (let k=from+1;k<HOMES.length;k++) if (!isDone(HOMES[k])) return k; for (let k=0;k<from;k++) if (!isDone(HOMES[k])) return k; return -1; }
+function qMore(){ const q=document.getElementById('qlist'); q.classList.toggle('more', q.scrollTop+q.clientHeight < q.scrollHeight-2); }
+document.getElementById('qlist').addEventListener('scroll', qMore, {passive:true}); addEventListener('resize', qMore);
+
+// find an address: filters the list; Enter opens the first match (inside the shell it sits above the queue)
+const findIn = document.getElementById('findIn');
+if (document.documentElement.classList.contains('embed')) document.getElementById('qlist').before(findIn.closest('.find'));
+findIn.addEventListener('input', ()=>{ query = findIn.value; renderQueue(false); });
+findIn.addEventListener('keydown', e=>{ if (e.key==='Enter'){ const b=document.querySelector('#qlist [data-go]'); if (b) go(+b.dataset.go, true); } if (e.key==='Escape'){ findIn.value=''; query=''; renderQueue(false); } });
+
+// ---------- left panel: Up next | Inbox (tabs) ----------
+// Tabs, not a stack: the column is narrow, and two lists stacked would each get half its height (about five rows at
+// 1440 x 900). One list at a time keeps the whole route or the whole inbox readable; the count on the right follows the tab.
+const TABK = 'rc.todayTab';   // per device convenience (not an rc.t. key)
+let TAB = 'next', THREADS = 0, radarMounted = false;
+function paintCount(){
+  const el = document.getElementById('qLeft');
+  el.textContent = TAB === 'inbox' ? (THREADS ? THREADS+(THREADS===1?' home':' homes') : '') : TAB === 'radar' ? 'last 90 days' : LEFT+' left today';
+  const n = document.getElementById('inN'); n.hidden = !THREADS; n.textContent = THREADS;
+  const pk = document.getElementById('peekIn'); if (pk) pk.textContent = THREADS ? THREADS : '';
+}
+function setTab(t, keep){
+  TAB = t === 'inbox' ? 'inbox' : t === 'radar' ? 'radar' : 'next';
+  document.querySelectorAll('.ltabs [data-tab]').forEach(b=>{ const on = b.dataset.tab === TAB; b.setAttribute('aria-selected', on?'true':'false'); b.classList.toggle('on', on); b.tabIndex = on ? 0 : -1; });
+  document.getElementById('paneNext').classList.toggle('on', TAB==='next');
+  document.getElementById('paneInbox').classList.toggle('on', TAB==='inbox');
+  document.getElementById('paneRadar').classList.toggle('on', TAB==='radar');
+  if (window.Radar) { if (TAB==='radar' && !radarMounted) { radarMounted = true; Radar.mount(document.getElementById('paneRadar')); } Radar.layer(TAB==='radar'); }
+  if (keep) try { localStorage.setItem(TABK, TAB); } catch(e){}
+  paintCount(); if (TAB==='next') qMore();
+}
+document.querySelector('.ltabs').addEventListener('click', e=>{ const b = e.target.closest('[data-tab]'); if (b) setTab(b.dataset.tab, true); });
+document.querySelector('.ltabs').addEventListener('keydown', e=>{ if (e.key!=='ArrowLeft' && e.key!=='ArrowRight') return; e.preventDefault(); const order = ['next','inbox','radar'], k = order.indexOf(TAB); setTab(order[(k + (e.key==='ArrowRight'?1:2)) % 3], true); document.querySelector('.ltabs [aria-selected="true"]').focus(); });
+// any home the Inbox shows: today's card when it is on the list, else what this device remembers about it
+function homeAny(id){
+  const h = HOMES.find(x=>x.id===id); if (h) return h;
+  const r = RC.recall(id) || {}, gi = r.gi!=null ? r.gi : null, addr = r.addr || 'Home on file';
+  return { id, addr, short:DK.short(addr), street:addr, city:r.city || '', zip:r.zip || '', hail:r.hail!=null ? (+r.hail).toFixed(2) : null, year:r.year || null, permit:r.permit || null,
+    gi, loc: isFinite(r.lon) && isFinite(r.lat) ? [+r.lon, +r.lat] : null, phone:r.phone || null, optin:!!(r.optin || r.optIn), past:!!(r.past || r.pastCustomer), textConsent:!!r.textConsent,
+    owner: gi!=null && RC.ownerNow ? RC.ownerNow(gi) : null, storm:r.storm || null, sq:r.sq || null };
+}
+const inbox = Inbox.mount(document.getElementById('paneInbox'), {
+  homeOf: homeAny,
+  draft: (id, ch)=>draftFor(homeAny(id), ch, true),
+  facts: id=>copyFacts(homeAny(id)),
+  onOpen: id=>{ if (phone) closeSheets(); RC.go('home', { id }); },
+  onCount: n=>{ THREADS = n; paintCount(); },
+  onSched: (sid, act)=>schedAction(sid, act),
+  onChange: ()=>{ if (QREADY) refreshAll(); }
+});
+
+// ---------- toast ----------
+const toast = document.getElementById('toast'); let toastT = 0;
+function showToast(html, undo){
+  toast.innerHTML = `<span>${html}</span>` + (undo ? `<button id="toastUndo">Undo</button>` : '');
+  toast.classList.add('open'); clearTimeout(toastT); toastT = setTimeout(()=>toast.classList.remove('open'), 7000);
+  if (undo) document.getElementById('toastUndo').onclick = ()=>{ toast.classList.remove('open'); undo(); };
+}
+
+// ---------- dialogs: text, email, schedule ----------
+const dlg = document.getElementById('dlg');
+// every open gets a new generation, so a late close meant for an earlier dialog never shuts the one on screen now
+let DLGGEN = 0;
+const closeLater = (ms) => { const g = DLGGEN; setTimeout(()=>{ if (g === DLGGEN) dlg.close(); }, ms); };
+function openDlg(html, wire){ DLGGEN++; dlg.innerHTML = html; wire(dlg); dlg.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>dlg.close()); dlg.showModal(); }
+dlg.addEventListener('click', e=>{ if (e.target === dlg) dlg.close(); });
+// ---------- outreach words: lib/rc-copy.js (RC.copy), the one library every screen drafts from ----------
+// audience: 'cold' for the Daily 50 (never contacted, skip-traced), 'optin' when a record says the homeowner said yes on
+// the check page, 'past' for past customers (texts only with their yes). Step = the home's touch in the cadence
+// (day 1, 3, 7, 30, then every 30 days): a message sent today belongs to today's touch even after another one earlier today.
+const audOf = h => h.past ? 'past' : h.optin ? 'optin' : 'cold';
+const BIZ = /\b(LLC|L L C|INC|TRUST|TRUSTEE|TRUSTEES|ESTATE|LP|LTD|CORP|CORPORATION|COMPANY|BANK|PARTNERS|PARTNERSHIP|HOLDINGS|PROPERTIES|INVESTMENTS|ASSOCIATION|CHURCH|CITY OF|COUNTY|HOMES|REALTY|FUND|REVOCABLE|LIVING)\b/i;
+const firstName = o => { if (!o || BIZ.test(o)) return null; const m = /,\s*([A-Za-z'-]{2,})/.exec(String(o)) || /^([A-Za-z'-]{2,})\b/.exec(String(o).trim()); return m ? m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase() : null; };
+function copyFacts(h){
+  // the home's OWN storm, and only when it took 1 in+ hail (a no-hail home's text never names another storm's hail)
+  return { id:h.id, street:h.addr, city:h.city, zip:h.zip, stormISO: hailOk(h.hail) ? (h.storm || (h.pick && h.pick.storm) || null) : null,
+    hail: hailOk(h.hail) ? +h.hail : null, roofYear: h.year || null, permit: h.permit ? String(h.permit).slice(0,4) : null,
+    squares: (h.pick && h.pick.squares) || h.sq || null, pitch: h.pitchMeasured && h.spec && h.spec.rise ? h.spec.rise : null, first: firstName(h.owner),
+    source: h.past ? 'past' : h.optin ? 'form' : undefined, textConsent: !!h.textConsent, optedOut: RC.optedOut(h.id) };
+}
+const stepIdx = day => !day || day <= 1 ? 0 : day <= 3 ? 1 : day <= 7 ? 2 : day < 60 ? 3 : Math.round(day/30) + 2;
+function touchDay(id){
+  const now = Date.now(), c = RC.cadence(id, now);
+  if (c.stopped) return { c, day:null };
+  const today = c.lastContact && new Date(c.lastContact).toDateString() === new Date(now).toDateString();
+  const c0 = today ? RC.cadence(id, new Date(now).setHours(0,0,0,0) - 1) : c;
+  return { c, day: c0.step || 1 };
+}
+// the draft for one home and channel: RC.copy.next(...) as is, plus whether a person can hand it off now.
+// A text the library holds back only for the roofer's call-back number still goes: it leaves from the rep's own phone,
+// so the homeowner can reply to that number (the draft just has no call-back line). Anything else blocked stays blocked.
+function draftFor(h, ch, upcoming){
+  // upcoming (the Inbox's "next touch"): the cadence's next step even when the home was already reached today
+  const t = upcoming ? (c => ({ c, day: c.stopped ? null : c.step || 1 }))(RC.cadence(h.id)) : touchDay(h.id), r = RC.copy.next(copyFacts(h), stepIdx(t.day), audOf(h), ch);
+  r.dayN = t.day; r.cad = t.c;
+  const onlyPhone = ch === 'text' && r.missing && r.missing.length === 1 && r.missing[0] === 'phone' && /^needs phone/.test(r.blocked || '');
+  r.canSend = !!r.body && (!r.blocked || onlyPhone); r.noCallback = onlyPhone;
+  return r;
+}
+const smsHref = (to, body) => `sms:${to}?&body=${encodeURIComponent(body)}`;
+const mailHref = (subject, body) => `mailto:?subject=${encodeURIComponent(subject||'')}&body=${encodeURIComponent(body||'')}`;
+const whoLine = h => { const o = h.owner || h.person; return (o ? esc(o)+', ' : '') + (h.phone ? pretty(h.phone) : 'No phone on file'); };
+function textState(h, r){
+  if (r.blocked === 'opted out') return `<div class="optin no"><b>Opted out (STOP)</b>No more texts or follow-ups to this home.</div>`;
+  if (r.useChannel === 'email') return `<div class="optin no"><b>Day ${r.dayN} goes by email</b>Only the first touch is a text. Every follow-up after it is an email: switch to Email.</div>`;
+  if (audOf(h) === 'past' && !r.canSend) return `<div class="optin no"><b>Past customer: no texts yet</b>Past customers get texts only after they say yes to texts. Email instead.</div>`;
+  if (audOf(h) === 'past') return `<div class="optin yes"><b>Past customer, said yes to texts</b>Day ${r.dayN} text from the outreach library.</div>`;
+  if (audOf(h) === 'optin') return `<div class="optin yes"><b>Opted in</b>Said yes to texts on the roof check page (sample). Day ${r.dayN} text from the outreach library.</div>`;
+  return `<div class="optin"><b>Cold homeowner: you send it yourself</b>Day ${r.dayN} text from the outreach library: it names ${esc(R.name)}, has no links and ends with a STOP line. It opens in Messages on your phone, one home at a time. Cold homes are never texted on a schedule.</div>`;
+}
+function chanSeg(ch){ return `<div class="dseg" role="group" aria-label="Channel"><button type="button" data-ch="text" aria-pressed="${ch==='text'}">Text</button><button type="button" data-ch="email" aria-pressed="${ch==='email'}">Email</button></div>`; }
+function textDlg(h, draft, fromSeg){
+  const r = draftFor(h, 'text');
+  if (r.useChannel === 'email' && !fromSeg) return emailDlg(h);   // only the first touch is a text: follow-ups open as email
+  const body = draft != null ? draft : (r.body || ''), w = RC.textWindow(), ok = r.canSend && !!h.phone && w.isOpen;
+  const can = RC.canSchedule(h.id), sch = RC.scheduledFor(h.id);
+  // the draft is editable when a text can go; the words actually opened in Messages are what the record keeps
+  openDlg(`<div class="dtop"><h3 id="dlgT">Text ${esc(h.short)}</h3>${chanSeg('text')}</div><p class="dsub">${whoLine(h)}</p>${textState(h, r)}
+    ${r.body ? `<div class="dlab">Day ${r.dayN} text <span class="dhint">${r.chars||body.length} characters</span></div>${r.canSend && h.phone?`<textarea id="dBody" rows="5" aria-label="Text message">${esc(body)}</textarea>`:`<div class="draft" id="dBody0">${esc(body)}</div>`}` : ''}
+    ${r.noCallback && ok ? `<p class="snote">No call-back number for ${esc(R.name)} is on file yet, so the draft has no "call or text" line. It goes from your phone, so replies come to you.</p>` : ''}
+    ${!h.phone ? `<p class="snote">No phone on file for this home yet. Knock, or when the homeowner gives you a number, <button type="button" class="dbtn" data-openhome="${esc(h.id)}">add it on the home's record</button> and Text is ready.</p>` : ''}
+    ${h.phone && r.canSend && !w.isOpen ? `<p class="snote" id="dHours">${esc(w.line)} Texts go out ${esc(w.label)} only (state law). Schedule it, or send it then.</p>` : ''}
+    ${sch?`<p class="snote on">Scheduled for ${esc(RC.when(sch.due))} (<span data-due="${esc(sch.due)}" data-fmt="short">${esc(RC.countdown(sch.due,'short'))}</span>). Scheduling again replaces it.</p>`:''}
+    <p class="snote" id="dWhy" hidden></p>
+    <div class="dact"><button class="dbtn" data-x>Close</button><button class="dbtn${can.ok?'':' off'}" id="dSched" ${can.ok?'':'aria-disabled="true" aria-describedby="dWhy"'}><span class="ic">${I.clock||''}</span>Schedule</button>${ok?`<a class="dbtn pri" id="dSms" href="${smsHref(h.phone, body)}">Open in Messages</a>`:''}</div>`, d=>{
+      const ta = d.querySelector('#dBody'), cur = () => ta ? ta.value.trim() || body : body;
+      d.querySelector('.dseg').onclick = e=>{ const b = e.target.closest('[data-ch]'); if (b && b.dataset.ch==='email') emailDlg(h); };
+      const s = d.querySelector('#dSms'); if (s) s.addEventListener('click', ()=>{ s.href = smsHref(h.phone, cur()); RC.logText(h.id,'Text drafted in Messages',{ body:cur(), to:h.phone });
+        if (HOMES.includes(h)){ actState[h.id] = { done:`Day ${r.dayN} text opened in Messages.` }; refreshAll(); } closeLater(50); });
+      d.querySelector('#dSched').onclick = ()=>{ if (!can.ok){ const w = d.querySelector('#dWhy'); w.textContent = can.reason; w.hidden = false; return; } schedDlg(h, cur(), sch); };
+    });
+}
+// email: the library's draft with its subject; send = a mailto: hand-off to the rep's mail app (nothing sends from here).
+// A marketing email must carry the roofer's mailing address: until it is on file the draft says so and Send stays off.
+function emailWhy(r){
+  if (r.blocked === 'opted out') return 'This homeowner opted out. No more emails or follow-ups.';
+  if (r.missing && r.missing.includes('mailingAddress')) return 'Add your mailing address to send emails.';
+  return r.blocked ? 'Email is held back: '+r.blocked+'.' : '';
+}
+function emailDlg(h){
+  const r = draftFor(h, 'email'), why = emailWhy(r), ok = r.canSend, ro = r.blocked === 'opted out';   // the draft stays editable; only an opt-out locks it
+  openDlg(`<div class="dtop"><h3 id="dlgT">Email ${esc(h.short)}</h3>${chanSeg('email')}</div><p class="dsub">${h.owner?RC.blurHTML(h.owner)+'. ':''}No email address on file for this homeowner: you add it in your mail app.</p>
+    ${r.body ? `<div class="dlab">Day ${r.dayN} email</div><label class="dlab dsubj" for="eSubj">Subject</label><input id="eSubj" class="dsel" value="${esc(r.subject||'')}" ${ro?'readonly':''}>
+    <textarea id="eBody" rows="8" aria-label="Email" ${ro?'readonly':''}>${esc(r.body)}</textarea>` : ''}
+    ${why ? `<p class="snote" id="eWhy">${esc(why)}</p>` : ''}
+    <div class="dact"><button class="dbtn" data-x>Close</button>${ok ? `<a class="dbtn pri" id="dMail" href="${mailHref(r.subject, r.body)}">Open in Mail</a>` : `<button class="dbtn pri off" id="dMail" aria-disabled="true" aria-describedby="eWhy">Open in Mail</button>`}</div>`, d=>{
+      d.querySelector('.dseg').onclick = e=>{ const b = e.target.closest('[data-ch]'); if (b && b.dataset.ch==='text') textDlg(h, null, true); };
+      const a = d.querySelector('a#dMail'); if (a) a.addEventListener('click', ()=>{ const sj = d.querySelector('#eSubj').value.trim() || r.subject, bd = d.querySelector('#eBody').value.trim() || r.body;
+        a.href = mailHref(sj, bd); RC.logEmail(h.id, 'Email drafted', { subject:sj, body:bd });
+        if (HOMES.includes(h)){ actState[h.id] = { done:`Day ${r.dayN} email opened in Mail.` }; refreshAll(); } closeLater(50); });
+    });
+}
+// ---------- scheduled texts: a REMINDER at the time picked (texting is not connected, nothing sends on its own) ----------
+function schedDlg(h, body, was){
+  const days = RC.textSlots(7), def = was && RC.inTextWindow(was.due) && Date.parse(was.due) > Date.now() ? was.due : RC.defaultSendTime();
+  if (!days.length || !def){ showToast('No send time open in the next week.'); return; }
+  let di = Math.max(0, days.findIndex(d=>d.times.includes(def))), pick = def;
+  const fmtDay = t => new Intl.DateTimeFormat('en-US',{ timeZone:(activeRoofer()||{}).tz||'America/Chicago', weekday:'short', month:'short', day:'numeric' }).format(t);
+  const dayWord = k => k === fmtDay(Date.now()) ? 'Today' : k === fmtDay(Date.now()+864e5) ? 'Tomorrow' : '';
+  const w = RC.textWindow(), tlabel = iso => new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}).toLowerCase();
+  openDlg(`<h3 id="dlgT">Schedule a text</h3><p class="dsub">${esc(h.addr)}. ${whoLine(h)}</p>
+    <div class="optin yes"><b>Reminder, sends from your phone</b>Texting is not connected yet, so nothing sends on its own. At this time Today says "Time to send" and opens it in Messages.</div>
+    <div class="dlab">Day</div><div class="dgrid" id="sDays">${days.slice(0,6).map((d,k)=>`<button type="button" data-d="${k}" class="${k===di?'on':''}"><small>${esc(dayWord(d.key) || d.label.split(',')[0])}</small>${esc(d.label.split(', ').slice(1).join(', '))}</button>`).join('')}</div>
+    <label class="dlab" for="sTime">Time <span class="dhint">Texting hours, ${esc(w.label)}</span></label><select id="sTime" class="dsel"></select>
+    <div class="dlab">Text</div><textarea id="sBody" rows="3" aria-label="Text message">${esc(body)}</textarea>
+    <div class="dact"><button class="dbtn" data-x>Cancel</button><button class="dbtn pri" id="sOk"></button></div>`, d=>{
+      const sel = d.querySelector('#sTime'), ok = d.querySelector('#sOk');
+      const fill = () => { const t = days[di].times; if (!t.includes(pick)) pick = t[0]; sel.innerHTML = t.map(x=>`<option value="${x}" ${x===pick?'selected':''}>${tlabel(x)}</option>`).join(''); upd(); };
+      const upd = () => { const w = dayWord(days[di].key); ok.textContent = 'Schedule for '+(w==='Today'?'':(w||days[di].label.split(',')[0])+' ')+tlabel(pick); };
+      d.querySelector('#sDays').onclick = e=>{ const b=e.target.closest('[data-d]'); if(!b) return; di=+b.dataset.d; d.querySelectorAll('#sDays button').forEach(x=>x.classList.toggle('on',x===b)); fill(); };
+      sel.onchange = ()=>{ pick = sel.value; upd(); };
+      fill();
+      ok.onclick = ()=>{ const txt = d.querySelector('#sBody').value.trim() || body, it = RC.scheduleText(h.id, pick, txt, h.phone);
+        dlg.close(); if (!it){ showToast('That time is outside texting hours. Pick another.'); return; }
+        delete prompted[it.sid]; refreshAll(); showToast(`Text to ${esc(h.short)} scheduled for ${esc(RC.when(it.due))}. A reminder: you send it from your phone.`); };
+    });
+}
+// the time came: open the drafted text in Messages; it counts as sent only when the user says so
+const prompted = {};
+function dueDlg(s){
+  const h = HOMES.find(x=>x.id===s.id) || Object.assign({ short: (RC.recall(s.id)||{}).addr || 'this home' }, RC.recall(s.id) || {});
+  const early = Date.parse(s.due) > Date.now();
+  openDlg(`<h3 id="dlgT">${early?'Send now':'Time to send'}</h3><p class="dsub">${esc(h.addr||h.short)}. ${whoLine(h)}</p>
+    <div class="optin yes"><b>Reminder, sends from your phone</b>${early?'Scheduled for '+esc(RC.when(s.due))+'. ':''}Texting is not connected, so Roof Command does not send it. Open it in Messages and send it yourself.</div>
+    <div class="dlab">Text</div><textarea id="tBody" rows="4" aria-label="Text message">${esc(s.body)}</textarea>
+    <div class="dact" id="tAct"><button class="dbtn" data-x>Later</button><a class="dbtn pri" id="dSms" href="${smsHref(s.to||h.phone, s.body)}">Open in Messages</a></div>`, d=>{
+      const a = d.querySelector('#dSms'), txt = () => d.querySelector('#tBody').value.trim() || s.body;
+      a.addEventListener('click', ()=>{ a.href = smsHref(s.to||h.phone, txt()); const body = txt();
+        setTimeout(()=>{ d.querySelector('#tAct').outerHTML = `<div class="dconf"><b>Did you send it?</b><span>It goes on the record only when you say so.</span></div><div class="dact"><button class="dbtn" id="tNo">Not yet</button><button class="dbtn pri" id="tYes">Yes, mark sent</button></div>`;
+          d.querySelector('#tNo').onclick = ()=>dlg.close();
+          d.querySelector('#tYes').onclick = ()=>{ RC.markScheduledSent(s.sid, body); dlg.close(); refreshAll(); showToast(`Text to ${esc(h.short)} marked sent.`); };
+          d.querySelector('#tYes').focus(); }, 60); });
+    });
+}
+function schedAction(sid, act){
+  const s = RC.scheduled().find(x=>x.sid===sid); if (!s) return;
+  const h = HOMES.find(x=>x.id===s.id) || Object.assign({ id:s.id, short:(RC.recall(s.id)||{}).addr||'this home' }, RC.recall(s.id)||{});
+  if (act==='now'){ prompted[sid] = 1; return dueDlg(s); }
+  if (act==='edit') return schedDlg(h, s.body, s);
+  if (act==='cancel'){ const it = RC.cancelScheduled(sid); refreshAll(); showToast(`Scheduled text to ${esc(h.short)} cancelled.`, ()=>{ RC.restoreScheduled(it); refreshAll(); }); }
+}
+// one clock for every countdown on the screen ([data-due] spans: inbox, Up next, the card, the map labels, the popover)
+function tickSched(){
+  if (QREADY && new Date().toDateString() !== QDAY) relist(true);   // a new day: the day's own 50
+  document.querySelectorAll('[data-due]').forEach(e=>{ const t = RC.countdown(e.dataset.due, e.dataset.fmt); if (e.textContent !== t) e.textContent = t;
+    const due = !(Date.parse(e.dataset.due) > Date.now()), row = e.closest('.srow'); if (row) row.classList.toggle('due', due); });
+  RC.scheduled().forEach(s=>{ if (Date.parse(s.due) <= Date.now() && !prompted[s.sid] && !dlg.open && (!phone || document.visibilityState==='visible')){ prompted[s.sid] = 1; inbox.render(); dueDlg(s); } });
+}
+setInterval(tickSched, 1000);
+
+// ---------- actions on the current card ----------
+function refreshAll(){ if (!QREADY) return; renderHeader(); refreshCard(cur); renderQueue(false); planMessages(); renderMapCard(); }
+deck.addEventListener('click',e=>{
+  const card = e.target.closest('.card'); if (!card) return; const i = +card.dataset.i, h = HOMES[i];
+  const skp = e.target.closest('[data-skip]'), b = e.target.closest('[data-a]');
+  if (skp){ const prev = i, reason = skp.dataset.skip, m = skips(); m[h.id] = { reason, at:new Date().toISOString() }; setSkips(m); delete actState[h.id];
+    const n = nextOpen(i); refreshAll(); if (n>=0) go(n, true);
+    showToast(`Skipped ${esc(h.short)}: ${reason.toLowerCase()}.`, ()=>{ const m2 = skips(); delete m2[h.id]; setSkips(m2); go(prev, true); refreshAll(); });
+    return; }
+  if (!b) return; const a = b.dataset.a;
+  if (a==='home'){ e.preventDefault(); RC.go('home',{id:h.id}); return; }
+  if (a==='roof') return openRoof(h);
+  if (a==='text') return textDlg(h);
+  if (a==='email') return emailDlg(h);
+  if (a==='proof') return RCP.sendDialog({ gi:h.gi, street:h.addr, city:h.city, first:firstName(h.owner), phone:h.phone, stormISO:copyFacts(h).stormISO, hail:copyFacts(h).hail,
+    warm: audOf(h) !== 'cold', facts:{ year:h.year, squares:copyFacts(h).squares }, onSent: m => { actState[h.id] = { done:m }; refreshAll(); } });
+  if (a==='skip'){ actState[h.id] = 'skip'; return refreshCard(i); }
+  if (a==='cancel'){ delete actState[h.id]; return refreshCard(i); }
+  if (a==='next'){ delete actState[h.id]; refreshCard(i); const n = nextOpen(i); if (n>=0) go(n, true); else showToast('Every home on the list is done.'); return; }
+});
+// swipe moves between stops (left = next, right = back). It never logs a touch.
+let sx=null, el=null;
+deck.addEventListener('pointerdown',e=>{ const c=e.target.closest('.card'); if(!c||c.dataset.d!=='0'||e.target.closest('button,a,input,textarea')) return; sx=e.clientX; el=c; c.classList.add('drag'); });
+window.addEventListener('pointermove',e=>{ if(sx===null) return; const dx=e.clientX-sx; el.style.transform=`translateX(${dx}px) rotate(${dx/40}deg)`; el.style.opacity = 1-Math.min(.35,Math.abs(dx)/600); });
+window.addEventListener('pointerup',e=>{ if(sx===null) return; const dx=e.clientX-sx; el.classList.remove('drag'); el.style.transform=''; el.style.opacity=''; sx=null; if(Math.abs(dx)>90) go(cur + (dx<0?1:-1), true); });
+
+// ---------- phone sheets ----------
+const sheets = {list:document.getElementById('sheetList'), route:document.getElementById('sheetRoute'), pipe:document.getElementById('sheetPipe'), roof:document.getElementById('sheetRoof')};
+const scrim = document.getElementById('scrim');
+function openSheet(k){ Object.values(sheets).forEach(s=>s.classList.remove('open')); sheets[k].classList.add('open'); scrim.classList.add('open'); if(k==='route'&&map){ setTimeout(()=>{map.resize(); fitAll(true);},420); } }
+function closeSheets(){ Object.values(sheets).forEach(s=>s.classList.remove('open')); scrim.classList.remove('open'); }
+scrim.onclick = closeSheets; document.querySelectorAll('[data-close]').forEach(b=>{ b.onclick=closeSheets; b.setAttribute('aria-label','Close'); });
+document.getElementById('openList').onclick=()=>{ openSheet('list'); setTab(THREADS ? TAB : 'next'); };
+document.getElementById('openRoute').onclick=()=>openSheet('route'); document.getElementById('openPipe').onclick=()=>openSheet('pipe');
+if (phone){ document.getElementById('listHost').append(document.getElementById('lpanel')); }
+if (phone){ document.getElementById('pmapHost').append(document.getElementById('map'), document.querySelector('.mapwrap .mtag'), document.getElementById('hpop')); }
+let roofCtl=null;
+function openRoof(h){
+  document.getElementById('rsAddr').textContent = h.short;
+  roofCtl = DK.mountRoof(document.getElementById('rsRoof'), h.spec, {onSelect:(p)=>renderTab(h,p)});
+  const chips = document.getElementById('rsChips');
+  chips.innerHTML = `<button class="on" data-m="planes">Planes</button><button data-m="edges">Edges</button><button data-m="dims">Dimensions</button>`;
+  chips.onclick = (e)=>{ const b=e.target.closest('button'); if(!b) return; if(b.dataset.m){ chips.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b)); roofCtl.setMode(b.dataset.m);} else { roofCtl.toggleHail(); b.classList.toggle('on', roofCtl.state.hail);} };
+  renderTab(h,null); openSheet('roof'); setTimeout(()=>roofCtl.refresh(),450);
+}
+function renderTab(h,sel){
+  const M=h.M; document.getElementById('rsTab').innerHTML = `<table><tbody>${M.planes.map(p=>`<tr class="${sel&&sel.id===p.id?'sel':''}"><td>${p.name}</td><td>${p.rise}/12</td><td>${p.area.toLocaleString()} sq ft</td><td>${p.squares} sq</td></tr>`).join('')}</tbody><tfoot><tr><td>Total, ${M.facets} facets</td><td>${M.predominant}</td><td>${M.area.toLocaleString()} sq ft</td><td>${M.squares} sq</td></tr></tfoot></table><p>Ridge ${M.edges.ridge} ft, hip ${M.edges.hip} ft, valley ${M.edges.valley} ft, eave ${M.edges.eave} ft, rake ${M.edges.rake} ft. Suggested waste ${M.waste}%. Measured from the drawing, sample.</p>`;
+}
+
+// ---------- map ----------
+// Light vector map, the Storms screen's look (lib/st-map.js): OpenFreeMap positron, restyled to the Wing greys, with every
+// home's real building outline extruded by deck.gl. Tilted and turned so the lines from the base rise across the frame.
+const LIGHT = 'https://tiles.openfreemap.org/styles/positron';
+let labelId = null;
+function restyle(){
+  map.getStyle().layers.forEach(l=>{ try{
+    if(l.type==='background') map.setPaintProperty(l.id,'background-color','#E3E6EC');
+    if(l.type==='fill' && /water/.test(l.id)) map.setPaintProperty(l.id,'fill-color','#CDD3DC');
+    else if(l.type==='fill' && /landuse|park|wood|grass|residential/.test(l.id)) map.setPaintProperty(l.id,'fill-color','#E8EBF0');
+    else if(l.type==='fill') map.setPaintProperty(l.id,'fill-opacity',0.5);
+    if(l.type==='line' && /road|highway|street|bridge|tunnel|path|rail/.test(l.id)) map.setPaintProperty(l.id,'line-color','#FFFFFF');
+    if(l.type==='line' && /boundary|admin/.test(l.id)) map.setPaintProperty(l.id,'line-color','#C9CED8');
+    if(l.type==='symbol' && /poi|housenum|shield|oneway|airport|transit|station|ferry/.test(l.id)) { map.setLayoutProperty(l.id,'visibility','none'); return; }
+    // place, area, water and street names stay on (they used to vanish once this restyle ran because city and town labels
+    // carry a dot icon); only the dot goes, the name stays
+    if(l.type==='symbol' && l.layout && l.layout['icon-image']) { map.setLayoutProperty(l.id,'icon-image',''); }
+    if(l.type==='symbol') { if(!labelId) labelId=l.id; try{ map.setPaintProperty(l.id,'text-color','#737B8F'); map.setPaintProperty(l.id,'text-opacity',0.75); map.setPaintProperty(l.id,'text-halo-color','#ECEEF2'); }catch(e){} }
+    if(/building/.test(l.id)) map.setLayoutProperty(l.id,'visibility','none');
+  }catch(e){} });
+  try { map.setLight({anchor:'map',position:[1.5,200,38],color:'#FFFFFF',intensity:0.42}); } catch(e){}
+}
+// home outlines (lib/st-homes.js tiles, the same files the Storms screen draws): grey blocks for the neighbourhood,
+// today's stops raised, the current stop in the roofer's colour, homes reached today in the colour of their channel
+let overlay = null, fpItems = [], fpBox = null, fpTimer = 0;
+const hexRGB = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+function fpState(){
+  const stop = {}, ch = {}; HOMES.forEach((h,i)=>{ if (h.gi!=null) stop[h.gi] = i; });
+  RC.contacted().forEach(c=>{ const r = RC.recall(c.id); const gi = c.gi!=null ? c.gi : r && r.gi; if (gi!=null) ch[gi] = c.channel; });
+  return { stop, ch };
+}
+let FPS = { stop:{}, ch:{} }, fpKey = '';
+// ---------- every home in the service area (lib/st-data-dfw homes.bin), drawn on the GPU as dots ----------
+// BULK.all = every residential home in the roofer's data (positions shared with STH.xy, no copy per home), BULK.hit = the
+// homes that took 1 inch or larger radar hail on the Today storm (meta/hail/<region>/<date>.bin, the queue's own rule).
+// Both are deck.gl ScatterplotLayers (one draw call each, no DOM), so 271k homes stay smooth at any zoom; today's 50 and
+// the base stay as pins on top. Zoomed in past ~14.2 the real building outlines rise where the camera is.
+const BULK = { all:null, nAll:0, hit:null, nHit:0, hitBox:null, ms:0, hitMs:0 };
+const stormIso = () => (R.storm && R.storm.iso) || RC.SHOWCASE;
+function buildBulk(){
+  if (!window.STH || !STH.xy || BULK.all) return;
+  const t0 = performance.now(), n = STH.n, xy = STH.xy, type = STH.type, out = new Float32Array(n*2); let m = 0;
+  for (let i=0;i<n;i++){ if ((type[i]&127) > 4) continue; out[m*2] = xy[i*2]; out[m*2+1] = xy[i*2+1]; m++; }
+  BULK.all = out.subarray(0, m*2); BULK.nAll = m; BULK.ms = Math.round(performance.now()-t0);
+  // the storm's hit homes: one hail file per region the storm touched (a missing file just means no hail there)
+  const iso = stormIso(), cat = STH.cat, st = (cat.storms||[]).find(s=>s.date===iso), regs = st && st.regions ? cat.regions.filter(r=>st.regions[r.id]) : [];
+  const root = window.rooferDataRoot ? rooferDataRoot() : '../lib/st-data-dfw/', t1 = performance.now();
+  Promise.all(regs.map(r=>fetch(`${root}meta/hail/${r.id}/${iso}.bin`).then(x=>x.ok?x.arrayBuffer():null).catch(()=>null).then(b=>[r,b]))).then(got=>{
+    const pos = []; const xs = [], ys = [];
+    got.forEach(([r,b])=>{ if (!b || b.byteLength !== r.count) return; const hail = new Uint8Array(b);
+      for (let j=0;j<r.count;j++){ if (hail[j] < 100) continue; const gi = r.offset+j; if ((type[gi]&127) > 4) continue; const x = xy[gi*2], y = xy[gi*2+1]; pos.push(x, y); xs.push(x); ys.push(y); } });
+    BULK.hit = new Float32Array(pos); BULK.nHit = pos.length/2; BULK.hitMs = Math.round(performance.now()-t1);
+    if (xs.length > 20){ xs.sort((a,b)=>a-b); ys.sort((a,b)=>a-b); const lo = Math.floor(xs.length*.03), hi = Math.ceil(xs.length*.97)-1; BULK.hitBox = [xs[lo], ys[lo], xs[hi], ys[hi]]; }
+    window.__mapStats = Object.assign(window.__mapStats||{}, { all:BULK.nAll, hit:BULK.nHit, bulkMs:BULK.ms, hitMs:BULK.hitMs });
+    document.getElementById('mLeg').textContent = BULK.nHit ? `${RC.fmt ? RC.fmt(BULK.nHit) : BULK.nHit.toLocaleString()} homes hit ${(R.storm && R.storm.date) || 'by the newest storm'}` : '';   // the newest storm, by name (the shell header's)
+    fpRedraw(); if (map && !BULK.fitted){ BULK.fitted = true; fitAll(true); } });
+  window.__mapStats = Object.assign(window.__mapStats||{}, { all:BULK.nAll, bulkMs:BULK.ms });
+}
+function bulkLayers(){
+  if (!overlay || !window.deck || !BULK.all) return [];
+  // Jack 10-10: the homes stay neutral so the only strong blue on this map is the message lines, their landing rings
+  // and the numbered pins. Every home = a faint light-slate dot; a storm-hit home = the same dot a touch darker and a
+  // little bigger (no accent fill, no area tint). The legend dots in dk.css (.mleg i.dot) carry the same two greys.
+  const L = [ new window.deck.ScatterplotLayer({ id:'homes-all', beforeId:labelId, data:{ length:BULK.nAll, attributes:{ getPosition:{ value:BULK.all, size:2 } } },
+    radiusUnits:'meters', getRadius:7, radiusMinPixels:phone?.7:1, radiusMaxPixels:2.2, getFillColor:[128,136,152,phone?40:52], stroked:false, pickable:false, antialiasing:false }) ];
+  if (BULK.hit && BULK.nHit) L.push(new window.deck.ScatterplotLayer({ id:'homes-hit', beforeId:labelId, data:{ length:BULK.nHit, attributes:{ getPosition:{ value:BULK.hit, size:2 } } },
+    radiusUnits:'meters', getRadius:9, radiusMinPixels:phone?1.1:1.5, radiusMaxPixels:3.4, getFillColor:[98,108,128,phone?78:92], stroked:false, pickable:false, antialiasing:true }));
+  return L;
+}
+function fpLayers(){
+  const L = bulkLayers();
+  if (!overlay || !fpItems.length || !window.deck) return L;
+  const acc = hexRGB((getComputedStyle(document.documentElement).getPropertyValue('--accent')||'#0D6C99').trim() || '#0D6C99');
+  const CHC = { text:hexRGB('#0D6C99'), email:hexRGB('#5B4BA8') };
+  const curGi = HOMES[cur] && HOMES[cur].gi;
+  return L.concat([ new window.deck.SolidPolygonLayer({ id:'fp', beforeId:labelId, data:fpItems, getPolygon:d=>d.ring, extruded:true, pickable:true, opacity:.97,
+    getFillColor:d=>{ if (d.i===curGi) return [...acc,255]; const c = FPS.ch[d.i]; if (c) return [...CHC[c],245]; if (FPS.stop[d.i]!=null) return [96,106,128,240]; return [207,212,221,235]; },
+    getElevation:d=>{ if (d.i===curGi) return 22; if (FPS.ch[d.i]) return 18; if (FPS.stop[d.i]!=null) return 13; return 4.2+((d.i*7)%5)*0.7; },
+    updateTriggers:{ getFillColor:[fpKey, curGi], getElevation:[fpKey, curGi] },
+    material:{ambient:0.6,diffuse:0.55,shininess:10,specularColor:[255,255,255]},
+    autoHighlight:true, highlightColor:[39,87,230,235],
+    // a stop opens its card here; any other house opens its record in the CRM (Jack 10-15: every house is clickable)
+    onClick:info=>{ const o = info.object; if (!o) return false; const i = FPS.stop[o.i]; if (i!=null){ if (reach && reach.has(HOMES[i].id)) reach.openFor(HOMES[i].id, {x:info.x, y:info.y}); else go(i,true); return true; }
+      const id = 'm'+o.i, m = window.STM && STM.metaNow ? STM.metaNow(o.i) : null;
+      if (m && RC.remember) RC.remember({ id, gi:o.i, addr:m.addr, city:m.city, zip:m.zip, place:m.place, full:m.full, subdivision:m.subdivision||'', state:m.state });
+      RC.go('home', { id }); return true; } }) ]);
+}
+function fpRedraw(){ FPS = fpState(); fpKey = JSON.stringify(FPS.ch); if (overlay) overlay.setProps({ layers: fpLayers() }); }
+// building outlines only where the camera is, and only zoomed in (street level): zoomed out the dots carry the picture,
+// so the map stays quick with every home in the service area on it
+const FPZ = 14.2;
+function fpArea(){ const b = map.getBounds(), p = .002; return [b.getWest()-p, b.getSouth()-p, b.getEast()+p, b.getNorth()+p]; }
+function refreshFp(){ if (!window.STH || !STH.xy || !map) return;
+  if (map.getZoom() < FPZ){ if (fpItems.length || fpBox){ fpItems = []; fpBox = null; fpRedraw(); } return; }
+  const box = fpArea();
+  if (fpBox && box.every((v,k)=>Math.abs(v-fpBox[k])<1e-9)) return; fpBox = box;
+  fpItems = STH.footprints(fpBox, fpArrived).items; fpRedraw(); }
+function fpArrived(){ if (fpTimer) return; fpTimer = setTimeout(()=>{ fpTimer = 0; if (!fpBox) return; fpItems = STH.footprints(fpBox, fpArrived).items; fpRedraw(); }, 150); }
+// ---------- the messages map: every home on today's list, in message order (the order of the Daily 50) ----------
+// Jack 10-09: no knock routes, nobody drives this list. The map shows where today's texts and emails go: every one of the
+// 50 is pinned (reached homes bigger, in the colour of the channel; a scheduled text dashed; the rest medium), the
+// chain runs base -> home 1 -> home 2 ... in list order, and every home in the service area sits underneath as a dot.
+let ROUTE = [], VIS = [], routeKey = '';
+const hqLoc = () => { const r = window.activeRoofer ? activeRoofer() : {}; return (r.hq && r.hq.loc) || r.center || (HOMES.find(h=>h.loc)||{}).loc || [-96.75,33.02]; };
+function msgCounts(){
+  const ids = new Set(HOMES.map(h=>h.id)), sch = RC.scheduled().filter(s=>ids.has(s.id)).length;
+  const sent = HOMES.filter(h=>reachedToday(h.id)).length, togo = HOMES.filter(h=>!isDone(h) && !RC.scheduledFor(h.id)).length;
+  return { sent, sch, togo };
+}
+function planMessages(){
+  if (!QREADY) return;
+  VIS = HOMES.map((h,i)=>i).filter(i=>HOMES[i].loc); ROUTE = VIS.slice();
+  const c = msgCounts();
+  const ms = document.getElementById('mStops'); ms.textContent = HOMES.length ? `${c.sent} sent, ${c.sch} scheduled, ${c.togo} to go` : 'No homes on the list'; ms.classList.remove('skel');
+  document.getElementById('peekDist').textContent = HOMES.length ? `${c.sent} of ${TOTAL} sent` : '';
+  const k = VIS.join(',');
+  if (k !== routeKey){ routeKey = k; if (map){ buildMarkers(); refreshFp(); } }
+}
+// the aerial: turned so the base sits at the top of the frame and the beams fan down to the homes
+function aerial(){ const hq = window.activeRoofer && activeRoofer().hq, st = HOMES.filter(h=>h.loc).map(h=>h.loc); if (!hq || !st.length) return { pitch:50, bearing:0 };
+  const c = st.reduce((a,s)=>[a[0]+s[0]/st.length, a[1]+s[1]/st.length],[0,0]);
+  const az = Math.atan2((c[0]-hq.loc[0])*Math.cos(hq.loc[1]*Math.PI/180), c[1]-hq.loc[1])*180/Math.PI;
+  let b = az + (phone ? 180 : 140); b = ((b+540)%360)-180; return { pitch: phone ? 40 : 44, bearing: Math.round(b) }; }
+let map=null; let markers=[], MI=[];   // MI[k] = the HOMES index of marker k
+function fitPad(){
+  document.getElementById('map').parentElement.style.setProperty('--mnh', '0px');   // no card over the bottom of the map (10-10)
+  const host = document.getElementById('map').getBoundingClientRect();
+  const tag = document.querySelector('.mtag').getBoundingClientRect();
+  // the legend sits in the pill row (top-left), so the bottom-right corner stays clear for Nimbus
+  // phone: the legend card spans the whole width, so the clear band starts under it with room for a pin (the fit
+  // checks pin centres, the pin is ~20px across and uncollide can nudge a packed pin another ~22px, 10-11); the
+  // bottom band keeps clear of Nimbus, who floats bottom right
+  const top = tag.height ? tag.bottom - host.top + (phone ? 48 : 34) : 70, bottom = phone ? 96 : 48;
+  // desktop (direction B): the legend is a column hanging under the pills top-left; fitAll keeps every point out of that
+  // block (not out of a whole band, so the homes can still sit low on the left under it)
+  const lg = phone ? null : document.querySelector('.mtag .mleg'), lr = lg ? lg.getBoundingClientRect() : null;
+  const leg = lr && lr.width ? { r: lr.right - host.left + 26, b: lr.bottom - host.top + 26 } : null;
+  const side = phone ? 36 : host.width < 440 ? 28 : 56;   // a narrow map column (1024 wide) keeps more of its width for the homes
+  return {top, bottom, left: side, right: side, leg};
+}
+// frame every pin, the base and any earlier home on the tilted aerial: fitBounds ignores tilt, so step the zoom out
+// from street level until every point lands in the clear part of the frame (the base also keeps room for its label)
+function fitAll(now){
+  if (!map) return;
+  // frame: the base, every home on today's list, earlier homes reached, and the storm's hit homes (so the map reads as
+  // the whole area the messages cover, not one street)
+  const hb = BULK.hitBox, locs0 = VIS.map(i=>HOMES[i].loc).filter(Boolean).concat(reach ? [reach.hqLoc].concat(reach.extraLocs()) : []);
+  const locs = locs0.concat(hb ? [[hb[0],hb[1]],[hb[2],hb[1]],[hb[2],hb[3]],[hb[0],hb[3]]] : []);
+  if (!locs.length) return;
+  const hq = reach ? reach.hqLoc : null, pad = fitPad(), host = document.getElementById('map').getBoundingClientRect();
+  if (!host.width || !host.height) return;
+  const b = new maplibregl.LngLatBounds(); locs.forEach(l=>b.extend(l));
+  const cam = { center: b.getCenter(), bearing: map.getBearing(), pitch: map.getPitch() }, was = { center: map.getCenter(), zoom: map.getZoom(), bearing: cam.bearing, pitch: cam.pitch };
+  // the base keeps room for its name on the side the name sits (reach.js puts it on the side away from the homes);
+  // the search below moves the camera up to 180 times: those trial moves stay silent (every pin answered each one with
+  // its own animation frame, thousands per fit), and the final jumpTo after it tells the pins, the dots and the beams once
+  let best; map.fire = function(e){ const t = typeof e === 'string' ? e : e && e.type; return /^(move|zoom|rotate|pitch)/.test(t || '') ? this : Object.getPrototypeOf(map).fire.apply(this, arguments); };
+  try {
+  // decided once here at street level, so it holds still while the zoom steps out
+  if (reach){ map.jumpTo(Object.assign({ zoom: 13 }, cam)); reach.relabel(); }
+  const lft = () => reach && reach.hqEl && reach.hqEl.classList.contains('lft');
+  const lab = reach && reach.hqEl ? (reach.hqEl.querySelector('.hql') || {}).offsetWidth || 120 : 120, lw = Math.min(lab + 28, host.width * .4);
+  // the name sits beside the mark only on the expanded map (dk.css); inline and on the phone it hangs under the mark
+  const beside = !phone && document.documentElement.classList.contains('mapbig');
+  const hm = Math.min(lab/2 + 10, host.width * .22);   // under the mark: half the name, never most of a narrow map column
+  const hqM = () => beside ? { l: lft() ? lw : 24, r: lft() ? 24 : lw } : { l: hm, r: hm };   // the base's margins
+  const fitsIn = (band, pts) => pts.every(l=>{ const p = map.project(l), isHq = l === hq, m = hqM(), ml = isHq ? m.l : 18, mr = isHq ? m.r : 18, mb = isHq && !beside ? 30 : 0;
+    return p.x > band.l + ml - 18 && p.x < band.r - mr + 18 && p.y > band.t && p.y < band.b - mb; });
+  // the clear band: everything (the base, every home reached, today's queue) centred in it, zoomed out until it fits.
+  // Desktop (direction B): the legend column hangs top-left, so the band is either the part right of it or the part
+  // under it, whichever lets the map stay closer
+  const full = { l: pad.left, r: host.width - pad.right, t: pad.top, b: host.height - pad.bottom };
+  const bands = pad.leg ? [ Object.assign({}, full, { l: pad.leg.r }), Object.assign({}, full, { t: pad.leg.b }) ] : [full];
+  const solve = pts => { let best = null; bands.forEach(band=>{
+    if (band.r - band.l < 120 || band.b - band.t < 120) return;
+    // start just above the flat fit of these points (not street level): with the 50 spread across the area, a street-level
+    // start put most points behind the tilted camera, their projections were garbage and the search drifted off the map
+    const bb = new maplibregl.LngLatBounds(); pts.forEach(l=>bb.extend(l));
+    let zb = 12; try { const cf = map.cameraForBounds(bb, { bearing: cam.bearing, padding: 40 }); if (cf && isFinite(cf.zoom)) zb = cf.zoom; } catch(e){}
+    // a narrow column can make cameraForBounds answer far too wide (zoom 6.5 at 1024): never start below the area's own scale
+    let z = Math.min(16.5, Math.max(zb + 1.5, 11.5)); const c = Object.assign({}, cam, { center: bb.getCenter() }); map.jumpTo(Object.assign({ zoom: z }, c));
+    // the points gather on this spot as the zoom drops: inside the band less the base's name margins, so the loop always lands
+    const m = hqM(), want = [(band.l + m.l - 18 + band.r - m.r + 18)/2, (band.t + band.b)/2];
+    for (let k = 0; k < 90 && !fitsIn(band, pts); k++){ z -= .1; map.jumpTo(Object.assign({ zoom: z }, c));
+      // the points' screen centre, held inside the frame: on the tilted map a point far above the frame unprojects past
+      // the horizon (the 50 now spread across 0.5 degrees, and the centre once drifted to longitude 1119 on the phone)
+      const ps = pts.map(l=>map.project(l)), cl = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+      const cx = cl((Math.min(...ps.map(p=>p.x)) + Math.max(...ps.map(p=>p.x)))/2, 0, host.width), cy = cl((Math.min(...ps.map(p=>p.y)) + Math.max(...ps.map(p=>p.y)))/2, 0, host.height);
+      const nc = map.unproject([host.width/2 + cl(cx - want[0], -160, 160), host.height/2 + cl(cy - want[1], -160, 160)]);
+      if (isFinite(nc.lng) && isFinite(nc.lat) && Math.abs(nc.lat) < 85) c.center = nc.wrap(); map.jumpTo(Object.assign({ zoom: z }, c)); }
+    (fitAll.last = fitAll.last || []).push({ band, z: +z.toFixed(1) });
+    if (!best || z > best.zoom + .05) best = { zoom: z, center: map.getCenter().wrap() }; }); return best; };
+  fitAll.last = [];
+  best = solve(locs);
+  // a storm that hit the whole service area would push the frame out to the county line: then the hit homes stay as
+  // the dot layer and the frame holds to the base and today's homes (never more than 1.5 zoom levels further out)
+  if (hb && best){ const b0 = solve(locs0); if (b0 && b0.zoom > best.zoom + 1.5) best = b0; }
+  } finally { delete map.fire; }
+  if (!best) best = { zoom: 12, center: cam.center };
+  map.jumpTo(Object.assign({}, cam, best));
+  if (!now && !RM.matches){ const to = { center: map.getCenter(), zoom: map.getZoom() }; map.jumpTo(was); map.easeTo(Object.assign({ duration: 500 }, to)); }
+  map.getContainer().classList.toggle('far', map.getZoom() < 14);
+  setTimeout(uncollide, now?80:600); }
+function uncollide(){
+  // pins never overlap: project, nudge any pair closer than 36px apart
+  const pts = markers.map(m=>map.project(m.getLngLat()));
+  const off = markers.map(()=>[0,0]);
+  const D = map.getContainer().classList.contains('far') ? (phone ? 22 : 30) : 38;   // zoomed out, pins pack closer (phone: smaller too)
+  for(let k=0;k<6;k++) for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+    const ax=pts[i].x+off[i][0], ay=pts[i].y+off[i][1], bx=pts[j].x+off[j][0], by=pts[j].y+off[j][1];
+    let dx=bx-ax, dy=by-ay, d=Math.hypot(dx,dy); if(d>=D) continue; if(d<1){dx=1;dy=0;d=1;}
+    const push=(D-d)/2; off[i][0]-=dx/d*push; off[i][1]-=dy/d*push; off[j][0]+=dx/d*push; off[j][1]+=dy/d*push;
+  }
+  markers.forEach((m,i)=>m.setOffset(off[i]));
+  if (reach) reach.draw();
+}
+function buildMarkers(){
+  if (!map) return; markers.forEach(m=>m.remove()); markers = []; MI = [];
+  VIS.forEach(i=>{ const h = HOMES[i]; if (!h.loc) return; const e=document.createElement('div'); e.className='stop'+(h.added?' added':''); e.textContent=h.n; e.title=h.addr; e.dataset.id=h.id;
+    // a home already reached shows what was sent (no navigation); any other stop moves the card to it
+    e.onclick=ev=>{ ev.stopPropagation(); const k = HOMES.indexOf(h); if (k < 0) return; const m=document.getElementById('map').getBoundingClientRect(), at = {x:ev.clientX-m.left, y:ev.clientY-m.top};
+      if (reach && reach.has(h.id)){ closeHomePop(); reach.openFor(h.id, at); } else { if (reach) reach.close(); go(k,true); homePop(h, at); } };
+    markers.push(new maplibregl.Marker({element:e}).setLngLat(h.loc).addTo(map)); MI.push(i); });
+  markers.forEach((mk,k)=>{ const i = MI[k], e = mk.getElement(); e.classList.toggle('now',i===cur); e.classList.toggle('done',i!==cur && isDone(HOMES[i])); e.style.zIndex = i===cur?5:1; });
+  if (reach){ reach.update(); setTimeout(uncollide, 0); }
+}
+// outreach lines from the roofer's base (reach.js): pins in map pixels, nudges included
+let reach = null;
+function pinIndex(id){ const i = HOMES.findIndex(h=>h.id===id); return i < 0 ? -1 : MI.indexOf(i); }   // marker index of a home, -1 = not on the map
+function mountReach(){
+  if (!window.Reach || !map || reach) return;
+  reach = Reach.mount(map, {
+    homes: ()=>VIS.map(i=>HOMES[i]),
+    route: ()=>ROUTE.map(i=>HOMES[i]),   // message order = the order of today's list
+    keys: '<div class="k"><i class="dot hit"></i>Hit by the newest storm</div><div class="k"><i class="dot all"></i>Every home in the area</div>',
+    pinOf: id=>{ const i = pinIndex(id), m = markers[i]; if (!m) return null; const p = map.project(m.getLngLat()), o = m.getOffset(); return {x:p.x+o.x, y:p.y+o.y}; },
+    pinEl: id=>{ const m = markers[pinIndex(id)]; return m ? m.getElement() : null; },
+    homeOf: id=>HOMES.find(x=>x.id===id) || RC.recall(id),
+    onOpenHome: id=>{ if (document.documentElement.classList.contains('mapbig')) setBig(false); if (phone) closeSheets(); RC.go('home',{id}); },
+    visible: ()=>SHOWN && (!phone || sheets.route.classList.contains('open')),   // the fan starts drawing only once the screen is in view
+    legendHost: document.querySelector('.mtag'),
+    top: ()=>{ const t = document.querySelector('.mtag').getBoundingClientRect(), h = document.getElementById('map').getBoundingClientRect(); return t.height ? t.bottom - h.top + 8 : 24; },
+    onLayout: ()=>{ const hgt = reach ? Math.round(reach.legend.getBoundingClientRect().height) : 0;   // refit only when the legend grew or shrank
+      if (hgt === mountReach.h) return; const first = mountReach.h == null; mountReach.h = hgt;
+      if (!first && map && map.loaded()) { clearTimeout(mountReach.t); mountReach.t = setTimeout(()=>fitAll(false), 60); } }
+  });
+  reach.update();
+}
+// is this point inside the clear part of the map (not under the pill row, the legend or the stop card)?
+function inView(loc){ if (!map) return false; const p = map.project(loc), host = document.getElementById('map').getBoundingClientRect(), pad = fitPad();
+  return p.x > pad.left/2 && p.x < host.width - pad.right/2 && p.y > pad.top - 20 && p.y < host.height - pad.bottom + 20; }
+
+// ---------- start ----------
+// first open: the shell (product.html) keeps the opening on screen until this page is genuinely ready, so the first
+// thing the roofer sees of Today is a finished screen. Ready = the Daily 50 built and the first cards painted, the map
+// style and the tiles for the first view drawn (maplibre 'idle'), and the message lines mounted and waiting. The shell
+// holds the frame with data-hold on the iframe; the fan of lines waits for the reveal (SHOWN) so it draws in view.
+let SHOWN = true; try { SHOWN = !(window.frameElement && window.frameElement.dataset.hold === '1'); } catch(e){}
+const toShell = m => { if (window.parent === window) return; try { window.parent.postMessage(m, location.origin); } catch(e){} };
+const READY = { cards:false, map:false, sent:false };
+function readyStage(name){ toShell({ type:'today-stage', stage:name }); }
+function readyCheck(why){
+  if (READY.sent) return; if (why !== 'force' && !(READY.cards && READY.map)) return;
+  READY.sent = true; window.__todayReady = performance.now(); toShell({ type:'today-ready', why:why||'ready', t:Math.round(window.__todayReady) });
+}
+const onShown = [];   // work that waits for the reveal (the owner roll, several MB): never during the opening or the crossfade
+function whenShown(f){ if (SHOWN) f(); else onShown.push(f); }
+function reveal(){ if (SHOWN) return; SHOWN = true; const q = onShown.splice(0); setTimeout(()=>q.forEach(f=>{ try{ f(); }catch(e){} }), 1200); }
+// the map libraries (preloaded in <head>) run once the first card is up, so the list never waits on 2 MB of script
+let MAPLIBS = null;
+const mapLibs = () => MAPLIBS || (MAPLIBS = new Promise(res=>requestAnimationFrame(()=>setTimeout(res,0))).then(()=>['../vendor/maplibre-gl@4.7.1/maplibre-gl.js','../vendor/deck.gl@9.0.38/dist.min.js']
+  .reduce((p,src)=>p.then(()=>new Promise((ok,no)=>{ const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=no; document.head.appendChild(s); })), Promise.resolve())));
+// the copy library asks this page who opted out (RC.optOut), so a STOP blocks every later draft
+if (RC.copy) RC.copy.isOptedOut = id => RC.optedOut(id);
+DK.patch();   // dk.js: honest no-outline roof art and labels around this page's own drawing functions
+// the list waits for the Daily 50 engine (RC.queueReady); the page shows a loading state until it lands
+buildList(); buildCards(); renderHeader(); renderQueue(false); renderMapCard();
+const want = DK.param('id'), wantN = +DK.param('n',0);
+function startMap(){
+  try{
+    const a = aerial(), c = (HOMES[cur] && HOMES[cur].loc) || hqLoc();
+    map = new maplibregl.Map({container:'map',style:LIGHT,antialias:false,fadeDuration:0,pixelRatio:Math.min(window.devicePixelRatio||1,1.5),center:c,zoom:12,pitch:a.pitch,bearing:a.bearing,maxPitch:76,attributionControl:{compact:true},interactive:true});
+    map.on('load',()=>{
+      restyle();
+      if (window.deck){ overlay = new window.deck.MapboxOverlay({ interleaved:true, layers:[], getCursor:({isDragging,isHovering})=>isDragging?'grabbing':isHovering?'pointer':'grab' });   /* a house under the cursor = pointer: every house is a click */ map.addControl(overlay); }
+      if (window.STH) STH.ready.then(()=>{ buildBulk(); fpRedraw(); refreshFp(); }).catch(()=>{});
+      RC.on(d=>{ if (d.key==='att' || d.key==='pipe') fpRedraw(); });
+      map.resize(); fitAll(true); setTimeout(()=>{map.resize(); fitAll(true);},300);
+      document.querySelectorAll('.maplibregl-ctrl-attrib').forEach(a=>a.classList.remove('maplibregl-compact-show'));
+      map.on('moveend', ()=>{ map.getContainer().classList.toggle('far', map.getZoom() < 14); uncollide(); refreshFp(); });
+      map.on('movestart', ()=>{ window.__mapMoving = true; }); map.on('moveend', ()=>{ window.__mapMoving = false; });   /* the 3D house pauses while the map moves (10-17) */
+      map.on('dragstart', closeHomePop); map.on('zoomstart', e=>{ if (e.originalEvent) closeHomePop(); });
+      // the shell may size this frame after load (kept-alive tabs): refit whenever the map box changes size
+      let rz=0; new ResizeObserver(()=>{ clearTimeout(rz); rz=setTimeout(()=>{ map.resize(); fitAll(true); },120); }).observe(document.getElementById('map'));
+      setTimeout(()=>{window.__mapReady = true;},800);
+      readyStage('map');
+      // a frame the shell sized late can miss the first fit: if any pin sits under the stop card or the pill row, fit again
+      const settled = ()=>{ if (!markers.length) return; const host = document.getElementById('map').getBoundingClientRect(), pad = fitPad();
+        const pts = markers.map(m=>m.getLngLat()).concat(reach ? [reach.hqLoc] : []);
+        const off = pts.some(l=>{ const y = map.project(l).y; return y < pad.top - 24 || y > host.height - pad.bottom + 24; }); if (off){ map.resize(); fitAll(true); } };
+      setTimeout(settled, 1200); setTimeout(settled, 3000);
+    });
+    buildMarkers(); mountReach();
+    // ready for the reveal once the style and the first view's tiles have drawn (maplibre 'idle') and the lines are mounted;
+    // registered here, not inside 'load', so a throttled tab (background, hidden pane) still reaches the fallback
+    map.once('idle', ()=>{ mountReach(); READY.map = true; readyStage('lines'); readyCheck(); });
+    setTimeout(()=>{ if (!READY.map){ READY.map = true; readyCheck('tiles-slow'); } }, 9000);   // slow tiles never hold the roofer past the shell's cap
+    try { fitAll(true); } catch(e){}   // frame the route before the style arrives, so pins never wait on slow tiles
+  }catch(e){ window.__mapReady = true; readyCheck('force'); }
+}
+function startList(){
+  buildList();
+  cur = Math.max(0, want ? HOMES.findIndex(h=>h.id===want) : wantN ? HOMES.findIndex(h=>h.n===wantN) : HOMES.findIndex(h=>!isDone(h)));
+  buildCards(); renderHeader(); layout();
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ READY.cards = true; readyStage('cards'); readyCheck(); }));   // the first cards are painted
+  if (!HOMES.length){ window.__mapReady = true; readyCheck('force'); return; }
+  mapLibs().then(startMap, ()=>{ window.__mapReady = true; readyCheck('force'); }); loadRoofs();
+  // the private owner roll is the biggest file on this screen (several MB): it follows the map libraries and the first
+  // outlines instead of competing with them for the connection; names fill in on the cards as it lands. On the first
+  // open it also waits for the reveal, so it never fights the tiles or the crossfade.
+  setTimeout(()=>whenShown(warmOwners), 1500);
+}
+// rebuild the list from the engine (a new day, an opt-out, a home added on the storm map), keeping the open card
+function relist(fresh){
+  const id = HOMES[cur] && HOMES[cur].id; buildList(); buildCards();
+  if (fresh) Object.keys(actState).forEach(k=>delete actState[k]);
+  const k = HOMES.findIndex(h=>h.id===id);
+  cur = Math.max(0, k >= 0 && !fresh ? k : HOMES.findIndex(h=>!isDone(h)));
+  renderHeader(); layout(); if (map){ buildMarkers(); refreshFp(); if (fresh) fitAll(true); } loadRoofs(); warmOwners(); inbox.render();
+}
+// own data: each stop's real owner (when signed in and the private roll is available), then repaint the cards
+// the 50 names land one promise at a time: the list repaints once per frame, not once per name (50 full rebuilds, ~700 ms, 10-15)
+let qRepaint = 0;
+function queueRepaint(){ if (qRepaint) return; qRepaint = requestAnimationFrame(()=>{ qRepaint = 0; try{ renderQueue(false); }catch(e){} }); }
+function warmOwners(){ if (!OWNDATA) return; HOMES.forEach(h=>{ if (h.gi==null || h.owner) return; RC.owner(h.gi).then(o=>{ if(!o) return; h.owner=o.name; const i = HOMES.indexOf(h); if (i<0) return; try{ refreshCard(i); queueRepaint(); }catch(e){} }); }); }
+RC.queueReady.then(ok=>{ QREADY = !!ok; if (ok) setStorm(RC.queueStats().storm); if (!ok){ QERR = (RC.queueStats().err) || 'the storm data did not load'; renderQueue(false); renderMapCard(); window.__mapReady = true; readyCheck('force'); return; } startList(); });
+// Up next leads until something has been sent; after that the last tab picked on this device comes back
+{ let t = null; try { t = localStorage.getItem(TABK); } catch(e){} setTab(THREADS && t === 'inbox' ? 'inbox' : 'next'); }
+// real storm facts from the catalog (the same list the storm map draws from)
+// the storm on screen = the newest storm (RC.SHOWCASE, then the Daily 50's own storm): date, homes hit, max, cities hit
+function setStorm(iso){ const s = iso && RC.catalog && RC.catalog.storms.find(x=>x.date===iso); if (!s) return;
+  const dt = new Date(iso+'T12:00:00Z'), md = dt.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
+  Object.assign(R.storm, { iso, date: md+(dt.getUTCFullYear()!==new Date().getFullYear()?', '+dt.getUTCFullYear():''), mon:md.split(' ')[0], day:md.split(' ')[1], year:dt.getUTCFullYear(),
+    homes: RC.fmt(s.homes_1in), max: Number(s.max_in).toFixed(2) });
+  const o = window.rooferCities ? rooferCities(RC.catalog) : [], c = Object.keys(s.by_city||{}).filter(k=>(s.by_city[k].homes_1in||0)>0).sort((a,b)=>(o.indexOf(a)+1||99)-(o.indexOf(b)+1||99));
+  if (c.length) R.storm.county = c.length>1 ? c.slice(0,-1).join(', ')+' and '+c[c.length-1] : c[0];
+  renderHeader(); }
+RC.factsReady.then(()=>setStorm(RC.SHOWCASE));
+// other screens (Home, storm map, Nimbus) change the same pipeline: keep this screen in step
+RC.on(d=>{
+  if (!QREADY) return;
+  // an opt-out (here, in the Inbox or on another screen) takes the home off today's list at once
+  if (d.key==='optout'){ relist(false); return; }
+  if (!d.remote) return;
+  if (d.key==='added'){ relist(false); return; }
+  renderHeader(); refreshCard(cur); renderQueue(false); markers.forEach((mk,k)=>{ const i = MI[k]; mk.getElement().classList.toggle('done', i!==cur && isDone(HOMES[i])); }); });
+setInterval(()=>{ if (!HOMES[cur]) return; renderHeader(); if (!actState[HOMES[cur].id]) refreshCard(cur); }, 60000);   // greeting and the texting hours follow the clock
+// the shell keeps this frame alive and routes by message: {type:'route', params:{n}} moves to stop n without a reload
+addEventListener('message', e=>{ if (e.origin !== location.origin || !e.data) return;
+  const d = e.data;
+  if (d.type==='find'){ findIn.value = String(d.q||''); query = findIn.value; renderQueue(false); return; }
+  if (d.type==='find-key'){ if (d.key==='Enter'){ const b=document.querySelector('#qlist [data-go]'); if (b) go(+b.dataset.go, true); } if (d.key==='Enter'||d.key==='Escape'){ findIn.value=''; query=''; renderQueue(false); } return; }
+  if (d.type==='find-close'){ if (document.activeElement!==findIn && findIn.value){ findIn.value=''; query=''; renderQueue(false); } return; }
+  if (d.type==='find-open'){ findIn.focus(); return; }
+  if (d.type==='visibility'){ if (!d.hidden){ reveal(); if (map) setTimeout(()=>{ map.resize(); fitAll(true); if (reach) reach.update(); }, 60); } return; }
+  if (d.type !== 'route') return;
+  if (e.data.token && e.source) try { e.source.postMessage({ type:'routed', token:e.data.token }, e.origin); } catch(err){}
+  const pr = e.data.params || {}, i = pr.id ? HOMES.findIndex(h=>h.id===pr.id) : pr.n ? HOMES.findIndex(h=>h.n===+pr.n) : -1;
+  if (i >= 0 && i !== cur) go(i, true, true); });
+// expand: the map takes the whole screen (Escape or the same button brings it back)
+const mExp = document.getElementById('mExp');
+function setBig(on){ document.documentElement.classList.toggle('mapbig', on); mExp.setAttribute('aria-pressed', on?'true':'false'); mExp.setAttribute('aria-label', on?'Shrink the map':'Expand the map'); mExp.querySelector('.t').textContent = on?'Close':'Expand';
+  mExp.querySelector('.ic').innerHTML = on ? I.close : I.expand; if (map) setTimeout(()=>{ map.resize(); fitAll(false); }, 40); }
+mExp.onclick = ()=>setBig(!document.documentElement.classList.contains('mapbig'));
+addEventListener('keydown', e=>{ if (e.key==='Escape' && document.documentElement.classList.contains('mapbig')) setBig(false); });
+// the stop list and the open card, for dk.js (the house in 3D on the card follows the current stop)
+window.__deckState = () => ({ homes: HOMES, cur });
+// capture hooks
+if (DK.param('sheet')==='route') setTimeout(()=>openSheet('route'),300);
+if (DK.param('sheet')==='roof') setTimeout(()=>openRoof(HOMES[cur]),300);
+</script>
+<!-- kept features (10-11), switches in lib/rc-features.js: time-of-day light, mission briefing, new storm takeover -->
+<script src="../lib/rc-tips.js"></script><!-- how Roof Command helps: small sourced tidbits (Jack 10-23) -->
+<script src="radar.js"></script><!-- Turnover Radar (Jack 10-23) -->
+<script>/* tidbits (Jack 10-23): today's one line under the greeting, then the cards redraw once the numbers are in */
+if (window.RCTIP) RCTIP.ready.then(() => { const h = document.querySelector('.hello'); if (h && !document.getElementById('tipHd')) { const d = document.createElement('div'); d.id = 'tipHd'; d.innerHTML = RCTIP.lineHTML(RCTIP.today(), 'hd'); const h1 = h.querySelector('h1'); if (h1) h1.after(d); else h.appendChild(d); }
+  try { if (typeof refreshAll === 'function') refreshAll(); } catch (e) {} });
+</script>
+<script src="../lib/rc-features.js"></script>
+<script src="features.js"></script>
+<script>document.addEventListener('click', e => { const x = e.target.closest('[data-openhome]'); if (!x) return; const dg = x.closest('dialog'); if (dg && dg.open) dg.close(); RC.go('home', { id: x.dataset.openhome }); });   // Text with no phone: add it on the record (10-22)
+</script>
+</body>
+</html>

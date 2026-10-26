@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roof proposal | Roof Command</title>
+<link rel="preload" href="assets/fonts/montserrat-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/montserrat-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="proposal.css">
+</head>
+<body>
+<!-- Roof proposal (PROPOSAL-1014, simplified per Jack 10-14): the home's measured roof (lib/rc-roof.js, lib/rc-proposal.js),
+     plus one optional price and one optional note the roofer types. Both are kept on this device only and start blank.
+     No materials, no takeoff: every roofer has their own system. Nothing is sent anywhere. -->
+<header class="tools noprint" aria-label="Proposal tools">
+  <div class="tl"><a class="back" id="bBack" hidden>&larr; Back to the home</a><b>Roof proposal</b></div>
+  <span style="display:flex;gap:8px;align-items:center"><button type="button" class="back" id="bSent" hidden>Mark sent to homeowner</button><button type="button" class="pbtn" id="bPrint">Print or save PDF</button></span>
+</header>
+
+<main class="wrap">
+  <p class="loading" id="loading">Loading the roof...</p>
+
+  <section class="entry noprint" id="entry" hidden aria-label="Your price and notes">
+    <div class="flds">
+      <label class="fld"><span>Your price per square <small>saved for every proposal on this device</small></span>
+        <span class="money"><i>$</i><input type="number" id="fRate" min="0" step="1" inputmode="decimal" placeholder="Per square"></span></label>
+      <label class="fld"><span>Squares to price <small id="sqHint">starts at the aerial estimate; change it after you walk the roof</small></span>
+        <input type="number" id="fSq" min="0" step="0.1" inputmode="decimal"></label>
+      <p class="tot" id="fTot" aria-live="polite"></p>
+    </div>
+    <label class="fld"><span>Notes or scope <small>optional; shown on the proposal as you type it</small></span>
+      <textarea id="fNotes" rows="4" placeholder="Anything you want the homeowner to read"></textarea></label>
+  </section>
+
+  <article class="doc" id="doc" hidden>
+    <header class="dh">
+      <div class="brand"><div class="mark" data-r="logo"></div><div><b data-r="name"></b><span data-r="region"></span></div></div>
+      <div class="dt"><h1>Roof proposal</h1><p id="dDate"></p></div>
+    </header>
+    <section class="addr"><span>Prepared for the homeowner at</span><b id="dAddr"></b></section>
+
+    <section class="blk"><h2 id="roofH">Your roof</h2>
+      <div class="kpis" id="kpis"></div>
+      <div class="diag" id="diag"></div>
+      <div class="two"><div id="secs"></div><div id="edges"></div></div>
+    </section>
+
+    <section class="blk" id="notesBlk" hidden><h2>Notes</h2><p class="notes" id="notes"></p></section>
+    <section class="blk" id="priceBlk" hidden><h2>Price</h2><div class="tier"><span>Total</span><b id="price"></b><small id="priceHow"></small></div></section>
+
+    <footer class="fine">
+      <p><b>Estimate, not a contract, not an insurance settlement.</b> Final scope and price are confirmed after the roof is inspected in person.</p>
+      <p id="srcLine"></p>
+    </footer>
+  </article>
+</main>
+
+<script src="../lib/rc-state.js"></script>
+<script src="../lib/brand.js"></script>
+<script>/* the roofer brands the page (lib/brand.js) */ applyRoofer(rooferKey());</script>
+<script src="../lib/rc-roof.js"></script>
+<script src="../lib/st-meta.js"></script>
+<script src="../../js/roofplan.js"></script>
+<script src="../lib/real-roof.js"></script>
+<script src="../lib/rc-proposal.js"></script>
+<script src="proposal.js"></script>
+</body>
+</html>

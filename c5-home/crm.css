@@ -1,0 +1,340 @@
+/* CRM (10-09): Inbox | Pipeline | Home views on one page (crm.js). The inbox is three panes: threads, the conversation,
+   the home with the record's own 3D roof. The record and the board are the other two views. Loads after home.css.
+   Inbox look (Jack 10-17: "looks basic and there are too many things going on, simplify it"): a calm messaging app.
+   One clean row per home, bubbles sent and received, one composer with one send, the home pane down to the facts a
+   roofer needs while texting with the rest behind More, and the pane can be hidden so the conversation breathes.
+   Whitespace and type do the work: few borders, no boxes in boxes, no dots or badges. Every rule is under #crm so it
+   wins over lib/rc-console.css (loads last) without touching it. Nothing hardcoded to one roofer: --accent (lib/brand.js). */
+:root{
+  --gl:rgba(255,255,255,.66); --gl-2:rgba(255,255,255,.8); --gl-3:rgba(255,255,255,.55); --gl-edge:rgba(255,255,255,.9);
+  --gl-shadow:0 30px 70px -30px rgba(11,16,32,.35), inset 0 1px 0 #fff;
+  --ga:linear-gradient(135deg,color-mix(in srgb,var(--accent) 82%,#0B1020),var(--accent-hi));
+  --ga-glow:0 18px 40px -16px color-mix(in srgb,var(--accent) 70%,transparent);
+  --ga-soft:color-mix(in srgb,var(--accent) 12%,transparent);
+  --r4:8px;
+  --ib-line:rgba(11,16,32,.08); --ib-wash:rgba(11,16,32,.045); --ib-bubble:rgba(11,16,32,.06); --ib-r:12px;
+}
+body{background:radial-gradient(900px 500px at 70% -10%,#DCE6FF 0%,rgba(220,230,255,0) 60%),radial-gradient(700px 500px at 10% 110%,#C9D8FF 0%,rgba(201,216,255,0) 60%),linear-gradient(160deg,#AEB8CC 0%,#D8DEE8 45%,#EEF1F6 100%);background-attachment:fixed}
+.mono{font-family:var(--font);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--slate)}
+.vtabs{display:flex;gap:4px;padding:4px;margin:14px 24px 0;border-radius:6px;background:var(--gl-3);border:1px solid rgba(255,255,255,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);width:max-content}
+.vtabs button{height:36px;padding:0 16px;border-radius:6px;font-size:13.5px;font-weight:500;color:var(--muted);display:inline-flex;align-items:center;gap:7px;transition:background .2s,color .2s;max-width:260px}
+.vtabs button .ic{width:15px;height:15px}
+.vtabs button:hover{color:var(--ink)}
+.vtabs button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.vtabs button i{font-style:normal;font-size:11px;font-weight:600;min-width:20px;height:18px;padding:0 6px;border-radius:4px;background:rgba(11,16,32,.08);color:var(--ink-2);display:inline-grid;place-items:center}
+.vtabs button[aria-pressed="true"] i{background:rgba(255,255,255,.2);color:#fff}
+.vtabs #vHomeLbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crm{display:none}
+/* ---------- inbox view: three quiet panes, each scrolling on its own ---------- */
+body[data-view="inbox"]{height:100vh;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+body[data-view="inbox"] .rh,body[data-view="inbox"] .steps,body[data-view="inbox"] .main,body[data-view="inbox"] .stick,body[data-view="inbox"] .brandline{display:none!important}
+body[data-view="inbox"] #crm{display:grid;grid-template-columns:340px minmax(0,1fr) 360px;gap:14px;flex:1;min-height:0;padding:14px 24px 18px}
+body[data-view="inbox"] #crm[data-home="off"]{grid-template-columns:340px minmax(0,1fr)}
+#crm .cl,#crm .cv,#crm .ch{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--ib-line);border-radius:var(--ib-r);box-shadow:none;min-height:0;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+#crm .ic svg{width:100%;height:100%;display:block}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* the thread list */
+#crm .clh{display:flex;align-items:baseline;gap:10px;padding:20px 20px 8px;flex-wrap:wrap;row-gap:4px}
+#crm .clh h2{font-size:20px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+#crm .clh small{font-family:var(--font);font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--slate);margin-left:auto;white-space:nowrap}
+#crm .clh #autoSlot:empty{display:none}
+#crm .clh #autoSlot>*{font-size:11.5px;color:var(--slate);background:var(--ib-wash);border:0;border-radius:999px;padding:3px 9px;line-height:1.4;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#crm .csearch{display:flex;align-items:center;gap:9px;height:40px;margin:6px 14px 6px;padding:0 13px;border-radius:10px;background:var(--ib-wash);border:1px solid transparent;flex:none;transition:background .2s,border-color .2s,box-shadow .2s}
+#crm .csearch:focus-within{background:#fff;border-color:var(--ib-line);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
+#crm .csearch .ic{width:16px;height:16px;color:var(--slate);flex:none}
+#crm .csearch input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:14px;color:var(--ink);outline:none;height:100%}
+#crm .csearch input::placeholder{color:var(--slate)}
+#crm .cfil{display:flex;align-items:center;margin:0 14px 6px;padding:0 4px;flex:none}
+#crm .cshow{position:relative;display:inline-flex;align-items:center;height:32px;max-width:100%}
+#crm .cshow select{height:32px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;font-weight:600;color:var(--ink-2);padding:0 26px 0 8px;cursor:pointer;-webkit-appearance:none;appearance:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#crm .cshow select:hover,#crm .cshow select:focus-visible{background:var(--ib-wash);outline:none}
+#crm .cshow .ic{position:absolute;right:8px;top:50%;width:14px;height:14px;margin-top:-7px;color:var(--slate);pointer-events:none}
+#crm .clist{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:4px 8px 14px;display:flex;flex-direction:column;gap:2px}
+#crm .clist>.crow{flex:none}
+#crm .crow{display:grid;grid-template-columns:40px minmax(0,1fr);gap:12px;align-items:center;padding:12px 12px 12px 14px;border:0;border-radius:10px;background:transparent;text-align:left;width:100%;min-height:64px;box-shadow:none;position:relative;transition:background .15s;color:var(--ink)}
+#crm .crow:hover{background:var(--ib-wash)}
+#crm .crow.sel,#crm .crow.sel:hover{background:color-mix(in srgb,var(--accent) 9%,#fff);color:var(--ink);box-shadow:none}
+#crm .cav{display:block}
+#crm .cav .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--ga-soft);color:var(--accent-ink);font-weight:600;font-size:13px;letter-spacing:.02em;position:relative;box-shadow:none}
+#crm .cav .ic svg{display:none}
+#crm .cav .ic::after{display:none}
+#crm .cb{display:grid;gap:3px;min-width:0}
+#crm .ct{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+#crm .cad{min-width:0;display:flex;align-items:baseline;gap:7px;overflow:hidden;white-space:nowrap}
+#crm .cad b{font-size:15px;font-weight:600;line-height:1.3;color:var(--ink);overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0}
+#crm .cad i{font-style:normal;font-size:13px;color:var(--slate);flex:none}
+#crm .ct time{font-family:var(--font);font-size:12px;color:var(--slate);white-space:nowrap;flex:none}
+#crm .clast{font-size:13.5px;color:var(--slate);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+/* unread = a reply waiting for an answer: weight and a thin accent edge, no dot, no badge */
+#crm .crow.rep::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:2px;background:var(--accent)}
+#crm .crow.rep .cad b{font-weight:700}
+#crm .crow.rep .clast{color:var(--ink);font-weight:500}
+#crm .crow.rep time{color:var(--accent-ink);font-weight:600}
+#crm .cnone{margin:56px auto 0;max-width:250px}
+#crm .cnone b{font-size:14.5px}
+#crm .cnone p{font-size:13px}
+/* the conversation */
+#crm .cvh{flex:none;padding:14px 16px 12px 20px;display:block;border-bottom:1px solid var(--ib-line)}
+#crm .cvh:empty{display:none}
+#crm .cvt-r{display:flex;align-items:center;gap:8px}
+#crm .cback{display:none;width:40px;height:40px;border-radius:10px;background:transparent;place-items:center;flex:none;color:var(--ink)}
+#crm .cback .ic{width:20px;height:20px}
+#crm .cvt{min-width:0;flex:1}
+#crm .cvt b{font-size:18px;font-weight:600;letter-spacing:-.02em;display:block;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#crm .cvt small{font-size:13px;color:var(--slate);line-height:1.4;display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#crm .cvt small .c-due{color:var(--accent-ink);font-weight:600}
+#crm .cvt small .c-late{color:#8A3B00;font-weight:600}
+#crm .cstage{flex:none}
+#crm .cstage select{height:36px;border:1px solid var(--ib-line);border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:13px;font-weight:600;padding:0 28px 0 12px;cursor:pointer;max-width:170px;box-shadow:none;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235A6378' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 10px center}
+#crm .cstage select:hover{border-color:rgba(11,16,32,.18)}
+#crm .cstage select.lost{background-color:var(--ink);color:#fff;border-color:var(--ink);background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>")}
+/* quiet icon buttons: show or hide the home, the More menu */
+#crm .cico,#crm .cmenu summary{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--slate);background:transparent;cursor:pointer;flex:none;list-style:none;transition:background .15s,color .15s}
+#crm .cmenu summary::-webkit-details-marker{display:none}
+#crm .cico:hover,#crm .cmenu summary:hover,#crm .cmenu[open] summary{background:var(--ib-wash);color:var(--ink)}
+#crm .cico[aria-pressed="true"]{color:var(--accent-ink)}
+#crm .cico .ic,#crm .cmenu summary .ic{width:18px;height:18px}
+#crm .cmenu{position:relative;flex:none}
+#crm .cmenu-l,#crm .cqr-l{position:absolute;right:0;top:calc(100% + 6px);min-width:210px;background:#fff;border:1px solid var(--ib-line);border-radius:12px;box-shadow:0 16px 40px -12px rgba(11,16,32,.28),0 2px 6px rgba(11,16,32,.06);padding:6px;display:grid;z-index:30}
+#crm .cmenu-l button,#crm .cqr-l button{height:38px;padding:0 12px;border-radius:8px;text-align:left;font-size:13.5px;font-weight:500;color:var(--ink);background:transparent;white-space:nowrap;display:flex;align-items:center}
+#crm .cmenu-l button:hover,#crm .cqr-l button:hover{background:var(--ib-wash)}
+#crm .cmenu-l button.warn{color:#8A3B00}
+#crm .cmenu-l button[disabled]{opacity:.45;cursor:not-allowed}
+#crm .cbtn{min-height:40px;padding:0 16px;border-radius:10px;border:1px solid var(--ib-line);background:#fff;font-size:13.5px;font-weight:600;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;transition:border-color .2s,background .2s;cursor:pointer}
+#crm .cbtn:hover{background:var(--ib-wash);border-color:rgba(11,16,32,.14)}
+#crm .cbtn .ic{width:16px;height:16px}
+#crm .cbtn.sm{min-height:36px;padding:0 14px;font-size:13px}
+#crm .cbtn.pri{background:var(--accent);border-color:transparent;color:#fff;min-height:40px;padding:0 18px;font-size:14px}
+#crm .cbtn.pri:hover{background:color-mix(in srgb,var(--accent) 88%,#0B1020)}
+#crm .cbtn.wide{width:100%}
+#crm .cbtn[disabled]{opacity:.45;cursor:not-allowed}
+#crm .cbtn.off,#crm .cbtn.off:hover{color:var(--slate);background:var(--ib-wash);border-color:transparent;cursor:not-allowed}
+#crm .clink{font-size:13px;font-weight:600;color:var(--slate);background:transparent;padding:4px 6px;border-radius:6px;cursor:pointer}
+#crm .clink:hover{color:var(--ink);background:var(--ib-wash)}
+/* the messages: sent in the roofer's accent on the right, received in a light wash on the left, the time light */
+#crm .cvm{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:14px 20px;display:flex;flex-direction:column;gap:4px;background:none}
+#crm .mday{display:flex;align-items:center;justify-content:center;margin:14px 0 8px;font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--slate)}
+#crm .mday:first-child{margin-top:4px}
+#crm .msg{display:grid;gap:4px;max-width:72%;text-align:left;border-radius:18px;padding:10px 14px;cursor:pointer;transition:box-shadow .2s;position:relative;border:0;box-shadow:none}
+#crm .msg.out{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:6px}
+#crm .msg.out.email{background:var(--ink)}
+#crm .msg.in{align-self:flex-start;background:var(--ib-bubble);color:var(--ink);border-bottom-left-radius:6px}
+#crm .msg .mb{font-size:15px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
+#crm .msg .mb b{display:block;margin-bottom:2px}
+#crm .msg .mm{font-family:var(--font);font-size:11px;opacity:.7;line-height:1.3;display:flex;align-items:center;gap:6px}
+#crm .msg.out .mm{justify-content:flex-end}
+#crm .msg.sys{align-self:center;max-width:92%;display:flex;align-items:center;gap:7px;background:transparent;border:0;color:var(--slate);font-size:12.5px;padding:4px 10px;border-radius:8px;margin:4px 0}
+#crm .msg.sys .ic{width:14px;height:14px;color:var(--slate);flex:none}
+#crm .msg.sys time{color:var(--slate);opacity:.8;margin-left:2px}
+#crm .msg.sched{align-self:flex-end;background:#fff;border:1px dashed color-mix(in srgb,var(--accent) 45%,transparent);color:var(--accent-ink);cursor:default;border-bottom-right-radius:6px}
+#crm .msg.sched .mm{opacity:1;color:var(--accent-ink);flex-wrap:wrap}
+#crm .msg.sched .mm button{height:26px;padding:0 10px;border-radius:7px;border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);background:#fff;font-size:11.5px;font-weight:600;color:var(--accent-ink);margin-left:4px}
+#crm .msg:hover{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 22%,transparent)}
+#crm .msg.on{box-shadow:0 0 0 2px var(--ink)}
+#crm .msg.sys:hover,#crm .msg.sys.on{box-shadow:none;color:var(--ink)}
+#crm .mnone{padding:8px 2px;justify-content:center}
+/* the composer: one box, one send */
+#crm .cvf{flex:none;max-height:56%;overflow-y:auto;scrollbar-width:thin;padding:6px 16px 16px;display:grid;gap:10px}
+#crm .cvf:empty{display:none}
+#crm .cnext,#crm .csugg,#crm .creply{border:1px solid var(--ib-line);border-radius:14px;padding:12px 14px;display:grid;gap:10px;background:#fff;box-shadow:none}
+#crm .csugg{background:color-mix(in srgb,var(--accent) 6%,#fff);border-color:color-mix(in srgb,var(--accent) 18%,transparent)}
+#crm .cnext.nx-stop{background:var(--ib-wash);border-color:transparent}
+#crm .clab{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;font-weight:600;color:var(--slate);min-height:28px}
+#crm .clab>span,#crm .clab>label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#crm .cseg{display:inline-flex;gap:2px;padding:2px;border-radius:8px;background:var(--ib-wash);border:0;flex:none}
+#crm .cseg button{height:26px;padding:0 10px;border-radius:6px;font-size:12px;font-weight:600;color:var(--slate)}
+#crm .cseg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(11,16,32,.12)}
+#crm .csubj{font-size:14px;font-weight:600;margin:-4px 0 -2px}
+#crm .cvf textarea{width:100%;border:0;border-radius:8px;padding:4px 2px;font:inherit;font-size:15px;line-height:1.5;resize:vertical;background:transparent;color:var(--ink);outline:none;min-height:72px}
+#crm .cvf textarea:focus{box-shadow:none}
+#crm .cvf textarea[readonly]{color:var(--ink-2)}
+#crm .cvf textarea::placeholder{color:var(--slate)}
+#crm .cact{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+#crm .cact .cbtn.pri{margin-left:auto}
+#crm .cnote{font-size:12.5px;color:var(--slate);line-height:1.4;flex:1 1 140px;display:flex;align-items:center;gap:6px;margin:0}
+#crm .cnote .ic{width:14px;height:14px}
+#crm .cqr{position:relative;flex:none;margin-right:auto}
+#crm .cqr summary{list-style:none;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--slate);cursor:pointer;transition:background .15s,color .15s}
+#crm .cqr summary::-webkit-details-marker{display:none}
+#crm .cqr summary .ic{width:15px;height:15px}
+#crm .cqr summary:hover,#crm .cqr[open] summary{background:var(--ib-wash);color:var(--ink)}
+/* open, the quick replies are a row of pills under the composer (a popover would be clipped by the scrolling composer) */
+#crm .cqr[open]{flex:1 1 100%;margin-right:0}
+#crm .cqr-l{position:static;display:flex;flex-wrap:wrap;gap:6px;padding:8px 0 2px;border:0;box-shadow:none;min-width:0;background:transparent;border-radius:0}
+#crm .cqr-l button{height:32px;padding:0 12px;border-radius:999px;background:var(--ib-wash);font-size:12.5px;font-weight:500;color:var(--ink-2)}
+#crm .cqr-l button:hover{background:color-mix(in srgb,var(--accent) 12%,#fff);color:var(--accent-ink)}
+#crm .cempty{margin:auto;max-width:300px;text-align:center;padding:30px 20px;display:grid;justify-items:center;gap:8px;color:var(--muted)}
+#crm .cempty .ic{width:44px;height:44px;border-radius:14px;background:var(--ib-wash);display:grid;place-items:center;color:var(--ink-2)}
+#crm .cempty .ic svg{width:20px;height:20px}
+#crm .cempty b{font-size:15.5px;color:var(--ink)}
+#crm .cempty p{font-size:13.5px;line-height:1.5}
+#crm .cempty.cstart .cact{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+#crm .cempty.cstart .cact .cbtn{margin:0}
+/* the home pane: the house, three facts, Book, the rest behind More */
+#crm .chh{flex:none;display:flex;align-items:center;gap:8px;padding:16px 14px 10px 20px}
+#crm .chh:empty{display:none}
+#crm .chh .cvt b{font-size:16px;letter-spacing:-.015em}
+#crm .chh .cvt small{font-size:12.5px}
+#crm .chstage{flex:none;padding:0 14px}
+#chstage .stage{height:220px;border-radius:12px;background:var(--ib-wash);border:0}
+#chstage .stage::after{display:none}
+#chstage .title{left:10px;top:10px;background:rgba(11,16,32,.85);color:#fff;border-radius:8px;padding:6px 10px 7px;max-width:calc(100% - 24px);backdrop-filter:none}
+#chstage .title::before{content:"Roof";display:block;font-family:var(--font);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#C3CADB;margin-bottom:1px}
+#chstage .title h2{font-size:13.5px;font-weight:600;letter-spacing:-.01em;color:#fff;line-height:1.25}
+#chstage .title p{display:none}
+#chstage .legend{font-size:11px;padding:6px 8px;max-width:190px;background:rgba(255,255,255,.94)}
+#chstage .dock{left:8px;right:8px;bottom:8px;gap:6px}
+#chstage .chips,#chstage .ctl{padding:3px;background:rgba(255,255,255,.92);border-color:transparent;border-radius:10px;backdrop-filter:none}
+#chstage .chip{height:30px;padding:0 9px 0 8px;font-size:12px;gap:5px;border-radius:7px}
+#chstage .chip .ic{width:13px;height:13px}
+#chstage .ctl button{height:30px;padding:0 11px;font-size:12px;border-radius:7px}
+#chstage .pin{font-size:11px;padding:3px 7px 3px 4px}
+#chstage .pin i{width:16px;height:16px;font-size:9.5px}
+#chstage .hpin{width:140px;padding:6px 8px 7px}#chstage .hpin .big{font-size:14px}#chstage .hpin .s{font-size:11px}
+#chstage #areaTotal{display:none!important}   /* the Total roof box (home.js): the title already says the squares and the facts below repeat them */
+#chstage .ctl,#chstage .dock,#chstage .legend,#chstage .labels{display:none!important}   /* Whole roof, Explode and the Planes / Edges / Dimensions / Hail bar belong to the record; the pane is a glance */
+#chstage .rc-built{display:none!important}    /* the build stamp (features.css) would sit on the house in this short pane */
+#crm .chf{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;padding:14px 20px 90px;display:flex;flex-direction:column;gap:14px}
+#crm .chf>*{flex:none}
+#crm .ckpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:2px 0 0}
+#crm .ckpi div{background:transparent;border:0;border-radius:0;padding:0;display:grid;gap:2px;min-width:0}
+#crm .ckpi span{font-family:var(--font);font-size:11.5px;letter-spacing:.04em;font-variant-caps:normal;text-transform:uppercase;color:var(--slate)}
+#crm .ckpi b{font-size:20px;font-weight:600;letter-spacing:-.02em;line-height:1.15;overflow-wrap:anywhere;color:var(--ink)}
+#crm .ckpi b.sm{font-size:14px;line-height:1.3}
+#crm .ckpi small{font-family:var(--font);font-size:12px;color:var(--slate);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#crm .cstg-row{display:none;align-items:center;justify-content:space-between;gap:12px;font-size:13.5px;color:var(--slate)}
+#crm .cstg-row .cstage select{max-width:none;height:40px}
+#crm .cact.book{padding:0;justify-content:stretch}
+#crm .cact.book .cbtn.pri{flex:1;min-height:44px;border-radius:10px;background:var(--accent);border-color:transparent;font-size:14px;box-shadow:none;margin-left:0}
+#crm .cact.book .cbtn.pri:hover{background:color-mix(in srgb,var(--accent) 88%,#0B1020)}
+#crm .cact.book .cnote{flex-basis:100%}
+#crm .cmore{border-top:1px solid var(--ib-line);display:grid;gap:12px}
+#crm .cmore summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 0;font-size:13.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+#crm .cmore summary::-webkit-details-marker{display:none}
+#crm .cmore summary .ic{width:16px;height:16px;color:var(--slate);transition:transform .2s}
+#crm .cmore[open] summary .ic{transform:rotate(180deg)}
+#crm .cmore summary:hover{color:var(--ink)}
+#crm .cmore>*:last-child{margin-bottom:4px}
+#crm .cfg{display:grid;gap:0;font-size:13.5px}
+#crm .cfg div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-radius:0;background:transparent;border-bottom:1px solid var(--ib-line);min-width:0}
+#crm .cfg div:last-child{border-bottom:0}
+#crm .cfg span{color:var(--slate);flex:none}
+#crm .cfg b{font-weight:500;color:var(--ink);text-align:right;overflow-wrap:anywhere}
+#crm .cfg small{display:none}
+#crm .cstrip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));background:var(--ib-wash);border-radius:10px;border:0;overflow:hidden}
+#crm .cst{display:grid;justify-items:center;gap:5px;padding:9px 3px 8px;position:relative;text-align:center;transition:background .2s}
+#crm .cst + .cst{border-left:1px solid #fff}
+#crm .cst::before{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:transparent}
+#crm .cst.dn::before{background:color-mix(in srgb,var(--accent) 45%,transparent)}
+#crm .cst.on::before{background:var(--accent)}
+#crm .cst.on{background:#fff}
+#crm .cst .d{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;border:1.5px solid var(--hair);color:var(--muted);font-size:10px;font-weight:600;font-family:var(--font)}
+#crm .cst .d svg{width:12px;height:12px}
+#crm .cst.dn .d,#crm .cst.on .d{background:var(--accent);border-color:var(--accent);color:#fff}
+#crm .cst.on .d{background:var(--ink);border-color:var(--ink)}
+#crm .cst b{font-size:10px;font-weight:600;color:var(--muted);line-height:1.2;overflow-wrap:anywhere}
+#crm .cst.on b,#crm .cst.dn b{color:var(--ink)}
+#crm .cst:hover{background:#fff}
+#crm .ch.flash{animation:chflash .7s ease-out}
+@keyframes chflash{0%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:none}}
+/* the house pane's Book runs into the bottom-right corner, where the Nimbus orb always sits: keep it clear (10-15) */
+@media (min-width:641px){#crm .ch .cact.book{padding-right:58px}#crm .ch .cmore{margin-right:0}}
+/* ---------- pipeline view: the board takes the whole screen, as one pane ---------- */
+body[data-view="pipeline"] .rh,body[data-view="pipeline"] .steps,body[data-view="pipeline"] .left,body[data-view="pipeline"] .ptab,body[data-view="pipeline"] #homePane,body[data-view="pipeline"] .stick,body[data-view="pipeline"] .brandline,body[data-view="pipeline"] .pfb{display:none!important}
+body[data-view="pipeline"] .main{grid-template-columns:minmax(0,1fr);padding:14px 24px 18px}
+body[data-view="pipeline"] .pipe{height:calc(100vh - 98px);background:var(--gl);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--gl-edge);border-radius:var(--r4);box-shadow:var(--gl-shadow)}
+body[data-view="pipeline"] .pph{display:block;padding:16px 18px 0}
+body[data-view="pipeline"] .pipe .ptools{margin-top:10px}
+body[data-view="pipeline"] .pcol{background:rgba(255,255,255,.45)}
+/* the record view keeps home.css's layout; its panels pick up the glass */
+body[data-view="home"] .panel,body[data-view="home"] .pipe,body[data-view="home"] .steps{background:var(--gl);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--gl-edge);box-shadow:var(--gl-shadow)}
+body[data-view="home"] .steps{border-radius:8px}
+/* the record's 3D roof sits on the same glass as the inbox's house pane, so the two halves of the record read as one deck */
+body[data-view="home"] .stage{background:radial-gradient(55% 60% at 50% 58%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 72%),var(--gl);border:1px solid var(--gl-edge);border-radius:var(--r4);box-shadow:var(--gl-shadow)}   /* no backdrop blur here: a blurred parent hides the WebGL canvas on software GL */
+body[data-view="home"] .main{padding-bottom:96px}   /* clear of the Nimbus orb in the corner */
+body[data-view="home"] .pipe{border-radius:var(--r4)}
+@media (min-width:641px){
+  body[data-view="pipeline"] .pcol:not(.plane),body[data-view="pipeline"] .pcol.plane.open{flex:1 0 210px}
+  body[data-view="pipeline"] .pcol.plane{flex:0 0 46px}
+  body[data-view="pipeline"] .pnav{display:none}
+}
+@media (max-width:1380px){
+  body[data-view="inbox"] #crm{grid-template-columns:310px minmax(0,1fr) 340px;padding:10px 22px 14px;gap:12px}
+  body[data-view="inbox"] #crm[data-home="off"]{grid-template-columns:310px minmax(0,1fr)}
+  .vtabs{margin-left:22px}
+  #chstage .stage{height:200px}
+  body[data-view="pipeline"] .main{padding-left:22px;padding-right:22px}
+}
+@media (max-width:1100px){
+  body[data-view="inbox"] #crm{grid-template-columns:280px minmax(0,1fr) 320px}
+  body[data-view="inbox"] #crm[data-home="off"]{grid-template-columns:280px minmax(0,1fr)}
+}
+/* ---------- phone: stacked screens. list -> conversation -> the house as a sheet ---------- */
+@media (max-width:640px){
+  body{background-attachment:scroll}
+  .vtabs{margin:10px 14px 0;width:auto;display:flex}
+  .vtabs button{flex:1;justify-content:center;padding:0 8px;min-height:44px}
+  .vtabs #vHome{flex:1.2}
+  body[data-view="inbox"]{height:100dvh;padding-bottom:0}
+  body[data-view="inbox"] #crm,body[data-view="inbox"] #crm[data-home="off"]{display:block;position:relative;padding:8px 0 0;flex:1;min-height:0}
+  #crm .cl,#crm .cv,#crm .ch{display:none;height:100%;border-radius:0;box-shadow:none;background:transparent;border:0}
+  #crm[data-screen="list"] .cl{display:flex}
+  #crm[data-screen="thread"] .cv,#crm[data-screen="home"] .cv{display:flex;background:#fff;border-radius:14px 14px 0 0;border:1px solid var(--ib-line);border-bottom:0;margin:0 8px;height:calc(100% - 4px)}
+  body[data-view="inbox"]:has(#crm[data-screen="thread"]) .vtabs,body[data-view="inbox"]:has(#crm[data-screen="home"]) .vtabs{display:none}
+  #crm .clh{padding:12px 18px 6px}
+  #crm .csearch{height:44px;margin:4px 12px 6px}
+  #crm .csearch input{font-size:16px}
+  #crm .cfil{margin:0 12px 4px}
+  #crm .cshow select{height:40px;font-size:14px}
+  #crm .clist{padding:2px 6px 100px}
+  #crm .crow{min-height:68px;padding:12px 12px 12px 16px;background:transparent;border-radius:12px}
+  #crm .crow.sel,#crm .crow.sel:hover{background:transparent}
+  #crm .cad b{font-size:16px}
+  #crm .clast{font-size:14.5px}
+  #crm .cback{display:grid;width:44px;height:44px;margin-left:-8px}
+  #crm .cvh{padding:10px 10px 10px 14px}
+  #crm .cvt b{font-size:16px}
+  #crm .cvt small{font-size:12.5px}
+  #crm .cvh .cstage{display:none}   /* the stage sits on the house sheet; the header keeps the address readable */
+  #crm .cstg-row{display:flex}
+  #crm .cico,#crm .cmenu summary{width:44px;height:44px}
+  #crm .cico.house{display:grid}
+  #crm .cvm{padding:12px 14px}
+  #crm .msg{max-width:86%}
+  #crm .cvf{max-height:50%;padding:4px 10px calc(12px + env(safe-area-inset-bottom))}   /* the thread stays readable above the composer */
+  #crm .cvf textarea{font-size:16px;max-height:132px}
+  #crm .cvf .cact{padding-right:58px}   /* the composer's last row sits on the bottom edge: keep its button clear of the Nimbus orb */
+  #crm .cnext .cact,#crm .csugg .cact{flex-wrap:wrap}
+  #crm .cnext .cact .cnote,#crm .csugg .cact .cnote{flex:1 1 100%}
+  #crm .cnext .cact .cbtn.pri,#crm .csugg .cact .cbtn.pri{flex:1 1 auto;margin-left:0;justify-content:center;min-height:46px}
+  #crm .cseg button{height:36px;padding:0 14px}
+  #crm .ch{display:flex;position:fixed;left:0;right:0;bottom:0;top:auto;height:min(92dvh,calc(100% - 20px));background:#fff;border-radius:16px 16px 0 0;border:1px solid var(--ib-line);border-bottom:0;box-shadow:0 -12px 40px -16px rgba(11,16,32,.35);transform:translateY(110%);transition:transform .4s cubic-bezier(.2,.8,.2,1);z-index:45}
+  #crm[data-screen="home"] .ch{transform:translateY(0)}
+  #crm .ch::before{content:"";width:40px;height:4px;border-radius:2px;background:rgba(11,16,32,.14);margin:10px auto 0;flex:none}
+  #crm .chh{padding:6px 10px 8px 6px;align-items:center}
+  #crm .chh .cback{margin-left:0}
+  #crm .chh .cico{display:none}   /* the sheet closes with Back or Escape */
+  #crm .chstage{padding:0 12px}
+  #chstage .stage{height:min(38dvh,300px);min-height:220px}
+  #chstage .chip,#chstage .ctl button{height:44px}   /* phone tap targets in the house sheet */
+  #crm .cact.book .cbtn.pri{min-height:48px}
+  #crm .chf{padding:14px 16px calc(110px + env(safe-area-inset-bottom))}
+  #crm .ckpi b{font-size:19px}
+  #crm .cfg{font-size:14px}
+  body[data-view="pipeline"] .main{padding:4px 0 0}
+  body[data-view="pipeline"] .pipe{height:auto;border-radius:0;border:0;backdrop-filter:none;-webkit-backdrop-filter:none;background:transparent;box-shadow:none}
+  body[data-view="pipeline"] .pls{max-height:calc(100dvh - 330px)}
+  body[data-view="pipeline"]{padding-bottom:120px}
+}
+/* the show/hide home button only matters where the pane is beside the conversation; on a phone the house is a sheet (above) */
+@media (min-width:641px){#crm .cico.house{display:grid}}
+/* first morning: three numbered steps in the empty conversation pane (10-19) */
+#crm .cempty.cstart{max-width:380px}
+#crm .csteps{list-style:none;margin:6px 0 4px;padding:0;display:grid;gap:8px;text-align:left;width:100%}
+#crm .csteps li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;align-items:start;padding:12px 14px;border:1px solid var(--hair, rgba(11,16,32,.14));border-radius:8px;background:#fff}
+#crm .csteps i{font-style:normal;width:28px;height:28px;border-radius:6px;background:var(--ink,#0B1020);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700}
+#crm .csteps b{display:block;font-size:14px;color:var(--ink);margin-bottom:2px}
+#crm .csteps span{font-size:13px;line-height:1.45;color:var(--muted)}
+
+/* touch screens: inbox buttons, quick replies and menus at least 44px (visual skills gate 10-24: 32 to 38px on a phone) */
+@media (pointer:coarse){#crm .cbtn,#crm .cbtn.sm,#crm .cseg button,#crm .cqr summary,#crm .cqr-l button,#crm .cmenu-l button{min-height:44px}#crm .cico,#crm .cmenu summary{min-width:44px;min-height:44px}}

@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Jackson Roofing, Roof Command</title>
+<script src="../lib/rc-frame-pause.js"></script><!-- the Nimbus panel closed = no drawing -->
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="stylesheet" href="../vendor/maplibre-gl@4.7.1/maplibre-gl.css">
+<link rel="stylesheet" href="../lib/nimbus-shell.css">
+<link rel="stylesheet" href="../lib/rc-physical.css">
+<script>try{ if (window.self !== window.top) document.documentElement.classList.add('embed'); }catch(e){ document.documentElement.classList.add('embed'); }</script>
+<style>
+@font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-var-latin.woff2) format('woff2')}
+
+:root{
+  /* Wing Digital website tokens (wing-site-v4/style.css) */
+  --stage-a:#ECEEF2; --stage-b:#F7F8FA; --bar:#E6E8ED; --panel:#FFFFFF; --panel-2:#F1F3F6; --panel-3:#E4E7EC;
+  --blue:#2757E6; --blue-light:#1F47C9; --paper:#0B1020; --muted:#465065; --hair:rgba(11,16,32,.14); --edge:#737B8F;
+  --brass:#8A5A00; --danger:#B42318;
+  /* the roofer's own colour, used for the one primary action and the logo tile */
+  --roofer:#B3262E;
+  --font-text:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --r1:4px; --r2:12px; --r3:20px; --r4:28px;
+  --sheet-w:456px; --bar-h:64px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{color:var(--paper);font-family:var(--font-text);font-feature-settings:"tnum" 1;-webkit-font-smoothing:antialiased;overflow:hidden;
+  background:
+    radial-gradient(ellipse 60% 48% at 50% 40%, rgba(255,255,255,.95), rgba(255,255,255,0) 70%),
+    linear-gradient(180deg,#B9BEC9 0%,#D5D9E0 30%,#ECEEF2 62%,#F7F8FA 100%)}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.mono{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* top bar, the site's bar colour: roofer leads, Wing signs */
+.bar{position:fixed;inset:0 0 auto 0;height:var(--bar-h);background:var(--bar);display:flex;align-items:center;gap:32px;padding:0 24px;z-index:20}
+.brand{display:flex;align-items:center;gap:12px;min-width:max-content}
+.logo{width:38px;height:38px;border-radius:var(--r2);background:var(--roofer);display:grid;place-items:center}
+.logo svg{width:21px;height:21px}
+.brand b{display:block;font-size:15px;font-weight:600;letter-spacing:-.01em;line-height:1.15}
+.brand span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.pipe{flex:1;max-width:600px;margin-left:auto}
+.pipe-bar{display:flex;height:6px;border-radius:999px;overflow:hidden;gap:2px}
+.pipe-bar i{display:block;height:100%}
+.pipe-legend{display:flex;justify-content:space-between;margin-top:7px;font-size:12px;color:var(--muted)}
+.pipe-legend b{color:var(--paper);font-weight:600;margin-right:5px;font-size:13px}
+.sig{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted);min-width:max-content}
+.sig svg{width:15px;height:16px}
+.me{width:34px;height:34px;border-radius:50%;background:var(--paper);color:#fff;font-weight:600;font-size:13px;display:grid;place-items:center}
+
+/* inside the tour shell the shell carries the roofer header, so this bar steps out */
+html.embed{--bar-h:0px}
+html.panel .qchip{display:none !important}
+html.embed .bar{display:none}
+html.embed .concept{display:none}
+/* map is the stage */
+#map{position:fixed;inset:var(--bar-h) 0 0 0}
+#map::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(185,190,201,.28),rgba(185,190,201,0) 45%)}
+.maplibregl-ctrl-attrib{font-size:10px;opacity:.75}
+.maplibregl-ctrl-top-right{top:6px;right:6px}
+
+/* conversation sheet: a white panel floating on the stage */
+.sheet{position:fixed;left:20px;top:calc(var(--bar-h) + 20px);bottom:20px;width:var(--sheet-w);background:var(--panel);border-radius:var(--r4);
+  box-shadow:0 30px 70px -30px rgba(11,16,32,.35),0 2px 8px rgba(11,16,32,.06);z-index:10;display:flex;flex-direction:column;padding:24px 28px 20px}
+.q{align-self:flex-end;background:var(--panel-2);color:var(--paper);font-size:15px;font-weight:500;padding:11px 16px;border-radius:18px 18px 4px 18px;max-width:320px;line-height:1.35}
+.qmeta{align-self:flex-end;font-size:12px;color:var(--muted);margin-top:6px}
+.nimbus-row{display:flex;align-items:center;gap:0;margin:14px 0 6px}
+.slot{flex:1;min-width:0}
+/* Nimbus's real bubble, docked into the sheet rather than floated over the page */
+.nb{position:static !important;inset:auto !important;max-width:230px !important;margin:0;padding:12px 15px !important;
+  background:var(--paper) !important;color:#fff !important;border:0 !important;border-radius:16px 16px 16px 4px !important;
+  font:400 14px/1.45 var(--font-text) !important;box-shadow:0 16px 34px -14px rgba(11,16,32,.45) !important;pointer-events:auto !important}
+.slot{position:relative}
+.answer{font-size:26px;font-weight:400;line-height:1.25;letter-spacing:-.02em;margin:2px 0 0;color:var(--paper);text-wrap:pretty}
+.answer strong{font-weight:600;color:var(--blue)}
+.src{font-size:13px;color:var(--muted);margin:14px 0 0;line-height:1.5;text-wrap:pretty}
+.facts{display:flex;gap:10px;margin-top:22px}
+.fact{flex:1;background:var(--panel-2);border-radius:var(--r2);padding:12px 14px 11px}
+.fact b{display:block;font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.fact span{display:block;font-size:12px;color:var(--muted);margin-top:4px;line-height:1.3}
+.act{margin-top:22px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.primary{background:var(--roofer);color:#fff;font-weight:600;font-size:15px;padding:15px 22px;white-space:normal;text-align:center;line-height:1.25;max-width:100%;border-radius:999px;box-shadow:0 10px 24px -10px color-mix(in srgb,var(--roofer) 60%,transparent);transition:transform .2s ease,box-shadow .2s ease}
+.primary:hover{transform:translateY(-1px);box-shadow:0 14px 28px -10px color-mix(in srgb,var(--roofer) 60%,transparent)}
+.primary.done{background:var(--paper);box-shadow:none}
+.ghost{font-weight:500;font-size:14.5px;padding:14px 16px;white-space:nowrap;border-radius:999px;color:var(--paper);box-shadow:inset 0 0 0 1px var(--edge)}
+.spacer{flex:1}
+.handle{display:none}
+/* the conversation scrolls inside the sheet; the composer stays put at the bottom */
+.scroll{display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;margin:0 -8px;padding:0 8px;scrollbar-width:thin}
+.scroll>*{flex:none}
+.scroll .spacer{flex:1 0 12px}
+.dock{display:block;flex:none;padding-top:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{font-size:13px;font-weight:500;padding:8px 13px;border-radius:999px;background:var(--panel-2);color:var(--paper);transition:background .2s ease}
+.chip:hover{background:#EAF0FF}
+.composer{display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:999px;padding:6px 6px 6px 18px;font-size:14.5px;color:var(--muted);box-shadow:inset 0 0 0 1px var(--edge)}
+.composer input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:14.5px;color:var(--paper);outline:none}
+.composer input::placeholder{color:var(--muted)}
+.composer:focus-within{box-shadow:inset 0 0 0 1.5px var(--blue)}
+.answer a{color:var(--blue);text-decoration:underline;text-underline-offset:3px}
+.send{width:40px;height:40px;border-radius:50%;background:var(--blue);display:grid;place-items:center}
+
+/* ranked streets ride on the map; the selected one is the one deep card */
+/* the row ends clear of Nimbus (the shell's 64px orb, 24px in): 24 + 64 + 16 gap */
+.streets{position:fixed;left:calc(var(--sheet-w) + 40px);right:104px;bottom:20px;display:flex;gap:10px;z-index:9}
+.st{flex:1 1 0;min-width:0;background:var(--panel);border-radius:var(--r3);padding:16px 14px 15px;text-align:left;
+  box-shadow:0 18px 40px -22px rgba(11,16,32,.4),0 1px 3px rgba(11,16,32,.06);transition:flex .4s cubic-bezier(.2,.7,.2,1),transform .25s ease,background .25s ease,color .25s ease}
+.st:hover{transform:translateY(-3px)}
+.st .top{display:flex;align-items:center;gap:9px}
+.rk{width:24px;height:24px;border-radius:50%;background:var(--panel-2);font-size:12px;font-weight:600;display:grid;place-items:center;flex:none;color:var(--paper)}
+.st .nm{font-size:14px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st .big{display:flex;align-items:baseline;gap:7px;margin-top:16px}
+.st .big b{font-size:32px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.st .big span{font-size:12.5px;color:var(--muted)}
+.st .row{display:flex;justify-content:space-between;gap:6px;margin-top:12px;font-size:11.5px;color:var(--muted);white-space:nowrap}   /* two labels on one line in a collapsed card */
+.st .row div{display:flex;flex-direction:column;gap:2px}.st .row div+div{text-align:right}.st .row b{color:var(--paper);font-weight:600;font-size:14px}
+.meter{height:4px;border-radius:9px;background:var(--panel-2);margin-top:12px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--blue);border-radius:9px}
+.st .more{display:none;font-size:12.5px;margin-top:12px;color:#AEB7D0}
+.st.on{flex:1.4 1 0;background:var(--paper);color:#fff;transform:translateY(-6px);box-shadow:0 26px 50px -22px rgba(11,16,32,.6)}
+.st.on .rk{background:var(--blue);color:#fff}
+.st.on .big span,.st.on .row{color:#AEB7D0}
+.st.on .row b{color:#fff}
+.st.on .meter{background:rgba(255,255,255,.14)}
+.st.on .meter i{background:#7D9BFF}
+.st.on .more{display:block}
+
+/* low, grouped map furniture */
+.furn{position:fixed;right:20px;bottom:248px;z-index:9;display:flex;align-items:center;gap:10px}
+.legend{background:var(--panel);border-radius:999px;padding:8px 14px 8px 12px;box-shadow:0 10px 26px -16px rgba(11,16,32,.35);display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
+.legend .ramp{width:92px;height:8px;border-radius:999px;background:linear-gradient(90deg,#DCE3F5,#A9BEF7 45%,#2757E6)}
+.legend b{color:var(--paper);font-weight:600}
+.concept{font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.82);padding:7px 12px;border-radius:999px}
+.pin::before{content:"";position:absolute;inset:-7px;border-radius:50%}
+.pin{position:relative;width:30px;height:30px;border-radius:50%;background:var(--paper);color:#fff;font:600 13px var(--font-text);display:grid;place-items:center;box-shadow:0 0 0 3px #fff,0 6px 14px rgba(11,16,32,.35);cursor:pointer;transition:transform .2s}
+.pin.on{background:var(--blue);transform:scale(1.2);box-shadow:0 0 0 3px #fff,0 0 0 5px var(--brass),0 8px 18px rgba(11,16,32,.4)}
+.qchip{display:none}
+/* fresh: nothing asked yet. The question bubble, its time, the street answer, facts, cards and actions wait for the first ask */
+body.fresh .q,body.fresh .qmeta,body.fresh .answer,body.fresh .facts,body.fresh .act,body.fresh .streets,body.fresh .src,body.fresh .qchip,body.fresh #a-most{display:none !important}
+body.nost .facts,body.nost .act,body.nost .streets{display:none !important}
+.hello{font-size:15px;color:var(--muted);margin:0 0 10px;line-height:1.5}
+body:not(.fresh) .hello{display:none}
+
+/* phone: map fills the screen, the conversation is a bottom sheet (peek / half / full) */
+@media (max-width:900px){
+  :root{--bar-h:60px}
+  .bar{gap:12px;padding:0 14px}
+  .pipe,.sig{display:none}
+  .me{margin-left:auto}
+  #map{inset:var(--bar-h) 0 0 0}
+  .maplibregl-ctrl-top-right{top:0;right:0}
+  .qchip{display:block;position:fixed;top:calc(var(--bar-h) + 54px);right:14px;z-index:11;background:var(--panel-2);font-size:14px;font-weight:500;padding:10px 14px;border-radius:16px 16px 4px 16px;box-shadow:0 10px 24px -14px rgba(11,16,32,.4);max-width:78vw;color:var(--paper)}
+  .sheet .q,.sheet .qmeta,.spacer{display:none}
+  .sheet{left:0;right:0;bottom:0;top:auto;width:auto;border-radius:24px 24px 0 0;padding:0;box-shadow:0 -20px 50px -20px rgba(11,16,32,.35);
+    height:var(--sheet-h,58dvh);max-height:94dvh;transition:height .4s cubic-bezier(.2,.7,.2,1);touch-action:none}
+  .sheet[data-state="peek"]{--sheet-h:236px}
+  .sheet[data-state="half"]{--sheet-h:60dvh}
+  .sheet[data-state="full"]{--sheet-h:94dvh}
+  .handle{display:grid;place-items:center;height:28px;flex:none;cursor:grab}
+  .handle i{width:40px;height:5px;border-radius:999px;background:var(--panel-3)}
+  .scroll{display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 16px 12px;touch-action:pan-y;scrollbar-width:none}
+  .scroll>*{flex:none}
+  .nimbus-row{order:1}.answer{order:2}#akx{order:2}.streets{order:3}.act{order:4}.src{order:5}.facts{order:6}.chips{order:7}
+  .ghost{display:none}
+  body[data-sheet="full"] .ghost{display:block}
+  body[data-sheet="full"] .qchip{display:none}
+  body[data-sheet="full"] .sheet .q,body[data-sheet="full"] .sheet .qmeta{display:block}
+  .sheet .q{order:0;margin:4px 0 0}.sheet .qmeta{order:0;margin:6px 0 10px}
+  .scroll::-webkit-scrollbar{display:none}
+  .sheet[data-state="peek"] .scroll{overflow:hidden}
+  .nimbus-row{margin:8px 0 4px}
+  .nb{max-width:220px !important;font-size:13.5px !important;padding:11px 14px !important}
+  .answer{font-size:19px;margin-top:4px;line-height:1.3}
+  .src{margin-top:16px;font-size:12.5px}
+  .facts{margin-top:14px}
+  .fact b{font-size:19px}
+  /* the row scrolls inside a window that ends left of Nimbus (52px orb, 20px in), so no card sits under him */
+  .streets{position:relative;inset:auto;display:flex;overflow-x:auto;gap:10px;margin:12px 78px 0 -16px;padding:6px 10px 8px 16px;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent);scroll-snap-type:x mandatory;scrollbar-width:none}
+  .streets::-webkit-scrollbar{display:none}
+  .st{flex:0 0 152px;padding:11px 14px 11px;border-radius:16px;scroll-snap-align:start;box-shadow:0 1px 0 var(--hair),0 8px 20px -14px rgba(11,16,32,.3)}
+  .st.on{flex:0 0 164px;transform:none}
+  .st .big{margin-top:10px}.st .big b{font-size:26px}
+  .st .row{margin-top:8px}.st .row b{font-size:13px}
+  .st .more,.st.on .more{display:none}
+  .meter{margin-top:8px}
+  .act{margin-top:6px;display:grid;gap:8px}
+  .primary{padding:15px 20px;text-align:center}
+  .ghost{text-align:center;padding:13px 16px}
+  .chips{margin:14px 0 0}
+  /* the composer ends left of Nimbus (52px orb, 20px in, fixed bottom right; he never moves), so Send is never under him */
+  .dock{display:block;flex:none;padding:8px 84px calc(10px + env(safe-area-inset-bottom)) 16px;background:var(--panel)}
+  .composer{min-height:52px}
+  .composer input{min-height:44px;font-size:16px}
+  .send{width:44px;height:44px}
+  .furn{right:auto;left:14px;top:calc(var(--bar-h) + 12px);bottom:auto}
+  .concept{font-size:11px;padding:6px 10px}
+  .legend{display:none}
+  .maplibregl-ctrl-attrib.maplibregl-compact:not(:hover):not(:focus-within) .maplibregl-ctrl-attrib-inner{display:none}
+  .maplibregl-ctrl-attrib.maplibregl-compact:not(:hover):not(:focus-within) .maplibregl-ctrl-attrib-button{display:block}
+}
+@media (prefers-reduced-motion:reduce){.st,.pin,.primary{transition:none}}
+/* Ops Console pass (10-15): square sheet and cards like the rest of the app; the drag grip is a full 44px tap row with a
+   flat bar; street pins stay round (pins, avatar and orb are the round things) with a 44px hit area */
+html.panel .sheet{border-radius:8px}
+html.panel .st,html.panel .fact,html.panel .q,html.panel .qchip{border-radius:8px}
+html.panel .nb{border-radius:8px !important}
+html.panel .rk{border-radius:4px}
+@media (max-width:900px){
+  html.panel .sheet{border-radius:8px 8px 0 0}
+  html.panel .handle{height:44px;touch-action:none}
+  html.panel .handle i{width:36px;height:4px;border-radius:2px;background:#C9CED8}
+  html.panel .st{border-radius:8px}
+  .scroll{margin:0}   /* the desktop -8px bleed left the text 8px from the sheet edge (visual check 10-23) */
+  /* in the panel, full means full: the 6% strip of empty map above the sheet read as a grey band (visual check polish 10-24);
+     dragging down to half still shows the map */
+  html.panel .sheet[data-state="full"]{--sheet-h:100dvh;max-height:none;border-radius:0}
+}
+.pin::before{inset:-8px}
+html.nodata .src,html.nodata .facts{visibility:hidden}
+</style>
+</head>
+<body data-sheet="half" class="fresh">
+<header class="bar">
+  <div class="brand">
+    <div class="logo" id="rlogo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12.5 12 5l9 7.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 11v7.5h11V11" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/><path d="M6 21h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".55"/></svg></div>
+    <div><b id="rname">Jackson Roofing</b><span id="rarea">Roof Command, Plano, TX</span></div>
+  </div>
+  <div class="pipe" aria-label="Pipeline">
+    <div class="pipe-bar"><i id="pb-new" style="flex:1;background:#C9D3EC"></i></div>
+    <div class="pipe-legend" id="pl-legend"><span><b id="pl-new"></b>New hit</span><span><b id="pl-called">0</b>Contacted</span><span><b id="pl-inspection">0</b>Inspection booked</span><span><b id="pl-proposal">0</b>Proposal</span><span><b id="pl-won">0</b>Won</span></div>
+  </div>
+  <div class="sig"><svg viewBox="0 0 63 66"><path fill="#2757E6" d="M 0 3 Q 0 0 3 0 L 27 0 Q 30.5 0 30.5 3.5 L 30.5 28.5 Q 30.5 33.5 35.5 33.5 L 60 33.5 Q 63 33.5 63 36.5 L 63 63 Q 63 66 60 66 L 36 66 Q 32.5 66 32.5 62.5 L 32.5 37.5 Q 32.5 32.5 27.5 32.5 L 3 32.5 Q 0 32.5 0 29.5 Z"/></svg>Powered by Wing Digital</div>
+  <div class="me" id="rme" title=""></div>
+</header>
+
+<div id="map" role="img" aria-label="Map of the latest hail swath with the five hardest-hit streets"></div>
+<div class="qchip" aria-hidden="true">Which streets got hit hardest <span class="sdate">Jun 2</span>?</div>
+
+<aside class="sheet" aria-label="Ask Nimbus" id="sheet" data-state="half">
+  <div class="handle" id="handle" role="button" aria-label="Resize the conversation" tabindex="0"><i></i></div>
+  <div class="scroll">
+  <div class="q">Which streets got hit hardest <span class="sdate">Jun 2</span>?</div>
+  <div class="qmeta" id="rqmeta">7:42 am</div>
+  <div class="nimbus-row"><div class="slot" id="slot" role="status" aria-live="polite"></div></div>
+  <p class="answer" id="answer">Five streets took the most homes at 1 inch or larger.<span id="a-most" hidden> <strong id="a-st"></strong> has the most.</span></p>
+  <div class="ak-wrap" id="akx" aria-live="polite"></div>
+  <p class="hello" id="hello"></p>
+  <p class="src">From the radar hail value at every home on <span class="sdate">Jun 2</span>, county addresses and the texts and emails sent from this device. Inspect before quoting.</p>
+  <div class="facts">
+    <div class="fact"><b id="fx-hit"></b><span>homes hit, 1 in or more</span></div>
+    <div class="fact"><b id="fx-max"></b><span>max hail</span></div>
+    <div class="fact"><b id="fx-five"></b><span>on these five streets</span></div>
+  </div>
+  <div class="act">
+    <button class="primary" id="add">Add to Daily 50</button>
+    <button class="ghost" id="route">Plan a route</button>
+  </div>
+  <section class="streets" id="streets" aria-label="Hardest hit streets"></section>
+  <div class="spacer"></div>
+  <div class="chips">
+    <button class="chip" data-q="Which streets got hit hardest?" data-streets="1">Hardest hit streets</button>
+    <button class="chip" data-q="Open today's list">Today's list</button>
+    <button class="chip" data-q="What is booked?">What is booked?</button>
+    <span id="akchips" style="display:contents"></span>
+  </div>
+  </div>
+  <div class="dock"><form class="composer" id="composer" onsubmit="return false"><input id="ask" type="text" maxlength="200" autocomplete="off" placeholder="Ask about a storm, street or home" aria-label="Ask Nimbus"><button class="send" type="submit" aria-label="Send"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form></div>
+</aside>
+
+<div class="furn">
+  <div class="concept">Concept. Street counts from radar hail per home</div>
+  <div class="legend"><span>Max hail</span><span class="ramp" aria-hidden="true"></span><b id="lg-max"></b></div>
+</div>
+
+<script src="../vendor/maplibre-gl@4.7.1/maplibre-gl.js"></script>
+<script src="../lib/rc-state.js"></script>
+<script src="../lib/brand.js"></script>
+<script src="../lib/rc-features.js"></script>
+<script>/* the roofer brands the page (lib/brand.js) */
+var OWNER=activeRoofer().owner;
+{ const r=activeRoofer(); document.documentElement.style.setProperty('--roofer',r.accent); rooferMark(document.getElementById('rlogo'),r);
+  const area=()=>{ rarea.textContent='Roof Command, '+r.area; }; area(); addEventListener('rc-area',area);
+  rname.textContent=r.name; rme.textContent=r.owner[0]; rme.title=r.owner; document.title=r.name+', Roof Command'; }</script>
+<script src="../lib/wing-mascot.js"></script>
+<script src="../lib/nimbus-shell.js"></script>
+<script src="../lib/rc-queue.js"></script>
+<script src="../lib/st-meta.js"></script><!-- county facts for the hail answer (rc-hail) -->
+<script src="../lib/rc-hail.js"></script><!-- Hail at an address (10-19) -->
+<script src="../lib/rc-ask.js"></script>
+<script>
+// The five hardest-hit streets of the WORKING storm (RC.SHOWCASE, the one the shell header names) by radar hail per home,
+// built in the browser from lib/st-data-dfw (RCAsk.stormStreets). "Not reached" counts (no text or email yet) come from
+// the texts and emails on this device. (Until 10-15 this read a fixed Aug 12, 2025 file, streets-real-dfw.json.)
+let STREETS=[], DATA=null;
+let sel=0; const pins=[];
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const phone=innerWidth<900;
+
+// Nimbus himself is the one floating orb, bottom-right (lib/nimbus-shell.js, from the shell). This page has no orb of
+// its own: his answer line sits in the sheet, and the floating orb reacts. Opened on its own (no shell), the page
+// starts that same floating orb itself.
+const EMBED=document.documentElement.classList.contains('embed');
+// ?panel=1: the page sits in the shell's Ask panel by the Nimbus orb (lib/nimbus-shell.js): the conversation sheet opens full
+const PANEL=new URLSearchParams(location.search).get('panel')==='1';
+if(PANEL){ document.documentElement.classList.add('panel'); const sh=document.getElementById('sheet'); if(sh) sh.dataset.state='full'; }
+if(!EMBED&&window.Nimbus&&window.WingMascot){ Nimbus.init({go:(screen,params)=>RC.go(screen,params)}); Nimbus.setScreen('ask',true); Nimbus.arrive(null); }
+const nim={ setState(){}, pulse(){} };
+const slot=document.getElementById('slot');
+function say(text){
+  let b=slot.querySelector('.nb'); if(!b){ b=document.createElement('div'); b.className='nb'; slot.appendChild(b); }
+  b.textContent=text; slot.classList.add('has');
+}
+const openOf=s=>s.list.filter(h=>RC.stage('m'+h.i)==='new');   // a text or email moves a home to Contacted
+function renderCards(){
+  if(!STREETS.length) return;
+  const max=STREETS[0].homes;
+  document.getElementById('streets').innerHTML=STREETS.map(s=>`<button class="st${s.id===sel?' on':''}" data-id="${s.id}" aria-pressed="${s.id===sel}">
+    <div class="top"><span class="rk">${s.id+1}</span><span class="nm">${RC.esc(s.name)}</span></div>
+    <div class="big"><b>${s.homes}</b><span>homes hit</span></div>
+    <div class="meter"><i style="width:${Math.round(s.homes/max*100)}%"></i></div>
+    <div class="row"><div><span>Max hail</span><b>${s.max.toFixed(2)} in</b></div><div><span>Not reached</span><b>${openOf(s).length}</b></div></div>
+    <div class="more">${RC.esc(s.city)}. Tap the street pin for its homes.</div>
+  </button>`).join('');
+  const s=STREETS[sel], left=openOf(s).filter(h=>!RC.isAdded('m'+h.i)).length, btn=document.getElementById('add');
+  btn.textContent=left?`Add ${left} homes to Daily 50`:`All of ${s.name} is on the list`; btn.disabled=!left; btn.classList.toggle('done',!left);
+}
+document.getElementById('streets').addEventListener('click',e=>{const c=e.target.closest('.st'); if(c) select(+c.dataset.id,true);});
+document.getElementById('add').addEventListener('click',()=>{ const s=STREETS[sel]; if(!s) return; let n=0;
+  openOf(s).forEach(h=>{ const home={id:'m'+h.i,addr:h.addr,county:s.county,city:s.city,lon:h.lon,lat:h.lat,hail:h.hail,storm:DATA.date,from:'ask nimbus'}; RC.remember(home); if(RC.add(home)) n++; });
+  renderCards(); nim.pulse('excited',3000); say(`Done. ${n} homes on ${s.name} joined today's Daily 50, worst hail first.`); });
+
+let map;
+function select(i,fly){
+  sel=i; renderCards();
+  pins.forEach((p,k)=>p.getElement().classList.toggle('on',k===i));
+  const s=STREETS[i];
+  if(map&&map.getLayer('st-sel')) map.setFilter('st-sel',['==',['get','sid'],i]);
+  if(phone){const c=document.querySelector(`.st[data-id="${i}"]`); c&&c.scrollIntoView({inline:'start',block:'nearest',behavior:reduced?'auto':'smooth'});}
+  if(fly){ nim.pulse('thinking',900); setTimeout(()=>say(`${s.name}: ${s.homes} homes hit, up to ${s.max.toFixed(2)} in. ${openOf(s).length} not contacted yet.`),reduced?0:900); }
+}
+RC.on(()=>renderCards());
+
+map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/positron',center:activeRoofer().center,zoom:12.6,attributionControl:false,fadeDuration:0});
+map.addControl(new maplibregl.AttributionControl({compact:true}),'top-right');
+// the roofer's own streets for the working storm (no other storm's streets ever)
+const OWNDATA=true;
+document.documentElement.classList.add('nodata');   /* until the streets land, their facts and source line stay hidden (no other storm's numbers flash first) */
+const dataP=RC.factsReady.then(()=>window.RCAsk&&RCAsk.stormStreets?RCAsk.stormStreets(RC.SHOWCASE):null).catch(()=>null);
+// a storm's short date, with the year whenever it is not this year ("Jun 2" this year, "Aug 12, 2025" before)
+const yd=iso=>{ const d=new Date(iso+'T12:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'}); return iso.slice(0,4)===String(new Date().getFullYear())?d:d+', '+iso.slice(0,4); };
+/* the streets answer names the storm its data is from (the working storm), never a different storm's date (10-15) */
+RC.factsReady.then(()=>{ const dd=yd(DATA&&DATA.date||RC.SHOWCASE);
+
+  document.querySelectorAll('.sdate').forEach(e=>e.textContent=dd);
+  document.getElementById('map').setAttribute('aria-label',`Map of the ${dd} hail swath with the five hardest-hit streets`); });
+map.on('load',()=>dataP.then(d=>{
+  if(!d||!d.streets||!d.streets.length||!d.bbox) return;   /* no streets for the working storm: the page stays on its plain state */
+  DATA=d; STREETS=d.streets.map((s,i)=>Object.assign(s,{id:i})); document.documentElement.classList.remove('nodata');
+  if(d.date){ const dd=yd(d.date); document.querySelectorAll('.sdate').forEach(e=>e.textContent=dd); document.getElementById('map').setAttribute('aria-label',`Map of the ${dd} hail swath with the five hardest-hit streets`); }
+  const B=d.bbox;
+  map.fitBounds([[B[0]-.004,B[1]-.002],[B[2]+.004,B[3]+.002]],{padding:phone?{top:110,bottom:innerHeight*0.61+16,left:20,right:20}:{top:90,bottom:230,left:490,right:40},duration:0});
+  // tint the basemap to the site's cool greys; blue is kept for data
+  map.getStyle().layers.forEach(l=>{
+    try{
+      if(l.type==='background') map.setPaintProperty(l.id,'background-color','#E9ECF1');
+      else if(l.type==='fill'&&/water/.test(l.id)) map.setPaintProperty(l.id,'fill-color','#D2D7E0');
+      else if(l.type==='fill'&&/park|landcover|wood|grass|landuse/.test(l.id)) map.setPaintProperty(l.id,'fill-color','#E2E6EC');
+      else if(l.type==='fill'&&/building/.test(l.id)) {map.setPaintProperty(l.id,'fill-color','#DEE2E9'); map.setPaintProperty(l.id,'fill-opacity',0.9);}
+      else if(l.type==='line'&&/highway|road|street|minor|major|motorway|trunk|primary|secondary|tertiary|path|rail/.test(l.id)) map.setPaintProperty(l.id,'line-color',/motorway|trunk/.test(l.id)?'#C9D0DC':'#FFFFFF');
+      else if(l.type==='line'&&/boundary/.test(l.id)) map.setPaintProperty(l.id,'line-opacity',0.2);
+      else if(l.type==='symbol'&&l.paint&&'text-color' in (l.paint||{})) {map.setPaintProperty(l.id,'text-color','#5B6478'); map.setPaintProperty(l.id,'text-halo-color','#EEF0F4'); map.setPaintProperty(l.id,'text-halo-width',1.4);}
+      if(l.type==='symbol'&&/poi/.test(l.id)) map.setLayoutProperty(l.id,'visibility','none');
+    }catch(e){}
+  });
+  const firstSym=map.getStyle().layers.find(l=>l.type==='symbol')?.id;
+  const mx=Math.max(1.05,d.max);
+  const hitFC={type:'FeatureCollection',features:d.hits.map(p=>({type:'Feature',properties:{w:+Math.min(1,(p[2]-0.9)/(mx-0.9)).toFixed(3),h:p[2]},geometry:{type:'Point',coordinates:[p[0],p[1]]}}))};
+  map.addSource('hail',{type:'geojson',data:hitFC});
+  map.addLayer({id:'hail',type:'heatmap',source:'hail',paint:{
+    'heatmap-weight':['get','w'],
+    'heatmap-intensity':['interpolate',['linear'],['zoom'],11,0.3,13,0.5,15,0.8],
+    'heatmap-radius':['interpolate',['exponential',1.8],['zoom'],11,10,13,26,14,44,15,80],
+    'heatmap-color':['interpolate',['linear'],['heatmap-density'],0,'rgba(222,229,246,0)',0.18,'rgba(214,223,247,.55)',0.42,'#C7D3F5',0.68,'#A9BEF7',0.88,'#88A3F0',1,'#6F8FF0'],
+    'heatmap-opacity':0.66}},firstSym);
+  map.addLayer({id:'homes',type:'circle',source:'hail',paint:{'circle-radius':['interpolate',['linear'],['zoom'],11,1.2,14,2.6],'circle-color':'#1F47C9','circle-opacity':0.35}},firstSym);
+  const stFC={type:'FeatureCollection',features:[]};
+  STREETS.forEach(s=>s.list.forEach(h=>stFC.features.push({type:'Feature',properties:{sid:s.id},geometry:{type:'Point',coordinates:[h.lon,h.lat]}})));
+  map.addSource('st',{type:'geojson',data:stFC});
+  map.addLayer({id:'st',type:'circle',source:'st',paint:{'circle-radius':['interpolate',['linear'],['zoom'],11,1.8,14,3.6],'circle-color':'#5B6478','circle-stroke-color':'#fff','circle-stroke-width':0.8}});
+  map.addLayer({id:'st-sel',type:'circle',source:'st',filter:['==',['get','sid'],sel],paint:{'circle-radius':['interpolate',['linear'],['zoom'],11,2.6,14,5],'circle-color':'#2757E6','circle-stroke-color':'#fff','circle-stroke-width':1}});
+  STREETS.forEach(s=>{ const el=document.createElement('button'); el.className='pin'+(s.id===sel?' on':''); el.textContent=s.id+1; el.setAttribute('aria-label',s.name);
+    el.addEventListener('click',()=>select(s.id,true)); pins[s.id]=new maplibregl.Marker({element:el}).setLngLat(s.mid).addTo(map); });
+  const five=STREETS.reduce((a,s)=>a+s.homes,0), t=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v;};
+  t('a-st',STREETS[0].name); { const am=document.getElementById('a-most'); if(am) am.hidden=false; }   /* gone once another question replaced the streets answer */ t('fx-five',RC.fmt(five)); t('fx-hit',RC.fmt(d.homes)); t('fx-max',d.max.toFixed(2)+' in'); t('lg-max',d.max.toFixed(2)+' in');
+  renderCards();
+  if(!document.body.classList.contains('fresh')){ const s=STREETS[0]; say(`${s.name} got it worst: ${s.homes} homes, hail up to ${s.max.toFixed(2)} in. ${openOf(s).length} still need a text.`); }
+  map.once('idle',()=>{document.querySelectorAll('.maplibregl-ctrl-attrib').forEach(a=>a.classList.remove('maplibregl-compact-show')); window.__ready=true;});
+}));
+// bottom sheet: peek / half / full by drag, tap or keyboard
+const sheet=document.getElementById('sheet'), handle=document.getElementById('handle'); const STATES=['peek','half','full'];
+function setSheet(st){ sheet.dataset.state=st; document.body.dataset.sheet=st; }
+window.__sheet=setSheet;
+let y0=null,st0=null;
+handle.addEventListener('pointerdown',e=>{y0=e.clientY; st0=STATES.indexOf(sheet.dataset.state); handle.setPointerCapture(e.pointerId);});
+handle.addEventListener('pointermove',e=>{ if(y0===null) return; const dy=y0-e.clientY; if(Math.abs(dy)>60){ setSheet(STATES[Math.max(0,Math.min(2,st0+(dy>0?1:-1)))]); y0=e.clientY; st0=STATES.indexOf(sheet.dataset.state);} });
+handle.addEventListener('pointerup',e=>{ if(y0!==null&&Math.abs(y0-e.clientY)<6) setSheet(sheet.dataset.state==='full'?'half':sheet.dataset.state==='half'?'full':'half'); y0=null; });
+handle.addEventListener('keydown',e=>{const i=STATES.indexOf(sheet.dataset.state); if(e.key==='ArrowUp') setSheet(STATES[Math.min(2,i+1)]); if(e.key==='ArrowDown') setSheet(STATES[Math.max(0,i-1)]);});
+
+// ---- one set of facts (lib/rc-state.js) and a real composer; answers from the same brain as the shell ----
+(function(){
+  function paint(){
+    const s=RC.facts.storm, t=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v;}; if(!s.homes) return;
+    if(!DATA){ t('fx-hit',RC.fmt(s.homes)); t('fx-max',s.max+' in'); t('lg-max',s.max+' in'); }   /* the streets data carries its own storm's numbers */
+    // the pipeline strip counts what the CRM board counts (today's 50, homes added by hand, homes with a record), never a
+    // storm's hit count under "New hit" (it said 6,546 New hit while the board said 50, 10-15)
+    const ids=new Set((RC.daily?RC.daily():[]).filter(p=>p.status!=='closed'||RC.pipeline()[p.id]).map(p=>p.id)); RC.added().forEach(a=>ids.add(a.id)); Object.keys(RC.pipeline()).forEach(k=>ids.add(k));
+    const c={new:0,called:0,handoff:0,inspection:0,proposal:0,won:0}; ids.forEach(id=>{ if((RC.pipeline()[id]||{}).archived) return; const st=RC.stage(id); c[st]=(c[st]||0)+1; });
+    t('pl-new',RC.fmt(c.new)); t('pl-called',RC.fmt(c.called+c.handoff)); t('pl-inspection',RC.fmt(c.inspection)); t('pl-proposal',RC.fmt(c.proposal)); t('pl-won',RC.fmt(c.won));
+    const pb=document.getElementById('pb-new'); if(pb) pb.style.flex=String(Math.max(1,c.new));
+  }
+  paint(); RC.factsReady.then(paint); if(RC.queueReady) RC.queueReady.then(paint); RC.on(paint);
+  document.getElementById('hello').textContent=(RC.greeting?RC.greeting():'Hello')+', '+OWNER+'. Ask me about a storm, a street or a home on your list.';
+  say('Ask me anything about your storms, streets and homes.');
+  const input=document.getElementById('ask'), form=document.getElementById('composer'), ans=document.getElementById('answer');
+  const qEl=document.querySelector('.sheet .q'), meta=document.querySelector('.sheet .qmeta'), qchip=document.querySelector('.qchip');
+  const src=document.querySelector('.src');
+  // Nimbus names the showcase storm by its short date ("Aug 12"); on this page it carries the year when that is not this year.
+  // (Done on the answer, not on RC.facts, so typing "Aug 12" still finds the storm.)
+  function withYear(html){ const s=RC.facts.storm; if(!s||!s.iso||!s.d) return html; const full=yd(s.iso); if(full===s.d) return html;
+    return html.split(s.d+' ').join(full+' ').split(s.d+'<').join(full+'<').split(s.d+'.').join(full+'.').split(s.d+':').join(full+':'); }
+  const STREET_HTML=ans.innerHTML, STREET_SRC=src.innerHTML;
+  const akx=document.getElementById('akx'); let askTok=0, akMarks=[];
+  akx.addEventListener('click',e=>window.RCAsk&&RCAsk.onClick(e));
+  function clearStops(){ akMarks.forEach(m=>m.remove()); akMarks=[]; if(map&&map.getLayer&&map.getLayer('ak-line')){ map.removeLayer('ak-line'); map.removeSource('ak-line'); }
+    if(map&&map.getLayer){ ['st','st-sel'].forEach(l=>map.getLayer(l)&&map.setLayoutProperty(l,'visibility','visible')); }
+    pins.forEach(p=>p&&p.getElement&&(p.getElement().style.display='')); }
+  function showStops(stops,line){
+    if(!map) return;
+    ['st','st-sel'].forEach(l=>map.getLayer(l)&&map.setLayoutProperty(l,'visibility','none')); pins.forEach(p=>p&&p.getElement&&(p.getElement().style.display='none'));
+    stops.forEach(s=>{ const el=document.createElement('div'); el.className='ak-pin'+(s.small?' sm':'')+(/^[JP]$/.test(s.label)?' job':''); el.textContent=s.label; el.title=s.title||'';
+      akMarks.push(new maplibregl.Marker({element:el}).setLngLat([s.lon,s.lat]).addTo(map)); });
+    if(line&&stops.length>1){ try{ map.addSource('ak-line',{type:'geojson',data:{type:'Feature',properties:{},geometry:{type:'LineString',coordinates:stops.map(s=>[s.lon,s.lat])}}});
+      map.addLayer({id:'ak-line',type:'line',source:'ak-line',paint:{'line-color':'#2757E6','line-width':3,'line-opacity':.75,'line-dasharray':[2,1.4]}}); }catch(e){} }
+    const b=new maplibregl.LngLatBounds(); stops.forEach(s=>b.extend([s.lon,s.lat]));
+    const pad=phone?{top:90,bottom:Math.round(innerHeight*0.6),left:30,right:30}:{top:90,bottom:60,left:510,right:60};
+    if(stops.length===1) map.easeTo({center:[stops[0].lon,stops[0].lat],zoom:15.5,padding:pad,duration:reduced?0:600}); else map.fitBounds(b,{padding:pad,maxZoom:16,duration:reduced?0:600});
+  }
+  const isStreets=q=>/streets?|hardest|worst hit/i.test(q)&&!(window.RCAsk&&RCAsk.match(q));
+  function ask(q){
+    q=(q||'').trim(); if(!q) return;
+    const t=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}).toLowerCase();
+    document.body.classList.remove('fresh');
+    qEl.textContent=q; meta.textContent=OWNER+', '+t; if(qchip) qchip.textContent=q;
+    if(isStreets(q)){ document.body.classList.remove('nost'); ans.innerHTML=STREET_HTML; src.innerHTML=STREET_SRC; { const dd=yd(DATA&&DATA.date||RC.SHOWCASE); src.querySelectorAll('.sdate').forEach(e=>e.textContent=dd); } document.getElementById('a-most').hidden=!STREETS.length;
+      nim.pulse('excited',2500); if(phone&&sheet.dataset.state==='peek') setSheet('half');
+      const s0=STREETS[0]; say(s0?`${s0.name} got it worst: ${s0.homes} homes, hail up to ${s0.max.toFixed(2)} in.`:'Counting the streets.'); return; }
+    document.body.classList.add('nost');
+    clearStops(); akx.innerHTML='';
+    // the eight approved questions (lib/rc-ask.js) answer from the real data; anything else goes to Nimbus's own brain
+    const ak=window.RCAsk&&RCAsk.answer(q);
+    if(ak){
+      const tok=++askTok; ans.textContent='Looking that up.'; src.textContent='';
+      if(phone&&sheet.dataset.state!=='full') setSheet('full');
+      ak.then(r=>{ if(tok!==askTok) return;
+        ans.textContent=r.head||''; akx.innerHTML=r.html||''; src.textContent='';
+        if(r.stops&&r.stops.length) showStops(r.stops,r.line);
+        say(r.say||r.head||''); nim.pulse('excited',2500);
+        if(r.later) r.later.then(h=>{ if(tok===askTok) akx.innerHTML=h; });
+      });
+      return;
+    }
+    const r=Nimbus.answer(q);
+    ans.innerHTML=withYear(r.html);
+    src.textContent=r.fallback?'Nimbus answers from the storms, the homes and your pipeline on this device.':'From the storm list, the home list and the pipeline on this device.';
+    nim.pulse(r.mood==='alert'?'alert':'excited',2500);
+    if(phone&&sheet.dataset.state==='peek') setSheet('half');
+    say(ans.textContent.replace(/\s+/g,' ').trim().slice(0,110));
+    if(r.go) setTimeout(()=>RC.go(r.go.screen,r.go.params),900);
+  }
+  form.addEventListener('submit',e=>{e.preventDefault(); const q=input.value; input.value=''; ask(q);});
+  form.dataset.live='1';
+  if(window.RCAsk){ const box=document.getElementById('akchips'); box.innerHTML=RCAsk.CHIPS.map(c=>`<button class="chip" data-q="${RC.esc(c[1])}">${RC.esc(c[0])}</button>`).join(''); }
+  document.querySelectorAll('.chip[data-q]').forEach(c=>c.addEventListener('click',()=>ask(c.dataset.q)));
+  document.getElementById('route').addEventListener('click',()=>RC.go('daily',{}));
+  ans.addEventListener('click',e=>{const a=e.target.closest('a[data-go]'); if(!a) return; e.preventDefault(); let p={}; try{p=JSON.parse(a.getAttribute('data-params')||'{}')}catch(err){} RC.go(a.getAttribute('data-go'),p);});
+  const q0=new URLSearchParams(location.search).get('q'); if(q0) setTimeout(()=>ask(q0),reduced?0:1200);
+  // the shell's Nimbus panel (#/ask?q=, RC.go('ask',{q})) hands a question to the page already loaded
+  addEventListener('message',e=>{ if(e.origin!==location.origin) return; const d=e.data||{}; if(d.type==='ask'&&d.q) ask(String(d.q)); });
+})();
+</script>
+</body>
+</html>

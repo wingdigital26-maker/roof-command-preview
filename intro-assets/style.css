@@ -1,0 +1,534 @@
+/* Wing Digital v4: the site is the piece. The stage engine owns #stage; this file owns content.
+   Every font-size, space and radius below references a token. Inner pages reuse the same tokens. */
+
+@font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;src:url(fonts/inter-var-latin.woff2) format('woff2')}
+
+
+:root{
+  /* colour */
+  --stage-a:#ECEEF2;
+  --stage-b:#F7F8FA;
+  --bar:#E6E8ED;
+  --panel:#FFFFFF;
+  --panel-2:#F1F3F6;
+  --panel-3:#E4E7EC;
+  --blue:#2757E6;
+  --blue-light:#1F47C9;
+  --paper:#0B1020;
+  --muted:#465065;            /* 7:1 or better on the light stage and on white panels */
+  --hair:rgba(11,16,32,.14);
+  --edge:#737B8F;             /* control boundaries: at least 3:1 on the bar, the stage and panels */
+  --brass:#8A5A00;
+  --danger:#B42318;
+
+  /* TYPE SCALE. One modular scale, fluid between 360px and 1440px (Utopia method).
+     Ratio 1.25 (major third) on phones so the big steps still fit a 375px line, opening to
+     1.333 (perfect fourth) on desktop because this is an editorial single-column page, not dense UI.
+     Base 17px to 18px: light text on a dark stage reads thinner, so body runs a touch over 16. */
+  --step--1: 0.875rem;                                              /* 14px fixed: small text never shrinks */
+  --step-0: clamp(1.0625rem, 1.0417rem + 0.0926vw, 1.1250rem);      /* 17.0 to 18.0 */
+  --step-1: clamp(1.3281rem, 1.2708rem + 0.2546vw, 1.5000rem);      /* 21.2 to 24.0 */
+  --step-2: clamp(1.6602rem, 1.5469rem + 0.5035vw, 2.0000rem);      /* 26.6 to 32.0 */
+  --step-3: clamp(2.0752rem, 1.8780rem + 0.8763vw, 2.6667rem);      /* 33.2 to 42.7 */
+  --step-4: clamp(2.5940rem, 2.2735rem + 1.4245vw, 3.5556rem);      /* 41.5 to 56.9 */
+  --step-5: clamp(3.2425rem, 2.7431rem + 2.2196vw, 4.7407rem);      /* 51.9 to 75.9 */
+  --step-6: clamp(4.0531rem, 3.2972rem + 3.3598vw, 6.3210rem);      /* 64.8 to 101.1 */
+  /* ROLE MAP
+     hero words  step-6  lh 1.0   track -.035em  w500
+     h1          step-5  lh 1.04  track -.03em   w500
+     h2          step-4  lh 1.08  track -.025em  w500
+     interlude   step-3  lh 1.12  track -.02em   w500   (one short line over the stage)
+     h3 / figure step-2  lh 1.15  track -.015em  w500
+     lead / faq q step-1 lh 1.4
+     body        step-0  lh 1.5
+     small       step--1 lh 1.45  (nav, footer, form labels, errors)
+     mono label  step--1 IBM Plex Mono, uppercase, track +.1em */
+  --font-text:'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+
+  /* SPACING SCALE, 4px base */
+  --space-1:.25rem;  /* 4 */
+  --space-2:.5rem;   /* 8 */
+  --space-3:.75rem;  /* 12 */
+  --space-4:1rem;    /* 16 */
+  --space-5:1.5rem;  /* 24 */
+  --space-6:2rem;    /* 32 */
+  --space-7:3rem;    /* 48 */
+  --space-8:4rem;    /* 64 */
+  --space-9:6rem;    /* 96 */
+  --space-10:8rem;   /* 128 */
+  --space-chapter:clamp(4rem, 2.667rem + 5.926vw, 8rem);  /* space-8 on phones to space-10 on desktop */
+  --gutter:var(--space-5);
+  --target:2.75rem;  /* 44px minimum touch target */
+  --nav-h:calc(var(--target) + var(--space-3) * 2);
+
+  /* RADIUS SCALE. Nested radius = outer minus padding, floored at --radius-1. */
+  --radius-1:4px;    /* inputs and anything nested inside a padded panel */
+  --radius-2:12px;   /* burger */
+  --radius-3:20px;   /* panels and media frames */
+  --radius-pill:999px;
+
+  /* layout */
+  --col-text:45rem;   /* 720px */
+  --col-media:60rem;  /* 960px */
+  --col-wide:77.5rem; /* 1240px: nav, hero words, footer share these outer gutters */
+  --measure:48ch;        /* 1ch is the wide 0 glyph here, so 48ch sets about 65 to 73 real characters a line */
+  --measure-lead:40ch;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+
+body{
+  margin:0;
+  background:
+    radial-gradient(ellipse 60% 48% at 50% 40%, rgba(255,255,255,.95), rgba(255,255,255,0) 70%),
+    linear-gradient(180deg, #B9BEC9 0%, #D5D9E0 30%, #ECEEF2 62%, #F7F8FA 100%);
+  background-attachment:fixed;
+  color:var(--paper);
+  font-family:var(--font-text);
+  font-size:var(--step-0);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+
+img{max-width:100%; display:block}
+button,input,textarea,select{font:inherit; letter-spacing:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--blue-light); outline-offset:3px; border-radius:var(--radius-1)}
+.btn:focus-visible{border-radius:var(--radius-pill)}
+
+h1,h2,h3{font-family:var(--font-text); font-weight:500; color:var(--paper); margin:0; text-wrap:balance}
+h1{font-size:var(--step-5); line-height:1.04; letter-spacing:-.03em}
+h2{font-size:var(--step-4); line-height:1.08; letter-spacing:-.025em}
+h3{font-size:var(--step-2); line-height:1.15; letter-spacing:-.015em}
+
+p{margin:0 0 var(--space-4); max-width:var(--measure); text-wrap:pretty}
+p:last-child{margin-bottom:0}
+.lead{font-size:var(--step-1); line-height:1.4; color:var(--muted); max-width:var(--measure-lead)}
+
+.lbl,.n,footer .fh{
+  font-family:var(--font-mono);
+  font-size:var(--step--1);
+  font-weight:400;
+  line-height:1.45;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.lbl{display:block}
+.n{color:var(--blue-light)}
+
+.skip{position:absolute; left:-9999px; top:0; z-index:999; background:var(--blue); color:#fff; padding:var(--space-3) var(--space-4); font-size:var(--step--1)}
+.skip:focus{left:var(--space-4); top:var(--space-4)}
+#content{scroll-margin-top:var(--nav-h)}
+#content:focus{outline:none}
+.sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap}
+
+/* ---------- layout: one centred column, at least 12vw of clear gutter each side for the plate frame ---------- */
+.wrap{max-width:var(--col-wide); margin:0 auto; padding:0 var(--gutter)}
+.column{max-width:var(--col-text); margin:0 auto; padding:0 var(--gutter)}
+.column--media{max-width:var(--col-media)}
+@media (min-width:821px){
+  .column{max-width:min(var(--col-text), 76vw)}
+  .column--media{max-width:min(var(--col-media), 76vw)}
+}
+
+.frame-block{position:relative; z-index:1; padding:var(--space-chapter) 0}
+.frame-block--open{padding-top:calc(var(--space-chapter) * 1.5)}
+.frame-block .lbl + h2{margin-top:var(--space-4)}
+.frame-block h1 + .lead,
+.frame-block h2 + .lead{margin-top:var(--space-5)}
+.frame-block .lead + .btn{margin-top:var(--space-6)}
+
+/* one quiet rise-in for copy */
+/* hidden only when JS is running (the js class is set inline in <head>) */
+.js .rv{opacity:0; transform:translateY(16px); transition:opacity .4s ease-out, transform .4s ease-out}
+.js .rv.in{opacity:1; transform:none}
+@media (prefers-reduced-motion: reduce){ .js .rv{opacity:1; transform:none; transition:none} }
+
+/* ---------- surfaces: dark panel plus hairline, never a shadow ---------- */
+.frame{
+  border:1px solid var(--hair);
+  border-radius:var(--radius-3);
+  overflow:hidden;
+  background:var(--panel);
+}
+.frame img{width:100%; height:auto}
+.panel{border:1px solid var(--hair); border-radius:var(--radius-3); background:var(--panel)}
+.frame .cap{color:var(--muted); padding:var(--space-4) var(--space-5); margin:0; max-width:calc(var(--measure) + var(--space-5) * 2)}
+.frame .cap b{color:var(--paper); font-weight:500}
+
+/* ---------- nav: solid bar, wordmark left, links and the primary pill far right ---------- */
+#nav{
+  position:fixed; top:0; left:0; right:0; z-index:50;
+  background:var(--bar);
+  border-bottom:1px solid transparent;
+  transition:border-color .3s ease;
+}
+#nav.solid{border-bottom-color:var(--hair)}
+#nav .wrap{display:flex; align-items:center; gap:var(--space-5); height:var(--nav-h)}
+.logo{
+  display:inline-flex; align-items:center; gap:var(--space-3); min-height:var(--target);
+  font-weight:600; font-size:var(--step-0); letter-spacing:-.01em; text-decoration:none;
+  position:relative; z-index:51; white-space:nowrap;
+}
+.logo img{width:26px; height:27px}
+.navlinks{display:flex; align-items:center; gap:var(--space-2); margin-left:auto}
+.navlinks a{
+  display:inline-flex; align-items:center; min-height:var(--target); padding:0 var(--space-3);
+  font-size:var(--step--1); text-decoration:none; color:var(--muted); transition:color .2s ease;
+}
+.navlinks a:hover{color:var(--paper)}
+.navlinks a[aria-current="page"]{color:var(--paper)}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:var(--space-7);
+  padding:0 var(--space-5);
+  font-family:var(--font-text); font-weight:600; font-size:var(--step-0); line-height:1;
+  border-radius:var(--radius-pill);
+  background:var(--blue); color:#fff;
+  text-decoration:none; border:1px solid transparent; cursor:pointer;
+  transition:background .2s ease, color .2s ease;
+}
+.btn:hover{background:var(--blue-light); color:var(--bar)}
+.btn--secondary{background:var(--panel-2); color:var(--paper); border-color:var(--hair)}
+.btn--secondary:hover{background:var(--panel-3); color:var(--paper)}
+.nav-cta{min-height:var(--target); padding:0 var(--space-4); font-size:var(--step--1); position:relative; z-index:51}
+
+.sound-toggle{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:var(--target); min-width:var(--target); padding:0 var(--space-3);
+  font-family:var(--font-mono); font-size:var(--step--1); line-height:1; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); background:transparent; border:1px solid var(--edge); border-radius:var(--radius-pill);
+  cursor:pointer; position:relative; z-index:51; transition:color .2s ease, border-color .2s ease;
+}
+.sound-toggle:hover{color:var(--paper)}
+.sound-toggle[aria-pressed="true"]{color:var(--paper); border-color:var(--blue-light)}
+.sound-toggle:focus-visible{outline:2px solid var(--blue-light); outline-offset:2px; border-radius:var(--radius-pill)}
+.sound-toggle[hidden]{display:none}
+
+/* the burger comes before the links in the DOM (focus order); order puts it last in the bar */
+.burger{
+  display:none; position:relative; z-index:51; order:9;
+  width:var(--target); height:var(--target);
+  background:transparent; border:1px solid var(--edge); border-radius:var(--radius-2);
+  padding:0; cursor:pointer;
+  flex-direction:column; align-items:center; justify-content:center; gap:var(--space-1);
+}
+.burger span{display:block; width:18px; height:2px; background:var(--paper); transition:transform .2s ease, opacity .2s ease}
+.burger[aria-expanded="true"] span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.burger[aria-expanded="true"] span:nth-child(2){opacity:0}
+.burger[aria-expanded="true"] span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+@media (prefers-reduced-motion: reduce){ .burger span{transition:none} }
+
+@media (max-width:900px){
+  #nav .wrap{gap:var(--space-3)}
+  .navlinks{display:none}
+  .sound-toggle{margin-left:auto; letter-spacing:.04em}
+  .burger{display:flex}
+  #nav.menu-open .navlinks{
+    display:flex; flex-direction:column; align-items:flex-start; position:fixed; inset:0;
+    background:var(--stage-b);
+    padding:calc(var(--nav-h) + var(--space-6)) var(--gutter) var(--space-6); gap:var(--space-2); z-index:49; margin:0;
+    overflow-y:auto;
+  }
+  #nav.menu-open .navlinks a{font-size:var(--step-3); letter-spacing:-.02em; color:var(--paper); padding:0; min-height:var(--space-8)}
+}
+/* phones: wordmark, Contact us and the burger fill the bar, so Sound lives in the open menu */
+@media (max-width:599px){
+  .sound-toggle{display:none}
+  .nav-cta{margin-left:auto}
+  #nav.menu-open .sound-toggle{display:inline-flex; position:fixed; left:var(--gutter); bottom:var(--space-6); margin:0}
+}
+@media (max-width:359px){ #nav .wrap{gap:var(--space-2); padding:0 var(--space-4)} .logo{gap:var(--space-2)} .nav-cta{padding:0 var(--space-2)} }
+body.menu-locked{overflow:hidden}
+
+/* ---------- hero: piece dead centre, split headline, nothing else ---------- */
+.hero{
+  min-height:100vh; min-height:100svh;
+  display:flex; align-items:center; justify-content:center;
+  position:relative; z-index:1;
+  padding-top:var(--nav-h);
+}
+.split-head{
+  display:flex; justify-content:space-between; align-items:center;
+  width:100%; max-width:var(--col-wide); margin:0 auto; padding:0 var(--gutter);
+  pointer-events:none;
+}
+.split-head span{font-weight:500; font-size:var(--step-6); line-height:1; letter-spacing:-.035em; color:var(--paper)}
+/* one quiet line under the piece: what Wing does, for whom, where (v3's hero meta, word for word) */
+.hero-line{
+  position:absolute; left:0; right:0; bottom:var(--space-6); margin:0 auto; max-width:none; padding:0 var(--gutter);
+  display:flex; flex-wrap:wrap; justify-content:center; gap:var(--space-1) var(--space-6);
+  font-family:var(--font-mono); font-size:var(--step--1); line-height:1.45; letter-spacing:.04em;
+  color:var(--muted); text-align:center; pointer-events:none;  /* sentence case: an all-caps run this long reads slower (W10) */
+}
+@media (max-width:820px){ .hero-line{flex-direction:column; align-items:center; bottom:var(--space-5)} }
+/* phones: the words sit above and below the piece, never on it. The piece is width-bound here
+   (about 80vw), so the gap between the words follows the viewport width. */
+@media (max-width:820px) and (orientation:portrait){
+  .split-head{flex-direction:column; justify-content:center; gap:min(52svh, 92vw); text-align:center; margin-bottom:var(--space-8)}
+}
+
+/* ---------- interludes: a pinned full-viewport stage; copy lives in the top and bottom bands,
+   the centre belongs to the re-formed piece ---------- */
+.interlude{position:relative; z-index:1; height:var(--ih, 100vh)}
+.interlude--services{--ih:240vh}
+.interlude--work{--ih:190vh}
+.interlude--process{--ih:320vh}
+.interlude--build{--ih:320vh}   /* the assemble interlude on the work and website pages: without this it had no pin distance and the four steps flashed past */
+.interlude--contact{--ih:100vh}
+/* the stage pins inside its own section and lets go when the section ends: nothing overhangs the next chapter */
+.interlude-stage{
+  position:sticky; top:0;
+  height:100vh; height:100svh;
+  display:flex; flex-direction:column; justify-content:space-between; align-items:center;
+  text-align:center;
+  padding:calc(var(--nav-h) + var(--space-7)) var(--gutter) var(--space-7);
+  pointer-events:none;
+}
+.band{width:100%; max-width:var(--col-media)}
+.band h2{font-size:var(--step-3); line-height:1.12; letter-spacing:-.02em; margin-top:var(--space-3)}
+@media (prefers-reduced-motion: reduce){ .interlude--services{--ih:100vh} }
+
+.cluster-row{display:flex; flex-wrap:wrap; gap:var(--space-3); justify-content:center}
+.cluster-row span{
+  font-family:var(--font-mono); font-size:var(--step--1); line-height:1; letter-spacing:.04em;
+  display:inline-flex; align-items:center; min-height:var(--space-6);
+  border:1px solid var(--hair); border-radius:var(--radius-pill); padding:0 var(--space-4);
+  color:var(--muted); background:var(--bar);
+  transition:color .3s ease, border-color .3s ease, background .3s ease;
+}
+.cluster-row span[data-piece-active]{color:var(--paper); border-color:var(--blue-light); background:var(--panel-2)}
+/* phones: two rows of pills whose centres stay under 40px apart, so the engine still steps them in order */
+@media (max-width:640px){
+  .cluster-row{gap:var(--space-1) var(--space-2)}
+  .cluster-row span{padding:0 var(--space-3)}
+}
+
+/* ---------- services ---------- */
+.svc-row,.work-row{padding:var(--space-7) 0; border-top:1px solid var(--hair)}
+.svc-row:first-child,.work-row:first-child{padding-top:0; border-top:none}
+.svc-row:last-child,.work-row:last-child{padding-bottom:0}
+.svc-row h3{margin-top:var(--space-2)}
+.svc-row p{margin-top:var(--space-4)}
+.svc-row p b{font-weight:500}
+.svc-row ul{list-style:none; margin:var(--space-4) 0 0; padding:0; color:var(--muted)}
+.svc-row li{padding:var(--space-1) 0 var(--space-1) var(--space-5); position:relative; max-width:var(--measure)}
+.svc-row li::before{content:''; position:absolute; left:0; top:.75em; width:var(--space-3); height:1px; background:var(--blue-light)}
+@media (min-width:821px){
+  .svc-row{display:grid; grid-template-columns:14rem 1fr; column-gap:var(--space-6); grid-template-rows:auto auto auto 1fr}
+  .svc-row .n{grid-column:1; grid-row:1}
+  .svc-row h3{grid-column:1; grid-row:2 / span 3}
+  .svc-row p{grid-column:2; grid-row:1 / span 2; margin-top:0}
+  .svc-row ul{grid-column:2; grid-row:3}
+  .svc-row .ar{grid-column:2; grid-row:4; justify-self:start}
+}
+/* the whole row is the link: the heading link stretches over its row */
+.svc-row{position:relative}
+.rowlink{display:inline-flex; align-items:center; min-height:var(--target); text-decoration:none}
+.rowlink::after{content:''; position:absolute; inset:0}
+.rowlink:focus-visible{outline:none}
+.rowlink:focus-visible::after{outline:2px solid var(--blue-light); outline-offset:var(--space-2); border-radius:var(--radius-1)}
+.svc-row .ar{display:inline-block; margin-top:var(--space-4); color:var(--blue-light); font-size:var(--step-1); line-height:1; transition:transform .2s ease}
+.svc-row:hover .ar,.svc-row:focus-within .ar{transform:translateX(var(--space-2))}
+.svc-row:hover .rowlink,.svc-row:focus-within .rowlink{color:var(--blue-light)}
+@media (prefers-reduced-motion: reduce){ .svc-row .ar{transition:none} }
+.tlink{
+  display:inline-flex; align-items:center; min-height:var(--target); margin-top:var(--space-3);
+  text-decoration:none; color:var(--blue-light); font-weight:600; font-size:var(--step-0);
+}
+.tlink:hover{color:var(--paper)}
+
+/* ---------- work ---------- */
+.work-row h3{font-size:var(--step-3); letter-spacing:-.02em; line-height:1.12; margin:var(--space-2) 0 var(--space-5)}
+.work-row .frame{margin-bottom:var(--space-5)}
+.evidence-row{margin-top:var(--space-6)}
+.lead + .evidence-row{margin-top:var(--space-7)}
+
+/* ---------- process: pinned stage, label in the top band, the live step caption in the bottom band ---------- */
+/* empty step blocks the engine and site.js read; they span the pinned travel (viewport centre runs from 50vh to 190vh of the section) */
+.step-track{position:absolute; left:0; right:0; top:55vh; height:130vh; display:grid; grid-template-rows:repeat(4,1fr); pointer-events:none}
+.step-caps{display:grid; max-width:var(--col-text)}
+.step-cap{grid-area:1 / 1; align-self:end; transition:opacity .3s ease-out}
+.step-cap h3{margin:var(--space-2) 0 var(--space-3)}
+.step-cap p{margin:0 auto; max-width:44ch; color:var(--muted)}
+.js .step-cap{opacity:0}
+.js .step-cap.on{opacity:1}
+html:not(.js) .interlude--process, html:not(.js) .interlude--build{height:auto}
+html:not(.js) .interlude--process .interlude-stage, html:not(.js) .interlude--build .interlude-stage{position:static; height:auto; gap:var(--space-7)}
+html:not(.js) .step-caps{gap:var(--space-7)}
+html:not(.js) .step-cap{grid-area:auto}
+html:not(.js) .step-track{display:none}
+
+/* ---------- 05 facts: an open ledger on the stage. Figure and term left, the sentence right at a full measure ---------- */
+.ledger{margin:var(--space-7) 0 0; border-bottom:1px solid var(--hair)}
+.ledger > div{border-top:1px solid var(--hair); padding:var(--space-6) 0}
+.ledger dt{margin:0}
+.ledger .fig{display:block; font-size:var(--step-2); font-weight:500; line-height:1.15; letter-spacing:-.015em; color:var(--brass)}
+.ledger .term{display:block; margin-top:var(--space-2); font-family:var(--font-mono); font-size:var(--step--1); line-height:1.45; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+.ledger dd{margin:var(--space-4) 0 0; color:var(--paper); max-width:var(--measure)}
+@media (min-width:821px){
+  .ledger > div{display:grid; grid-template-columns:15rem 1fr; column-gap:var(--space-6); align-items:start}
+  .ledger dd{margin-top:var(--space-1)}
+}
+
+/* ---------- 06 pricing: the one raised panel in this run of chapters, wider than the text column ---------- */
+.pricing{padding:var(--space-6)}
+.pricing h2{margin-top:var(--space-4); font-size:var(--step-3); line-height:1.12; letter-spacing:-.02em}
+.pricing .lead{margin-top:var(--space-5)}
+.pricing .btn{margin-top:var(--space-6)}
+.terms{margin:var(--space-7) 0 0}
+.terms > div{border-top:1px solid var(--hair); padding:var(--space-4) 0}
+.terms > div:last-child{padding-bottom:0}
+.terms dt{font-weight:500; color:var(--paper)}
+.terms dd{margin:var(--space-1) 0 0; color:var(--muted); max-width:var(--measure)}
+@media (min-width:821px){
+  .pricing{padding:var(--space-7)}
+  .terms > div{display:grid; grid-template-columns:12rem 1fr; column-gap:var(--space-6); align-items:baseline}
+  .terms dd{margin:0}
+}
+
+/* ---------- FAQ: open hairline rows, no panel ---------- */
+.chapter-faq h2{font-size:var(--step-3); line-height:1.12; letter-spacing:-.02em}
+.faq{margin-top:var(--space-6); border-top:1px solid var(--hair); border-bottom:1px solid var(--hair)}
+.qa + .qa{border-top:1px solid var(--hair)}
+.qa button{
+  width:100%; text-align:left; background:none; border:none; color:var(--paper);
+  font-family:var(--font-text); font-size:var(--step-1); line-height:1.4; font-weight:500; letter-spacing:-.01em;
+  padding:var(--space-5) 0; min-height:var(--target); cursor:pointer;
+  display:flex; justify-content:space-between; align-items:center; gap:var(--space-4);
+}
+.qa .ic{width:18px; height:18px; position:relative; flex:0 0 auto}
+.qa .ic::before,.qa .ic::after{content:''; position:absolute; background:var(--muted); top:50%; left:50%; transform:translate(-50%,-50%)}
+.qa .ic::before{width:14px; height:2px; transition:background .2s ease}
+.qa .ic::after{width:2px; height:14px; transition:transform .2s ease, background .2s ease}
+.qa button[aria-expanded="true"] .ic::after{transform:translate(-50%,-50%) scaleY(0)}
+.qa button:hover .ic::before,.qa button:hover .ic::after{background:var(--blue-light)}
+.qa .ans{padding:0 0 var(--space-5); color:var(--muted)}
+.qa .ans p{margin:0}
+
+/* ---------- contact ---------- */
+.chapter-contact h2 + .lead{margin-top:var(--space-5)}
+.meta{margin-top:var(--space-5); display:flex; flex-direction:column; gap:var(--space-2); color:var(--muted)}
+.meta div{display:flex; align-items:center; gap:var(--space-3)}
+.meta svg{width:18px; height:18px; color:var(--blue-light); flex:0 0 auto}
+
+.leadform{
+  display:flex; flex-direction:column; gap:var(--space-5); margin-top:var(--space-7);
+  background:var(--panel); border:1px solid var(--hair); border-radius:var(--radius-3); padding:var(--space-6);
+}
+.leadform .field{display:flex; flex-direction:column; gap:var(--space-2)}
+.leadform label{font-size:var(--step--1); line-height:1.45; color:var(--muted)}
+.leadform input,.leadform textarea{
+  background:var(--stage-a);
+  border:1px solid var(--edge);
+  border-radius:var(--radius-1);
+  min-height:var(--space-7);
+  padding:var(--space-3) var(--space-4);
+  color:var(--paper);
+  font-family:var(--font-text); font-size:var(--step-0); line-height:1.5;
+}
+.leadform ::placeholder{color:#5F6A80; opacity:1}
+.leadform input:focus-visible,.leadform textarea:focus-visible{outline:2px solid var(--blue-light); outline-offset:1px}
+.leadform textarea{min-height:var(--space-10); resize:vertical}
+.leadform .hp{position:absolute; left:-9999px; opacity:0}
+.leadform .ferr{color:var(--danger); font-size:var(--step--1); line-height:1.45; margin:0}
+.leadform .ferr[hidden]{display:none}
+.leadform .ferr::before{content:'Error: '; font-weight:600}
+.leadform input.invalid,.leadform textarea.invalid{border-color:var(--danger)}
+.leadform button{margin-top:var(--space-2); align-self:flex-start}
+@media (max-width:640px){ .leadform{padding:var(--space-5)} .leadform button{align-self:stretch} }
+
+/* ---------- footer ---------- */
+footer{position:relative; z-index:1; border-top:1px solid var(--hair); padding:var(--space-9) 0 var(--space-6); background:var(--bar)}
+footer .top{display:flex; gap:var(--space-8); flex-wrap:wrap; margin-bottom:var(--space-8)}
+footer .top > div:first-child{flex:1 1 16rem}
+footer .brand{display:flex; align-items:center; gap:var(--space-3); font-size:var(--step-0); font-weight:600; letter-spacing:-.01em}
+footer .brand img{width:26px; height:27px}
+footer .blurb{color:var(--muted); max-width:32ch; margin-top:var(--space-4)}
+footer .cols{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:var(--space-6); flex:3 1 36rem}
+footer .fh{margin:0 0 var(--space-2)}
+footer .cols a{display:flex; align-items:center; min-height:var(--target); text-decoration:none; color:var(--paper); font-size:var(--step--1); line-height:1.45}
+footer .cols a:hover{color:var(--blue-light)}
+footer .base{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-2) var(--space-5); border-top:1px solid var(--hair); padding-top:var(--space-4); color:var(--muted); font-size:var(--step--1); line-height:1.45}
+footer .base a{display:inline-flex; align-items:center; min-height:var(--target); min-width:var(--target); justify-content:center; text-decoration:none; color:var(--muted)}
+footer .base a:hover{color:var(--paper)}
+@media (max-width:820px){ footer .cols{grid-template-columns:repeat(2, minmax(0,1fr))} }
+
+/* ---------- chapter progress rail: short bars ---------- */
+#rail{position:fixed; right:var(--space-5); top:50%; transform:translateY(-50%); z-index:40; display:flex; flex-direction:column; align-items:flex-end; gap:var(--space-3)}
+#rail .tick{width:var(--space-3); height:2px; background:rgba(11,16,32,.22); transition:background .25s ease, width .25s ease}
+#rail .tick.on{background:var(--blue-light); width:var(--space-5)}
+@media (max-width:1100px){ #rail{display:none} }
+
+/* ---------- short viewports (landscape phones, short laptop windows): give the piece a real free rectangle ---------- */
+@media (max-height:600px){
+  .split-head span{font-size:var(--step-4)}
+  .hero-line{bottom:var(--space-3)}
+  .interlude-stage{padding:calc(var(--nav-h) + var(--space-4)) var(--gutter) var(--space-4)}
+  .band h2{font-size:var(--step-1); line-height:1.4; letter-spacing:-.01em; margin-top:var(--space-2)}
+}
+@media (max-height:600px) and (orientation:landscape){
+  /* copy moves to a left column, the right side of the stage belongs to the piece */
+  .interlude-stage{align-items:flex-start; text-align:left}
+  .band{max-width:44%}
+  .cluster-row{justify-content:flex-start}
+  .step-cap p{margin:0}
+  .step-cap h3{font-size:var(--step-1); line-height:1.4; letter-spacing:-.01em; margin:var(--space-1) 0 var(--space-2)}
+}
+/* landscape phones: the words and the line stack in a left column so the piece owns the right of the hero */
+@media (max-height:600px) and (orientation:landscape) and (max-width:1000px){
+  .hero{flex-direction:column; align-items:flex-start; justify-content:center; padding-left:var(--gutter); padding-right:var(--gutter)}
+  .split-head{flex-direction:column; align-items:flex-start; gap:0; width:auto; max-width:none; margin:0; padding:0}
+  .hero-line{position:static; flex-direction:column; align-items:flex-start; text-align:left; gap:0; margin:var(--space-4) 0 0; padding:0; max-width:46%}
+}
+@media (max-height:600px) and (max-width:700px){
+  .split-head span{font-size:var(--step-3)}
+  .band{max-width:52%}
+  .interlude--process .band h2{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap}
+}
+
+/* === INTRO (jaswarm r1) === */
+/* First load, homepage only: html.intro-active is set synchronously in <head> (skipped
+   if wingIntroSeen is already in sessionStorage, or prefers-reduced-motion). While it is
+   present, nav + the split words + the tagline stay out of the way of the piece assembling.
+   Hidden with opacity/transform, never display, so no-JS visitors and layout never move. */
+html.intro-active #nav,
+html.intro-active .split-head,
+html.intro-active .hero-line{
+  opacity:0;
+  transform:translateY(10px);
+  pointer-events:none;
+}
+/* the reveal: quick, staggered, no bounce. #nav keeps its existing border-color transition. */
+#nav{transition:border-color .3s ease, opacity .4s ease, transform .4s ease}
+.split-head{transition:opacity .4s ease, transform .4s ease}
+.hero-line{transition:opacity .4s ease, transform .4s ease}
+html:not(.intro-active) .split-head{transition-delay:.15s}
+html:not(.intro-active) .hero-line{transition-delay:.3s}
+@media (prefers-reduced-motion: reduce){
+  html.intro-active #nav,
+  html.intro-active .split-head,
+  html.intro-active .hero-line{opacity:1; transform:none}
+  #nav,.split-head,.hero-line{transition:none}
+}
+
+/* Wing / Digital sat pushed out to the page edges (space-between across the full 1240px
+   .wrap column); pull them into a narrower box so both words stay close to the centred
+   piece instead of the far corners. Still space-between inside that narrower box, so they
+   remain on opposite sides of the piece, just tighter. Mobile portrait already stacks them
+   above/below the piece (untouched here). */
+/* NOTE (jaswarm r1): tightening .split-head max-width alone pulls Wing/Digital onto the
+   centred piece's data-piece-avoid rects, so the engine fragments/shoves the piece to the
+   left. Correct fix = coordinate with piece-engine (shrink/reposition the piece so the whole
+   Wing + piece + Digital lockup reads tighter without collision). Deferred to r2. See BACKLOG. */
+/* jaswarm r2: moderate tightening only (not the r1 attempt's 46rem/50rem, which collided with
+   the piece's avoid rects and made the engine fragment/shove it). Paired with a matching ~5%
+   hero scale reduction in piece-engine.js (v5HeroScale 0.84 -> 0.80) so the piece's rendered
+   footprint sits comfortably inside this narrower box with margin to spare. */
+@media (min-width:821px){ .split-head{max-width:min(74vw, 60rem)} }
+@media (min-width:1440px){ .split-head{max-width:64rem} }

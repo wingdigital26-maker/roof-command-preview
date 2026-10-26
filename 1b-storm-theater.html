@@ -1,0 +1,465 @@
+<!doctype html><html lang="en" data-rc="storm"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Storm Map</title>
+<script src="lib/rc-frame-pause.js"></script><!-- parked by the shell = no drawing -->
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<script>/* preload Jackson's homes (lib/brand.js dataRoot = lib/st-data-dfw/) */
+(function(){ var root='lib/st-data-dfw/';
+  [].forEach(function(f){ document.write('<link rel="preload" href="'+root+f+'" as="fetch" crossorigin>'); }); })();</script>
+<link rel="preload" href="lib/st-fonts/montserrat-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="lib/st-fonts/montserrat-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="vendor/maplibre-gl@4.7.1/maplibre-gl.css">
+<link rel="stylesheet" href="lib/st-common.css">
+<link rel="stylesheet" href="lib/rc-physical.css">
+<style>
+body{height:100vh;overflow:hidden}
+#map{position:fixed;inset:0}
+#map canvas{cursor:default}
+#map.hot canvas{cursor:pointer}
+/* atmosphere: the site's stage haze over the far map */
+.fog{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(226,229,235,.96) 0%,rgba(236,238,242,.72) 12%,rgba(247,248,250,0) 34%,rgba(247,248,250,0) 82%,rgba(247,248,250,.5) 100%)}
+.vign{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 60% at 50% 48%,rgba(255,255,255,0) 55%,rgba(185,190,201,.3) 100%)}
+/* panels enter the way the website's sections do: 16px up, .4s ease-out, staggered */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .4s ease-out,transform .4s ease-out}
+.rv.in{opacity:1;transform:none}
+.rv:nth-of-type(2){transition-delay:.1s}.rv:nth-of-type(3){transition-delay:.2s}
+:focus-visible{outline:2px solid var(--blue-light);outline-offset:3px;border-radius:4px}
+button{font:inherit;letter-spacing:inherit;color:inherit}
+.top{position:fixed;top:22px;left:24px;right:24px;display:flex;align-items:flex-start;justify-content:space-between;z-index:5}
+.cap{display:flex;align-items:center;gap:18px;padding:9px 20px 9px 9px;border-radius:16px}
+.cap .greet{padding-left:18px;border-left:1px solid var(--hair)}
+.greet b{display:block;font-weight:600;font-size:14px;letter-spacing:-.01em}
+.greet span{font-size:12.5px;color:var(--muted)}
+.ask{width:400px;height:46px;border-radius:999px;display:flex;align-items:center;gap:10px;padding:0 8px 0 18px;color:var(--muted);font-size:14px;cursor:text;transition:border-color .3s ease}
+.ask:hover{border-color:var(--edge)}
+.ask .k{margin-left:auto;background:var(--panel-2);border:1px solid var(--hair);border-radius:999px;padding:6px 11px;color:var(--muted);font-size:12px}
+.sig{position:fixed;left:50%;transform:translateX(-50%);top:37px;z-index:5}
+/* pills: site secondary (panel-2, hairline) and ink (the one action when nothing is selected) */
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--hair);background:var(--panel-2);color:var(--paper);font-weight:600;font-size:13.5px;cursor:pointer;transition:background .2s ease,border-color .2s ease}
+.pill:hover{background:var(--panel-3)}
+.pill.sm{min-height:32px;padding:0 12px;font-size:12.5px}
+.pill.ink{background:var(--paper);border-color:var(--paper);color:#fff}
+.pill.ink:hover{background:#1A2140}
+/* stat card: calm = your area, storm = how big was it */
+.stat{position:fixed;left:24px;top:118px;width:326px;border-radius:20px;padding:22px 24px 22px;z-index:5}
+.stat .head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px}
+.stat .date{font-size:13px;color:var(--muted);font-weight:500}
+.stat .big{font-weight:400;font-size:80px;letter-spacing:-.05em;line-height:.95;margin:10px 0 8px;font-variant-numeric:tabular-nums;color:var(--paper)}
+.stat .lbl{font-size:15px;color:var(--muted);line-height:1.35}
+.stat .row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px;padding-top:16px;border-top:1px solid var(--hair)}
+.stat .row b{display:block;font-weight:500;font-size:22px;letter-spacing:-.025em;line-height:1.1}
+.stat .row span{display:block;font-size:12.5px;color:var(--muted);margin-top:3px}
+/* hail bands: real counts of hit homes per radar size band, bar height = share of the band with the most homes */
+.bands{margin-top:20px}
+.bands .h{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.bands .bb{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-items:end}
+.bands .bb div{display:flex;flex-direction:column;justify-content:flex-end}
+.bands .bb i{display:block;height:4px;border-radius:3px 3px 1px 1px;transition:height .5s ease-out,background .3s ease}
+.bands .bb b{display:block;font-weight:600;font-size:14px;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums}
+.bands .bb span{display:block;font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap}
+/* dock window control: past 6 months (default) or everything on file */
+.sh{display:flex;align-items:center;justify-content:space-between;gap:12px;right:0}
+.wseg{display:inline-flex;gap:2px;padding:2px;border-radius:999px;background:var(--panel-2);border:1px solid var(--hair)}
+.wseg button{border:0;background:none;min-height:22px;padding:0 10px;border-radius:999px;font-weight:500;font-size:11.5px;color:var(--muted);cursor:pointer;transition:background .2s ease,color .2s ease;white-space:nowrap}
+.wseg button:hover{color:var(--paper)}
+.wseg button.on{background:var(--paper);color:#fff}
+.mlab{position:absolute;bottom:12px;font-size:11px;color:#A6ACBA;transform:translateX(-50%);white-space:nowrap;pointer-events:none}
+.mtick{position:absolute;bottom:37px;width:1px;height:6px;background:var(--hair)}
+.scrub .none{position:absolute;left:0;bottom:48px;font-size:12.5px;color:var(--muted)}
+.calm .ttl{font-weight:500;font-size:24px;letter-spacing:-.025em;line-height:1.15;margin:10px 0 8px}
+.calm .sub{font-size:14px;color:var(--muted);line-height:1.45}
+.calm .d50{font-size:13px;color:var(--paper);line-height:1.4;margin-top:8px}
+.calm .pill{margin-top:18px;width:100%;min-height:44px}
+/* before the data lands: the card shows at once with shimmer bars where the numbers go (no grey void, no zeros) */
+.stat .skel{display:grid;gap:12px;padding-top:6px}
+.stat .skel i{display:block;height:14px;border-radius:999px;background:linear-gradient(90deg,#EEF0F4 25%,#FAFBFC 50%,#EEF0F4 75%);background-size:200% 100%;animation:skel 1.3s linear infinite}
+.stat .skel i:nth-child(1){height:30px;width:72%}.stat .skel i:nth-child(2){width:88%}.stat .skel i:nth-child(3){width:60%}.stat .skel i:nth-child(4){height:44px;width:100%;border-radius:12px;margin-top:6px}
+@keyframes skel{from{background-position:200% 0}to{background-position:-200% 0}}
+body.loaded .stat .skel,body:not(.loaded) .stat .only-calm,body:not(.loaded) .stat .only-storm{display:none}
+body:not(.loaded) .stat.rv{opacity:1;transform:none}
+/* hardest hit in view: while the camera is still flying to the storm the counts wait (never 0 beside the storm's own count) */
+.hh.wait .facts,.hh.wait .plan,.hh.wait .rt{display:none}
+@media (prefers-reduced-motion:reduce){.stat .skel i{animation:none}}
+body:not(.storm) .only-storm{display:none}
+body.storm .only-calm{display:none}
+/* record panel: who is this home and what is next. Hidden until a home is picked */
+.peek{position:fixed;right:24px;top:118px;width:344px;border-radius:20px;padding:22px 22px 20px;z-index:7;max-height:calc(100vh - 118px - 24px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+body:not(.sel) .peek{display:none}
+/* a home is open: the pipeline strip steps aside (never over the card) and the card scrolls on its own, its last
+   control padded clear of the Nimbus orb (64px, bottom-right) */
+body.sel .dock .pipe{display:none}
+body.sel .dock{right:calc(24px + 344px + 24px)}
+body.sel .nav{max-width:calc(100vw - 24px - 344px - 48px);overflow-x:auto;scrollbar-width:none}
+.peek .acts{padding-bottom:96px}
+.peek .x{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:999px;border:1px solid var(--hair);background:var(--panel-2);display:grid;place-items:center;cursor:pointer;transition:background .2s ease}
+.peek .x:hover{background:var(--panel-3)}
+.peek .x svg{width:12px;height:12px}
+.peek h3{margin:0 40px 0 0;font-weight:500;font-size:21px;letter-spacing:-.02em;line-height:1.15}
+.peek .sub{font-size:13px;color:var(--muted);margin-top:4px}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;padding:6px 11px 6px 9px;border-radius:999px;background:var(--panel-2);border:1px solid var(--hair);color:var(--paper);margin-top:14px}
+.chip svg{width:13px;height:13px}
+.facts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:16px 0 16px}
+.facts div{background:var(--panel-2);border-radius:10px;padding:10px 11px}
+.facts b{display:block;font-weight:600;font-size:17px;letter-spacing:-.02em}
+.facts span{font-size:11.5px;color:var(--muted)}
+.roofm{margin:-6px 0 14px;font-size:12.5px;line-height:1.45;color:var(--muted)}.roofm p{margin:0 0 4px}.roofm b{color:var(--ink);font-weight:600}
+.tl{position:relative;margin:0;padding:0 0 0 18px;list-style:none}
+.tl:before{content:"";position:absolute;left:4px;top:6px;bottom:6px;width:1px;background:var(--hair)}
+.tl li{position:relative;padding:0 0 12px;font-size:13px;color:var(--paper)}
+.tl li:before{content:"";position:absolute;left:-18px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--panel);border:1.5px solid var(--edge)}
+.tl li.done:before{background:var(--blue);border-color:var(--blue)}
+.tl li.next{font-weight:500}
+.tl li.next:before{background:var(--panel);border:1.5px solid var(--paper)}
+.tl small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px;font-weight:400}
+.btn{display:flex;justify-content:center;width:100%;min-height:46px;align-items:center;border-radius:999px;background:var(--accent);color:#fff;font-weight:600;font-size:14.5px;border:0;margin-top:6px;cursor:pointer;transition:background .2s ease}
+.btn:hover{background:var(--accent-ink)}
+/* tooltip */
+.tip{position:fixed;z-index:6;pointer-events:none;opacity:0;transform:translate(-50%,calc(-100% - 18px));transition:opacity .2s ease;background:var(--panel);border:1px solid var(--hair);border-radius:10px;padding:8px 11px;font-size:12.5px;color:var(--paper);white-space:nowrap;box-shadow:var(--shadow)}
+.tip.on{opacity:1}
+.tip b{font-weight:600}
+.tip span{color:var(--muted);margin-left:8px}
+#l-open[hidden],#l-open-calm[hidden],#p-own[hidden]{display:none!important}
+.tip em{display:block;font-style:normal;color:var(--muted);font-size:12px;margin-top:2px}
+/* owner line on the record (private county roll; "Owner not loaded" when not available) */
+.peek .own{font-size:13px;margin-top:6px;color:var(--paper)}.peek .own i{font-style:normal;color:var(--muted)}
+/* home list: every home in the storm or the picked place, in county order (city > ZIP > subdivision > street > number) */
+.lst{position:fixed;left:24px;top:118px;bottom:244px;width:360px;border-radius:20px;z-index:6;display:none;flex-direction:column;overflow:hidden}
+body.list .lst{display:flex}body.list .stat{visibility:hidden}
+.lst .lh{padding:18px 18px 10px;border-bottom:1px solid var(--hair)}
+.lst .lh .r1{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.lst h3{margin:0;font-weight:500;font-size:18px;letter-spacing:-.02em}
+.lst .lsub{font-size:12.5px;color:var(--muted);margin-top:3px}
+.lst input{width:100%;margin-top:10px;height:38px;border-radius:999px;border:1px solid var(--hair);background:var(--panel-2);padding:0 14px;font:inherit;font-size:13.5px;color:var(--paper)}
+.lst .grp{font-size:11.5px;font-weight:600;color:var(--muted);padding:7px 18px;background:var(--panel-2);border-bottom:1px solid var(--hair);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:28px}
+.lst .vp{flex:1;overflow-y:auto;position:relative;overscroll-behavior:contain}
+.lst .row{position:absolute;left:0;right:0;height:58px;padding:8px 18px;border-bottom:1px solid var(--hair);cursor:pointer;display:flex;flex-direction:column;justify-content:center;text-align:left;background:none;border-left:0;border-right:0;border-top:0;width:100%}
+.lst .row:hover,.lst .row.on{background:var(--panel-2)}
+.lst .row b{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lst .row span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lst .row .h{font-style:normal;position:absolute;right:18px;top:9px;font-size:12px;font-weight:600;color:var(--blue-light)}
+.lst .empty{padding:18px;font-size:13px;color:var(--muted)}
+.tip:after{content:"";position:absolute;left:50%;bottom:-5px;width:8px;height:8px;background:var(--panel);border-right:1px solid var(--hair);border-bottom:1px solid var(--hair);transform:translateX(-50%) rotate(45deg)}
+/* dock: storms this season (left) + pipeline (right), one panel, nothing floating over it */
+.dock{position:fixed;left:24px;right:124px;bottom:36px;height:130px;border-radius:20px;z-index:5;display:flex;align-items:stretch;padding:0 26px}
+.scrub{flex:1;position:relative;margin-right:30px}
+.sh,.ph{position:absolute;left:0;top:16px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.scrub .axis{position:absolute;left:0;right:0;bottom:36px;height:1px;background:var(--hair)}
+.tick{position:absolute;bottom:37px;width:3px;max-height:44px;border-radius:2px 2px 0 0;background:#B9BEC9;transition:background .2s ease}
+.tick.hov{background:var(--blue)}
+.tick.on{background:var(--paper)}
+.hit{position:absolute;bottom:0;top:38px;width:44px;transform:translateX(-50%);cursor:pointer;background:none;border:0;padding:0}
+.hit:focus-visible{outline-offset:-6px;border-radius:12px}
+.tlab{position:absolute;bottom:12px;font-size:12px;color:var(--muted);transform:translateX(-50%);white-space:nowrap;pointer-events:none;transition:color .2s ease}
+.tlab.on{color:var(--paper);font-weight:600}
+.read{position:absolute;transform:translateX(-50%);white-space:nowrap;font-size:12px;color:var(--paper);background:var(--panel-2);border:1px solid var(--hair);border-radius:999px;padding:4px 10px;pointer-events:none;transition:left .3s ease,bottom .3s ease,background .2s ease,opacity .2s ease;opacity:0}
+.read.show{opacity:1}
+.read span{color:var(--muted);margin-left:7px}
+.read.hov{background:#E4EAFB;border-color:rgba(39,87,230,.35)}
+.pipe{position:relative;display:flex;flex-direction:column;justify-content:flex-end;padding:0 0 22px 28px;border-left:1px solid var(--hair)}
+.pipe .ph{left:28px}
+.stages{display:flex;align-items:center}
+.stage{position:relative;padding:0 14px;text-align:left}
+.stage:first-child{padding-left:0}
+.stage b{display:block;font-weight:400;font-size:26px;letter-spacing:-.03em;color:var(--muted);font-variant-numeric:tabular-nums}
+.stage span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;margin-top:2px}
+.stage.on b{color:var(--paper);font-weight:500}
+.chev{width:5px;height:5px;border-right:1.5px solid #B9BEC9;border-top:1.5px solid #B9BEC9;transform:rotate(45deg);flex:none}
+/* selected home marker: the darkest ink is reserved for what you act on */
+.marker{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--paper);display:grid;place-items:center;box-shadow:0 0 0 4px rgba(255,255,255,.75),0 0 0 5px rgba(11,16,32,.12)}
+.marker:after{content:"";width:4px;height:4px;border-radius:50%;background:var(--paper)}
+body:not(.sel) .marker{display:none}
+/* search: top right, geocodes an address or street inside the loaded counties, or picks a storm by date */
+.ask input{flex:1;min-width:0;border:0;outline:0;background:none;font:inherit;font-size:14px;color:var(--paper);height:100%}
+.ask input::placeholder{color:var(--muted)}
+.ask.open{border-radius:22px 22px 0 0}
+.res{position:fixed;right:24px;top:70px;width:400px;z-index:7;border-radius:0 0 18px 18px;padding:6px;display:none}
+.res.on{display:block}
+.res button{display:flex;flex-direction:column;align-items:flex-start;width:100%;text-align:left;border:0;background:none;padding:9px 12px;border-radius:12px;cursor:pointer;transition:background .2s ease}
+.res button:hover,.res button.on{background:var(--panel-2)}
+.res b{font-weight:600;font-size:13.5px;letter-spacing:-.01em}
+.res span{font-size:12px;color:var(--muted);margin-top:1px}
+.res .none{padding:10px 12px;font-size:13px;color:var(--muted)}
+/* nav: one low group, left, above the dock. County chips fly, Fit storm frames the swath, 3D toggles tilt and north */
+.nav{position:fixed;left:24px;bottom:182px;z-index:5;display:flex;align-items:center;gap:6px;padding:6px;border-radius:999px}
+.seg{display:flex;gap:2px;padding:2px;border-radius:999px;background:var(--panel-2);border:1px solid var(--hair)}
+.seg button{border:0;background:none;min-height:30px;padding:0 12px;border-radius:999px;font-weight:500;font-size:12.5px;color:var(--muted);cursor:pointer;transition:background .2s ease,color .2s ease;white-space:nowrap}
+.seg button:hover{color:var(--paper)}
+.seg button.on{background:var(--paper);color:#fff}
+.nb{min-height:34px;padding:0 13px;border-radius:999px;border:1px solid var(--hair);background:var(--panel-2);font-weight:600;font-size:12.5px;cursor:pointer;transition:background .2s ease,color .2s ease,opacity .2s ease;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.nb:hover{background:var(--panel-3)}
+.nb.on{background:var(--paper);border-color:var(--paper);color:#fff}
+.nb svg{width:13px;height:13px}
+.nb.ic{width:34px;padding:0;justify-content:center;font-size:17px;font-weight:400}
+.nb[hidden]{display:none}
+.zoomhint{font-size:11.5px;color:var(--muted);padding:0 8px 0 4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+/* loading: homes fade in; the calm card says what is loading, no spinner */
+.load{font-size:13px;color:var(--muted);margin-top:14px;transition:opacity .4s ease}
+.load i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--blue);margin-right:8px;vertical-align:1px;opacity:.7}
+body.loaded .load{display:none}
+.chips,.sheet,.cta,.ctafade,.ask .short,.scrim{display:none}
+/* inside the tour shell the shell is the one header: drop this page's brand bar */
+body.embedded .cap{display:none}
+body.embedded .ask:not(.wide){display:none}
+body.embedded .res{top:14px}
+body.embedded .stat{top:22px}
+body.embedded .peek,body.embedded .hh{top:22px}
+body.embedded .peek{max-height:calc(100vh - 22px - 24px)}
+body.embedded .concept-tag{display:none}
+@media (max-width:600px){ body.embedded .res{top:calc(env(safe-area-inset-top,0px) + 62px)} }
+/* record actions: Open record (accent) + Add to Daily 50 (secondary) */
+.acts{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.acts .btn{margin-top:0}
+.acts .pill{width:100%;min-height:44px}
+.acts .pill[aria-pressed="true"]{background:#E4EAFB;border-color:rgba(39,87,230,.35);color:var(--blue-light)}
+/* hardest hit in view: the storm's next step when no home is picked */
+.hh{position:fixed;right:24px;top:118px;width:344px;border-radius:20px;padding:22px 22px 20px;z-index:5}
+body:not(.storm) .hh,body.sel .hh{display:none}
+.hh h3{margin:0;font-weight:500;font-size:21px;letter-spacing:-.02em;line-height:1.15}
+.hh .sub{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.4}
+.hh .facts{margin:16px 0 14px}
+.hh .pill{width:100%;min-height:44px}
+.hh .rt{display:none}
+.hh.routed .rt{display:block}.hh.routed .plan{display:none}
+.hh .rt .meta{font-size:13px;color:var(--paper);margin-bottom:10px}
+.hh .rt .meta span{color:var(--muted)}
+.hh .rt .btn{margin-top:0}
+.hh .rt .pill{margin-top:8px}
+/* toast: what just happened, with Undo */
+.toast{position:fixed;left:50%;top:26px;transform:translate(-50%,-12px);z-index:9;display:flex;align-items:center;gap:14px;padding:8px 8px 8px 18px;border-radius:999px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .4s ease-out;white-space:nowrap}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast .pill{min-height:36px}
+@media (prefers-reduced-motion:reduce){ .rv,.tip,.read,.tick,.tlab,.btn,.sheet,.cta,.pill,.toast,.scrim{transition:none} .rv{opacity:1;transform:none} }
+
+/* ===== storms dropdown (desktop, Jack 10-17): the timeline and storm list drop down under the card's date instead of a bar
+   across the bottom. The nav group and the home list take the room the bar held. Phone keeps its chip strip. ===== */
+#s-date.sdt{background:none;border:0;padding:0;text-align:left}
+@media (max-width:600px){ #s-date.sdt{pointer-events:none} }   /* the phone picks storms from its chip strip */
+@media (min-width:601px){
+ #s-date.sdt{display:inline-flex;align-items:center;gap:7px;cursor:pointer;min-height:32px}
+ #s-date.sdt::after{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translate(-1px,-1px);transition:transform .15s ease;opacity:.8}
+ #s-date.sdt:hover{color:var(--paper)}
+ body.sdrop #s-date.sdt::after{transform:rotate(225deg) translate(-2px,-2px)}
+ #dock{display:none;position:fixed;left:16px;right:auto;top:64px;bottom:auto;width:432px;height:auto;max-height:calc(100vh - 80px);flex-direction:column;align-items:stretch;padding:12px 18px 14px;z-index:9;overflow:hidden}
+ body.sdrop #dock{display:flex}
+ #dock .scrub{flex:none;height:126px;margin:0}
+ #dock .sh{top:4px}
+ #dock .scrub .axis{bottom:30px}
+ #dock .tick{bottom:31px}
+ #dock .mtick{bottom:31px}
+ #dock .tlab,#dock .mlab{bottom:8px}
+ #dock .hit{top:30px;pointer-events:none}   /* the scrub itself takes the pointer (lib/st-dock.js): hover and click land on the nearest storm, no gaps */
+ #dock .scrub .none{bottom:40px}
+ /* instant: the readout and ticks jump to the storm under the pointer, no slide */
+ #dock .read{transition:opacity .12s ease;bottom:auto!important;top:50px;transform:translate(-50%,-100%)}
+ #dock .tick,#dock .tlab{transition:none}
+ #dock .slist{flex:0 1 auto;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;margin:4px -6px 0;padding:0 6px;max-height:228px;border-top:1px solid var(--hair)}
+ #dock .srow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;width:100%;min-height:38px;padding:5px 8px;border:0;border-bottom:1px solid var(--hair);background:none;text-align:left;cursor:pointer;border-radius:0;font-size:13px}
+ #dock .srow:hover{background:var(--panel-2)}
+ #dock .srow.on{background:var(--panel-2);box-shadow:inset 3px 0 0 var(--paper)}
+ #dock .srow b{font-weight:600;white-space:nowrap}
+ #dock .srow span{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted);font-size:12px}
+ #dock .srow span i{font-style:normal;color:var(--paper);font-weight:600}
+ #dock .srow.on span,#dock .srow.on span i{color:var(--paper)}
+ #dock .pipe{flex:none;position:relative;border-left:0;border-top:1px solid var(--hair);padding:30px 0 0;margin-top:0;justify-content:flex-start}
+ #dock .pipe .ph{left:0;top:10px}
+ #dock .stages{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+ #dock .stage{padding:0;min-width:0}
+ #dock .stage b{font-size:20px}
+ #dock .stage span{font-size:10px;overflow:hidden;text-overflow:ellipsis}
+ #dock .chev{display:none}
+ /* the bar is gone: the nav group sits on the floor, the home list runs to it */
+ /* the slim timeline bar across the bottom (Jack 10-17, later): the scrub lives here, the dropdown keeps the list */
+ #tbar{position:fixed;left:16px;right:96px;bottom:16px;height:92px;padding:6px 18px 4px;z-index:6;border-radius:12px}
+ body.sel #tbar{right:calc(336px + 32px)}
+ #tbar .scrub{position:relative;height:82px;margin:0}
+ #tbar .sh{top:0}
+ #tbar .scrub .axis{bottom:24px}
+ #tbar .tick,#tbar .mtick{bottom:25px}
+ /* the tallest storm tick (44px) ran up through the 'Storms, past 6 months' title; scaled to the room under it, heights keep their ratio (visual check polish 10-24) */
+ #tbar .tick{transform:scaleY(.62);transform-origin:50% 100%}
+ #tbar .tlab,#tbar .mlab{bottom:4px}
+ #tbar .hit{top:22px;pointer-events:none}
+ #tbar .scrub .none{bottom:34px}
+ #tbar .read{transition:opacity .12s ease;bottom:auto!important;top:-8px;transform:translate(-50%,-100%)}
+ #tbar .tick,#tbar .tlab{transition:none}
+ #nav.glass{bottom:122px}
+ #lst.glass{bottom:122px}
+ body.sel #dock{right:auto}
+ body.sel .nav{max-width:calc(100vw - 16px - 336px - 32px)}
+}
+/* hardest-hit sections on the map: an outline per neighbourhood with a numbered label (lib/st-hard.js) */
+.hsec{display:inline-flex;align-items:center;gap:6px;padding:4px 8px 4px 4px;border-radius:6px;background:#fff;border:1px solid rgba(11,16,32,.14);box-shadow:0 6px 16px -8px rgba(11,16,32,.35);font-size:11px;font-weight:600;color:var(--paper);white-space:nowrap;cursor:pointer;transition:background .12s ease,border-color .12s ease;pointer-events:auto}
+.hsec i{font-style:normal;display:grid;place-items:center;width:18px;height:18px;border-radius:4px;background:var(--paper);color:#fff;font-size:10.5px;font-weight:600}
+.hsec span{color:#1F47C9;font-weight:600;font-variant-numeric:tabular-nums}
+.hsec:hover,.hsec.on{border-color:rgba(39,87,230,.55);background:#F3F6FE}
+.hsec.on i{background:#2757E6}
+body.sel .hsec{opacity:.55}
+@media (max-width:600px){ .hsec{font-size:11px;padding:4px 8px 4px 4px} .hsec em{display:none} }
+.hsec em{font-style:normal;max-width:108px;overflow:hidden;text-overflow:ellipsis}
+.hh .hard{margin-top:14px;padding-top:12px}
+
+@media (max-width:1300px){ .ask{width:360px;white-space:nowrap;overflow:hidden} .stat{width:316px;padding:20px 22px} .stat .date{font-size:12.5px} .peek,.hh{width:320px} body.sel .dock{right:calc(24px + 320px + 24px)} body.sel .nav{max-width:calc(100vw - 24px - 320px - 48px)} .stat .big{font-size:72px} .stage{padding:0 11px} .stage b{font-size:24px} }
+
+/* ================= phone: designed for a roofer in a truck ================= */
+@media (max-width:600px){
+ .lst{left:0;right:0;top:0;bottom:0;width:auto;border-radius:0;z-index:30;padding-top:env(safe-area-inset-top,0px)}
+ .lst .row{height:62px}
+ html,body{height:100%;overscroll-behavior:none}
+ .top{top:calc(env(safe-area-inset-top,0px) + 12px);left:14px;right:14px;align-items:center}
+ .cap{padding:7px 14px 7px 7px;border-radius:999px}.cap .greet{display:none}.rlogo{width:34px;height:34px;border-radius:999px}.rlogo svg{width:19px;height:19px}.rname{font-size:14px}.rarea{font-size:11.5px}
+ .ask{width:44px;height:44px;padding:0;justify-content:center;gap:0;cursor:pointer}.ask .k{display:none}.ask input{display:none}
+ .ask.wide{position:fixed;left:14px;right:14px;top:calc(env(safe-area-inset-top,0px) + 12px);width:auto;justify-content:flex-start;padding:0 16px;gap:10px;z-index:8}.ask.wide input{display:block}
+ body.sheet-open .nav{display:none}
+ .sig,.vign,.dock,.tip{display:none}
+ .fog{background:linear-gradient(180deg,rgba(226,229,235,.98) 0%,rgba(236,238,242,.75) 16%,rgba(247,248,250,0) 32%,rgba(247,248,250,0) 70%,rgba(247,248,250,.5) 100%)}
+ .maplibregl-ctrl-attrib{display:none!important}
+ /* storm chips: one horizontal swipe strip under the header. First chip is the calm area view */
+ .chips{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 70px);z-index:5;display:flex;gap:8px;padding:0 48px 0 14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent)}
+ body.embedded .chips{top:12px}
+ .chips::-webkit-scrollbar{display:none}
+ .chip-s{flex:none;scroll-snap-align:start;min-height:44px;padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.92);border:1px solid var(--hair);box-shadow:0 10px 24px -16px rgba(11,16,32,.35);display:flex;flex-direction:column;justify-content:center;cursor:pointer;text-align:left;transition:background .2s ease,border-color .2s ease}
+ .chip-s b{font-size:13px;font-weight:600;color:var(--paper);line-height:1.1}
+ .chip-s span{font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+ .chip-s.on{background:var(--paper);border-color:var(--paper)}
+ .chip-s.on b{color:#fff}.chip-s.on span{color:#B9BEC9}
+ /* bottom sheet: peek / half / full */
+ .sheet{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--panel);border-radius:22px 22px 0 0;box-shadow:0 -20px 60px -30px rgba(11,16,32,.35),0 -1px 0 var(--hair);height:92dvh;transform:translateY(calc(100% - 186px));transition:transform .4s ease-out;display:flex;flex-direction:column;touch-action:none}
+ .sheet.drag{transition:none}
+ .sheet.s-half{transform:translateY(42%)}
+ .sheet.s-full{transform:translateY(0)}
+ .handle{flex:none;height:44px;display:grid;place-items:center;cursor:grab;background:none;border:0;width:100%}
+ .handle i{width:40px;height:4px;border-radius:2px;background:#C9CED8}
+ .sheet .body{flex:none;overflow-y:auto;overscroll-behavior:contain;padding:0 18px calc(env(safe-area-inset-bottom,0px) + 96px);touch-action:pan-y;background:var(--panel)}
+ body.sel .sheet .body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 104px)}
+ /* scrim behind the full sheet; tap it to drop the sheet back to half */
+ .scrim{display:block;position:fixed;inset:0;z-index:6;background:rgba(11,16,32,.22);opacity:0;pointer-events:none;transition:opacity .3s ease}
+ body.sheet-full .scrim{opacity:1;pointer-events:auto}
+ .sheet{z-index:7}
+ .hh{position:static;width:auto;border-radius:0;padding:16px 0 18px;background:none;border:0;border-top:1px solid var(--hair);box-shadow:none;backdrop-filter:none;margin-top:16px}
+ .hh h3{font-size:18px}
+ .toast{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 78px);transform:translate(-50%,12px);font-size:13px}
+ .toast .pill{min-height:44px}
+ .peek .acts .pill{min-height:44px}
+ .sheet-foot{display:none}
+ .sheet.s-peek .body{overflow:hidden;-webkit-mask-image:linear-gradient(#000 86px,transparent 138px);mask-image:linear-gradient(#000 86px,transparent 138px)}
+ .sheet.s-peek .body{padding-right:80px}   /* peek: the lines stop short of the Nimbus orb in the corner (10-15) */
+ .sheet.s-peek .hh,.sheet.s-peek .pipe,.sheet.s-peek .sheet-foot{visibility:hidden}
+ .stat{position:static;width:auto;border-radius:0;padding:0;background:none;border:0;box-shadow:none;backdrop-filter:none;opacity:1;transform:none}
+ .stat .head{min-height:0}
+ .stat .date{font-size:12.5px}
+ .stat .head .pill{display:none}
+ .stat .big{font-size:56px;margin:4px 0 0;line-height:1}
+ .stat .lbl{font-size:13.5px;line-height:1.4;margin-top:6px}
+ .stat .row{margin-top:12px;padding-top:0;border:0;grid-template-columns:1fr 1fr;gap:10px}
+ .stat .row b{font-size:17px}.stat .row span{font-size:11px;margin-top:1px}
+ .bands{margin-top:14px}.bands .bb b{font-size:13px}.bands .bb span{font-size:10px}
+ .calm .ttl{font-size:20px;margin:6px 0 6px}.calm .sub{font-size:13.5px;line-height:1.5}.calm .pill{display:none}
+ .pipe{display:flex;flex-direction:column;padding:12px 0 0;margin-top:14px;border-top:1px solid var(--hair);border-left:0}
+ .pipe .ph{position:static;font-size:12px;margin-bottom:8px}
+ /* all five stages fit the width (no sideways scroll hiding Won) */
+ .stages{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+ .stages::-webkit-scrollbar{display:none}
+ .stage{min-width:0;padding:8px 5px 8px 6px;border-radius:12px;background:var(--panel-2)}
+ .stage:first-child{padding-left:6px}
+ .stage b{font-size:17px}.stage span{font-size:10.5px;margin-top:0;overflow:hidden;text-overflow:ellipsis}
+ .stage.on{background:#E4EAFB}.stage.on b{color:var(--blue-light)}
+ .chev{display:none}
+ .peek{position:static;width:auto;border-radius:0;padding:0 0 18px;background:none;border:0;border-bottom:1px solid var(--hair);box-shadow:none;backdrop-filter:none;margin-bottom:18px;opacity:1;transform:none}
+ body:not(.sel) .peek{display:none}
+ .peek .x{top:-8px;right:0;width:44px;height:44px}
+ .peek h3{font-size:20px}
+ .peek .btn{display:none}
+ /* the one primary action, pinned to the thumb zone while the sheet is open on a selected home */
+ .cta{position:fixed;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:8;min-height:50px;border-radius:999px;background:var(--accent);color:#fff;font-weight:600;font-size:15px;border:0;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 14px 30px -14px color-mix(in srgb,var(--accent) 60%,transparent);opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .2s ease,transform .4s ease-out}
+ .ctafade{position:fixed;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom,0px) + 76px);background:linear-gradient(180deg,rgba(255,255,255,0),#fff 22px);pointer-events:none;z-index:8;opacity:0;transition:opacity .2s ease}
+ .ctafade.show{opacity:1}
+ .cta small{font-weight:400;opacity:.8;font-size:13px}
+ .cta.show{opacity:1;transform:none;pointer-events:auto}
+ .cta:hover{background:var(--accent-ink)}
+ .marker{width:22px;height:22px}
+ .concept-tag{display:none}
+ .nav{left:auto;right:14px;bottom:184px;flex-direction:column;padding:5px;border-radius:18px;gap:5px}
+ .nav .seg,.nav .zoomhint,.nav .nb span{display:none}
+ .nav .nb{min-height:44px;width:44px;padding:0;justify-content:center}
+ .res{right:14px;left:14px;width:auto;top:calc(env(safe-area-inset-top,0px) + 62px)}
+ .res button{min-height:44px;justify-content:center}
+ .ask input{font-size:16px}
+ .load{font-size:12px}
+}
+</style><link rel="stylesheet" href="lib/rc-console.css"></head><body>
+<div id="map"></div><div class="fog"></div><div class="vign"></div>
+<div class="top">
+  <div class="cap panel rv"><div class="rbrand"><div class="rlogo" data-r="logo"></div><div><div class="rname" data-r="name"></div><div class="rarea" data-r="area"></div></div></div>
+    <div class="greet"><b id="greet">Good evening</b><span id="greet-sub"></span></div></div>
+  <div class="ask panel rv" id="ask"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#737B8F" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Search an address, street or storm" aria-label="Search an address, street or storm"><span class="k">Ctrl K</span></div>
+</div>
+<div class="res panel" id="res"></div>
+<div class="stat glass rv" id="stat">
+  <div class="head"><button type="button" class="date sdt" id="s-date" aria-haspopup="true" aria-expanded="false" aria-controls="dock" title="Storms on file: pick one">Your service area</button><button class="pill sm only-storm" id="clear">Clear</button></div>
+  <div class="skel" aria-label="Loading your storms"><i></i><i></i><i></i><i></i></div>
+  <div class="calm only-calm">
+    <div class="ttl" id="c-ttl"></div>
+    <div class="sub" id="c-sub"></div>
+    <div class="d50" id="c-d50" hidden></div>
+    <button class="pill ink" id="show"></button><button class="pill" id="l-open-calm" hidden style="margin-top:8px;width:100%;min-height:44px">List every home</button>
+    <div class="load" id="load"><i></i><span id="load-t">Loading every home in your service area</span></div>
+    <button class="about-link" id="about" hidden>About Roof Command</button>
+  </div>
+  <div class="only-storm">
+    <div class="big" id="s-n"></div>
+    <div class="lbl">homes hit by 1 inch hail or larger</div>
+    <div class="row"><div><b id="s-max"></b><span>largest hail, radar</span></div><div><b id="s-days"></b><span>since the storm</span></div></div>
+    <div class="bands"><div class="h"><span>Homes by hail size</span><span id="s-share"></span></div>
+      <div class="bb" id="s-bands"></div></div>
+  </div>
+</div>
+<div class="lst glass" id="lst" aria-label="Home list"><div class="lh"><div class="r1"><h3 id="l-ttl">Homes</h3><button class="pill sm" id="l-close">Close</button></div>
+  <div class="lsub" id="l-sub"></div><input id="l-q" type="search" placeholder="Filter by street, owner or subdivision" aria-label="Filter the list" autocomplete="off"></div>
+  <div class="grp" id="l-grp"></div><div class="vp" id="l-vp"><div id="l-in"></div></div></div>
+<div class="peek glass" id="peek">
+  <button class="x" id="close" aria-label="Close record"><svg viewBox="0 0 24 24" fill="none" stroke="#0B1020" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  <h3 id="p-addr"></h3>
+  <div class="sub" id="p-sub"></div>
+  <div class="own" id="p-own" hidden></div>
+  <div class="chip" id="p-chip"><svg viewBox="0 0 24 24" fill="none" stroke="#2757E6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span id="p-stage"></span></div>
+  <div class="facts"><div><b id="p-f1"></b><span id="p-f1l"></span></div><div><b id="p-sq"></b><span>roof size</span></div><div><b id="p-age"></b><span>roof age</span></div></div>
+  <ul class="tl" id="p-tl"></ul>
+  <div class="acts"><button class="btn" id="open">Open report</button><button class="pill" id="add" aria-pressed="false">Add to Daily 50</button></div>
+</div>
+<div class="hh glass" id="hh">
+  <h3>Hardest hit in view</h3>
+  <div class="sub" id="hh-sub"></div>
+  <div class="facts"><div><b id="hh-n"></b><span>hit homes here</span></div><div><b id="hh-max"></b><span>largest hail</span></div><div><b id="hh-top"></b><span>route stops</span></div></div>
+  <button class="pill ink plan" id="plan">Plan a route</button><button class="pill" id="l-open" hidden style="width:100%;min-height:44px;margin-top:8px">List the hit homes</button>
+  <div class="rt"><div class="meta" id="rt-meta"></div><button class="btn" id="rt-add">Add these 12 to Daily 50</button><button class="pill" id="rt-clear">Clear route</button></div>
+</div>
+<!-- storms on file: a compact dropdown under the card's date (Jack 10-17), not a bar across the bottom. Timeline, list, pipeline -->
+<div class="dock panel rv" id="dock" role="dialog" aria-label="Storms on file">
+  <div class="scrub" id="scrub"><div class="sh"><span id="sh-t">Storms, past 6 months</span><span class="wseg" id="wseg" role="group" aria-label="Storm window"><button data-w="6m" class="on">6 months</button><button data-w="all">All on file</button></span></div><div class="axis"></div></div>
+  <div class="slist" id="slist" role="listbox" aria-label="Storms"></div>
+  <div class="pipe"><div class="ph" id="ph"></div><div class="stages" id="pipe"></div></div>
+</div>
+<div class="nav glass rv" id="nav">
+  <div class="seg" id="counties"><button data-c="all" class="on">All</button></div>
+  <button class="nb only-storm" id="fit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg><span>Fit storm</span></button>
+  <button class="nb" id="tilt" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M3 17 9 5h6l6 12z"/></svg><span>3D</span></button>
+  <button class="nb" id="rdBtn" aria-pressed="false"><span class="rdd" aria-hidden="true"></span><span>Re-roofs</span></button><!-- st-radar-layer.js: re-roof permits, last 90 days (Jack 10-23) -->
+  <button class="nb ic" id="zin" aria-label="Zoom in">+</button><button class="nb ic" id="zout" aria-label="Zoom out">&minus;</button>
+  <span class="zoomhint" id="zhint"></span>
+</div>
+<div class="chips" id="chips"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet s-peek" id="sheet"><button class="handle" id="handle" aria-label="Open details"><i></i></button><div class="body" id="sheetbody"></div></div>
+<div class="ctafade" id="ctafade"></div><button class="cta" id="cta">Open report<small id="cta-sub"></small></button>
+<div class="toast panel" id="toast" role="status" aria-live="polite"><span id="toast-t"></span><button class="pill sm" id="undo">Undo</button></div>
+<div class="tip" id="tip"><b id="t-addr"></b><span id="t-hail"></span></div>
+<div class="concept-tag" id="ctag">Concept by Wing Digital. Homes, addresses, radar hail per home and roofs are real data; the pipeline is yours, kept on this device</div>
+<script src="vendor/maplibre-gl@4.7.1/maplibre-gl.js"></script>
+<script src="vendor/deck.gl@9.0.38/dist.min.js"></script>
+<script src="lib/rc-state.js"></script><script src="lib/brand.js"></script><script src="lib/st-homes.js"></script><script src="lib/rc-roof.js"></script><script src="lib/st-meta.js"></script><script src="js/roofplan.js"></script><script src="lib/real-roof.js"></script><script src="lib/st-storm.js"></script>
+<script src="lib/rc-features.js"></script>
+<script src="lib/st-map.js"></script>
+<script src="lib/rc-lines.js"></script><script src="lib/st-mapview.js"></script>
+<script src="lib/st-radar-layer.js"></script><!-- Satellite | 3D houses toggle: licensed aerial + measurement lines, custom 3D roofs (roof3d tiles) -->
+<script src="lib/st-hard.js"></script><!-- hit hardest: neighbourhood list + glow (calm) and the picked storm's hardest sections outlined on the map -->
+<script src="lib/st-dock.js"></script><!-- storms dropdown + instant timeline (desktop); shorter crossfade and flight on a storm pick -->
+<script src="lib/st-replay.js"></script><!-- storm replay: the front sweeps the whole map (switch RC_FEATURES.stormReplay) --></body></html>

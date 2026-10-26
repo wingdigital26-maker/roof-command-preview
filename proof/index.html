@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- one page per home, opened from a link in a text or email: never indexed, never cached by search engines -->
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<title>Storm record</title>
+<link rel="stylesheet" href="proof.css">
+</head>
+<body>
+<!-- The Homeowner Proof Page (Bet 3, 10-23). Public: a homeowner opens it from a text or email the roofer's rep sent by
+     hand. Every fact is a public record with its source on the card: NOAA MRMS radar hail at the address, the National
+     Weather Service's own hail reports, the county appraisal roll, city re-roof permits (counts only, never a neighbour's
+     address), USGS LiDAR roof size as an estimate. No owner name, phone or email is ever loaded or shown. The consent box
+     is the only thing that collects anything, and only what the homeowner types. proof.js paints it; lib/rc-proof.js logs it. -->
+<header class="top">
+  <div class="brand"><div class="mark" data-r="logo"></div><span class="nm" data-r="name"></span></div>
+  <span class="kind">Storm record</span>
+</header>
+
+<main class="wrap" id="main">
+  <p class="loading" id="loading">Reading the radar for this address...</p>
+
+  <article id="doc" hidden>
+    <section class="hero">
+      <p class="eyebrow">Storm record for the home at</p>
+      <h1 id="addr"></h1>
+      <div class="big" id="big"></div>
+      <p class="src"><span class="chip">Source</span><span id="bigSrc"></span></p>
+    </section>
+
+    <section class="card" id="nearCard" hidden>
+      <h2>How close the hail came</h2>
+      <div id="near"></div>
+    </section>
+
+    <section class="card" id="streetCard" hidden>
+      <h2 id="streetH">Your street on that storm</h2>
+      <div class="street"><div id="streetMap" class="map"></div><div id="streetKey"></div></div>
+    </section>
+
+    <section class="card" id="nbCard" hidden>
+      <h2>Re-roofs nearby</h2>
+      <div id="nb"></div>
+    </section>
+
+    <section class="card">
+      <h2>Your roof on record</h2>
+      <dl class="facts" id="roof"></dl>
+    </section>
+
+    <section class="card" id="histCard" hidden>
+      <h2>Every storm on file at this address</h2>
+      <div id="hist"></div>
+    </section>
+
+    <section class="card plain">
+      <h2>What this means, and what it doesn't</h2>
+      <ul class="mean" id="mean"></ul>
+    </section>
+
+    <section class="cta" id="book">
+      <h2>Want someone to look at it?</h2>
+      <p>A free roof inspection from <b data-r="name"></b>: photos of every slope, and a straight answer on whether there is damage. No cost and no obligation.</p>
+      <button type="button" class="go" id="bOpen">Book a free inspection</button>
+      <form id="form" hidden novalidate>
+        <fieldset class="when"><legend>Best time for a visit</legend>
+          <div class="pills" id="when"></div>
+        </fieldset>
+        <label class="fld">Mobile number<input id="fPhone" name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="(972) 555-0123"></label>
+        <label class="fld">Email <span class="opt">(optional)</span><input id="fEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"></label>
+        <label class="consent"><input type="checkbox" id="fAgree" aria-labelledby="consentText"><span id="consentText"></span></label>
+        <p class="hint" id="fWhy" role="alert" hidden></p>
+        <button type="submit" class="go" id="bSend">Request my free inspection</button>
+        <p class="hint">Leave the box unticked and we will only reply by email about this request.</p>
+      </form>
+      <div class="done" id="done" hidden></div>
+    </section>
+
+    <section class="card who">
+      <h2>Who sent this</h2>
+      <div id="who"></div>
+    </section>
+
+    <footer class="fine">
+      <p id="srcs"></p>
+      <p>This page shows public records only. It has no owner name, phone number or email, and nothing about anyone else's home except counts.</p>
+      <p><button type="button" class="link" id="bStop">Don't contact me again</button></p>
+      <p class="made">Prepared by <span data-r="name"></span> with Roof Command.</p>
+    </footer>
+  </article>
+</main>
+<!-- phone: the one action stays in reach while the homeowner reads; hidden once the booking card is on screen -->
+<a class="sticky" id="sticky" href="#book" hidden>Book a free inspection</a>
+
+<script src="../lib/rc-state.js"></script>
+<script src="../lib/brand.js"></script>
+<script>/* the roofer brands the page (lib/brand.js) */ applyRoofer(rooferKey());</script>
+<script src="../lib/rc-copy.js"></script>
+<script src="../lib/st-meta.js"></script>
+<script src="../lib/rc-roof.js"></script>
+<script src="../lib/rc-hail.js"></script>
+<script src="../lib/rc-proof.js"></script>
+<script src="proof.js"></script>
+</body>
+</html>

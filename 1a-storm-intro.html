@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script src="lib/rc-frame-pause.js"></script><!-- perf 10-16: once the shell hands off to Today the parked opening stops its 60 fps engine loop -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roof Command, opening</title>
+<!-- the Wing website's own first-load gate, set synchronously exactly like wing-site-v4/index.html -->
+<script>(function(){var d=document.documentElement;d.className+=" js";try{if(!window.matchMedia("(prefers-reduced-motion: reduce)").matches){d.className+=" intro-active"}}catch(e){}})();</script>
+<link rel="preload" href="intro-assets/fonts/montserrat-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="intro-assets/fonts/montserrat-600.woff2" as="font" type="font/woff2" crossorigin>
+<!-- the site's stylesheet, ported as is (font urls repointed); everything the intro shows uses its tokens -->
+<link rel="stylesheet" href="intro-assets/style.css">
+<link rel="stylesheet" href="intro-assets/intro.css">
+</head>
+<body>
+
+<nav id="nav" aria-label="Main">
+  <div class="wrap">
+    <a href="product.html" class="logo"><img src="intro-assets/wing-mark.png" alt="" aria-hidden="true" width="26" height="27">Wing Digital</a>
+    <div class="navlinks intro-navlinks"><span>Roof Command</span></div>
+    <span class="intro-navright" data-r="name"></span>
+  </div>
+</nav>
+
+<main id="main">
+<!-- HERO: the site's hero, word for word in structure: piece dead centre, split headline, one mono line -->
+<header class="hero" data-piece-state="hero">
+  <div class="split-head" aria-hidden="true">
+    <span data-piece-avoid id="w1">Wing</span>
+    <span data-piece-avoid id="w2">Digital</span>
+  </div>
+  <p class="hero-line" data-piece-avoid id="hl">
+    <span>Roof Command / storm CRM</span>
+    <span>Built by Wing Digital for roofers</span>
+    <span data-r="region">Plano, Frisco, Allen, McKinney, Richardson and Rockwall, TX</span>
+  </p>
+</header>
+
+<!-- BEAT 2: the information beat. Roofer first, then what is in here today. Auto-advances. Numbers from lib/rc-state.js. -->
+<section class="beat" id="beat-info" aria-live="polite">
+  <div class="beat-brand"><span class="rlogo" data-r="logo"></span><span class="rname" data-r="name"></span></div>
+  <p class="beat-sub">Roof Command by Wing Digital</p>
+  <p class="beat-facts"><span><b id="f-homes"></b> homes watched across <span id="f-counties"></span> counties</span><span>Last storm <b id="f-storm">Jun 2</b>, <b id="f-hit"></b> homes hit</span></p>
+</section>
+
+<!-- BEAT: the greeting (first open and the short opening). The roofer's first name from lib/brand.js; the beat stays up while the app finishes loading underneath. -->
+<section class="beat" id="beat-hi" aria-live="polite">
+  <p class="beat-big beat-hi">Hi <span data-r="owner"></span></p>
+  <p class="beat-sub" id="hi-sub">Your day is loading</p>
+</section>
+
+<!-- the loading cue (?wait=1, the first open): shown only when the app is still getting ready after the beats. One hairline, one quiet line of text. -->
+<div class="load" id="load" aria-live="polite"><i class="load-bar"></i><span id="load-t">Opening today</span></div>
+<!-- skip: small, in the corner, appears after a moment (any key skips too) -->
+<a class="intro-prop" href="proposal.html" target="_blank" rel="noopener">See the proposal</a>
+<button type="button" class="intro-skip" id="skip" hidden>Skip</button>
+
+<!-- BEAT 3: storm report, only when a storm came through in the last 7 days (or ?storm=1). Nothing sends. -->
+<section class="beat" id="beat-storm" aria-live="polite">
+  <p class="beat-kicker">Storm report, <b id="s-storm">Jun 2</b></p>
+  <p class="beat-big"><b id="s-hit"></b> homes hit, <span id="s-max"></span> in hail</p>
+  <p class="beat-big beat-big--texts">Storm alerts go only to <b>opted-in</b> homeowners and past customers</p>
+  <p class="beat-note">Real home and storm counts. People and calls in this tour are samples.</p>
+</section>
+</main>
+
+<canvas id="hail" aria-hidden="true"></canvas>
+
+<!-- the site's piece engine, the same file, same object, same lighting; it mounts its own #stage -->
+<script src="lib/rc-state.js"></script>
+<script src="lib/brand.js"></script>
+<script src="intro-assets/piece-engine.js" defer></script>
+<script src="intro-assets/intro.js" defer></script>
+</body>
+</html>

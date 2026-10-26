@@ -1,0 +1,1 @@
+{"collin-tx": [164153], "src": "scripts/dfw/roof_report.py full report per home (CALEO-REPORT-1011). The app (lib/rc-roof.js) reads meta/roof-detail/<region>/<row>.json for the rows listed here; an entry may be a row number or {row, url} (url relative to the data root)."}

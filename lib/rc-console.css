@@ -1,0 +1,575 @@
+/* Roof Command polish, direction B "Ops Console" (10-14). Loaded last on every screen and on the shell.
+   Same app, same screens, same skeleton: this sheet only changes surfaces, radii, type roles and small motion.
+   The map and the data are the stage; the UI floats over them as crisp docked panels (solid white, 1px line, 8px,
+   no blur). Measured data (dates, counts, hail, sq ft) reads in Inter too (10-17: one font everywhere, tabular digits).
+   Light theme only. Nothing here is hardcoded to one roofer: the accent comes from --accent (lib/brand.js). */
+
+:root{
+  --c-ink:#0B1020; --c-blue:#2757E6; --c-canvas:#EEF0F3; --c-line:#D5D9E0; --c-line-2:#E6E8ED; --c-slate:#5A6378; --c-tint:#F1F5FA;
+  --c-shadow:0 1px 2px rgba(11,16,32,.06),0 12px 32px -16px rgba(11,16,32,.22);
+  --c-mono:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --c-r:8px; --c-r2:6px; --c-r3:4px;
+  --c-fast:120ms; --c-dock:240ms; --c-ease:cubic-bezier(.2,.7,.2,1);
+}
+.c-mono,.c-lbl{font-family:var(--c-mono);font-variant-numeric:tabular-nums}
+.c-lbl{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--c-slate)}
+
+/* =========================================================== SHELL (product.html) =========================================================== */
+html[data-rc="shell"]{
+body>header{height:52px;padding:0 16px;gap:14px;background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;border-bottom:1px solid var(--c-line)}
+body>header .co{gap:10px}
+body>header .co .mark{width:30px;height:30px;border-radius:var(--c-r2)}
+body>header .co .mark svg{width:17px;height:17px}
+body>header .co b{font-size:14px}
+body>header .co small{font-size:11.5px}
+body>header nav{border-radius:var(--c-r2);padding:3px;gap:2px;background:var(--c-canvas);border:1px solid var(--c-line)}
+body>header nav button{border-radius:var(--c-r3);padding:5px 14px;font-size:13px;min-height:28px;transition:background var(--c-fast) var(--c-ease),color var(--c-fast) var(--c-ease)}
+body>header nav button:hover{background:rgba(255,255,255,.7);color:var(--c-ink)}
+body>header nav button.on{background:#fff;color:var(--c-ink);box-shadow:0 1px 2px rgba(11,16,32,.14),0 0 0 1px var(--c-line)}
+body>header .find{border-radius:var(--c-r2);height:32px;width:296px;padding:0 8px 0 10px;background:#fff;border:1px solid var(--c-line);color:var(--c-slate);transition:border-color var(--c-fast) var(--c-ease),box-shadow var(--c-fast) var(--c-ease)}
+body>header .find:focus-within{border-color:var(--c-blue);box-shadow:0 0 0 3px rgba(39,87,230,.14);outline:none}
+body>header .find input{font-size:13px}   /* 296px box: the whole placeholder 'Find an address or storm' fits left of the Ctrl K hint (clipped at 260) */
+body>header .find::after{content:"Ctrl K";flex:none;font-family:var(--c-mono);font-size:10.5px;letter-spacing:.04em;color:var(--c-slate);border:1px solid var(--c-line);border-radius:var(--c-r3);padding:2px 6px;line-height:1.2;background:var(--c-canvas)}
+body>header .sig{font-size:12px}
+/* the working storm chip (product.html #wstorm): square, quiet, the date in ink */
+body>header .wstorm{display:flex;align-items:center;gap:7px;height:32px;padding:0 11px;border:1px solid var(--c-line);border-radius:var(--c-r2);background:#fff;color:var(--c-slate);font:inherit;font-size:12.5px;white-space:nowrap;flex:none;cursor:pointer}
+body>header .wstorm[hidden]{display:none}
+body>header .wstorm b{color:var(--c-ink);font-weight:600}
+body>header .wstorm .k{font-family:var(--c-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase}
+body>header .wstorm:hover{border-color:var(--c-slate)}
+body>header .wstorm:focus-visible{outline:2px solid #1F47C9;outline-offset:2px}
+@media (max-width:1599px){ body>header .wstorm .n{display:none} }
+@media (max-width:900px){ body>header .wstorm{display:none} }
+body>header .me{width:30px;height:30px;font-size:12px;border-radius:50%;border-color:var(--c-line)}   /* the avatar stays round (10-15 square rule exception) */
+body>main>.stage{border-radius:0}
+body>header .co .mark{border-radius:var(--c-r2)}
+body>main{padding:0}
+body>main>.stage{border-radius:0;box-shadow:none;background:var(--c-canvas)}
+body>main.phone>.stage{border-radius:28px}
+/* 901-1180: the 296px box pushed the avatar off a 1024 screen; a 236px box without the Ctrl K hint keeps the full placeholder */
+@media (min-width:901px) and (max-width:1180px){ body>header .find{width:236px} body>header .find::after{display:none} }
+@media (max-width:900px){ body>header{height:auto;padding:6px 12px} body>header .find{width:32px;padding:0;justify-content:center} body>header .find::after{display:none} }
+@media (max-width:599px){
+  body>header{padding:8px 12px 6px}
+  body>header .find{width:44px;height:44px;border-radius:var(--c-r2)}
+  body>header .me{width:44px;height:44px}
+  body>header nav{background:transparent;border:0;padding:0;margin:0 -12px;padding:0 12px;gap:0}
+  body>header nav button{border-radius:var(--c-r2);min-height:44px;font-size:15px}
+  /* phone pass 10-15: the roofer's name and the tabs read at 15px, the service-area line at 12.5px */
+  body>header .co b{font-size:15px}
+  body>header .co small{font-size:12.5px}
+  body>header nav button.on{box-shadow:none;background:var(--c-ink);color:#fff}
+  body>main{padding:0}
+  body>main>.stage{border-radius:0}
+}
+}
+
+/* =========================================================== STORMS (1b-storm-theater.html) =========================================================== */
+html[data-rc="storm"]{
+/* the map is the floor: no haze over it */
+body>.fog,body>.vign{display:none}
+#stat.glass,#peek.glass,#hh.glass,#lst.glass,#nav.glass,.dock.panel,#res.panel,#toast.panel{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--c-line);box-shadow:var(--c-shadow)}
+#stat,#peek,#hh,#lst,.dock.panel,#toast{border-radius:var(--c-r)}
+#nav.glass{border-radius:var(--c-r2);padding:4px;gap:4px}
+#res.panel{border-radius:0 0 var(--c-r) var(--c-r)}
+/* docked panels slide in 12px from their own edge, 240ms, precise */
+#stat.rv,#nav.rv,.dock.rv{transition:opacity var(--c-dock) var(--c-ease),transform var(--c-dock) var(--c-ease)}
+#stat.rv{transform:translateX(-12px)}
+.dock.rv,#nav.rv{transform:translateY(12px)}
+#stat.rv.in,.dock.rv.in,#nav.rv.in{transform:none}
+#stat.rv:nth-of-type(n),.dock.rv:nth-of-type(n),#nav.rv:nth-of-type(n){transition-delay:0s}
+/* stat card: a readout, not a poster */
+#stat .date{font-family:var(--c-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--c-slate);font-weight:400}
+#stat .big{font-size:64px;font-weight:500;letter-spacing:-.04em}
+#stat .lbl{font-size:14px}
+#stat .row{gap:14px;margin-top:16px;padding-top:14px;border-top:1px solid var(--c-line-2)}
+#stat .row b{font-size:20px}
+#stat .row span,.bands .bb span,.bands .h{font-family:var(--c-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--c-slate)}
+.bands .h{font-size:11px;text-transform:none;letter-spacing:.02em}
+.bands .bb span{font-size:9.5px;letter-spacing:0;text-transform:none}
+.bands .bb{gap:6px}
+.bands .bb i{border-radius:1px}
+.bands .bb b{font-family:var(--c-mono);font-size:13px;font-weight:400;letter-spacing:0}
+#stat .calm .ttl{font-size:22px}
+#stat .calm .sub{font-size:13.5px}
+#stat .load{font-family:var(--c-mono);font-size:12px}
+#stat .load i{border-radius:1px}
+/* controls: GIS tool groups, square and grouped */
+.pill,.btn,.nb,.lst input,.peek .x,.chip,.ask,.ask.open,.cta,.rlogo,.cap,.hit:focus-visible{border-radius:var(--c-r2)}
+.ask .k,.concept-tag,.stat .skel i,.stat .skel i:nth-child(4){border-radius:var(--c-r3)}
+.maplibregl-ctrl-group{border-radius:var(--c-r2)!important;box-shadow:none!important}
+.pill.sm{min-height:30px}
+/* About Roof Command: a quiet text link at the foot of the calm card (shell only) */
+.about-link{display:block;margin-top:12px;padding:4px 0;border:0;background:none;font-family:var(--c-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--c-slate);cursor:pointer;border-radius:var(--c-r3)}
+.about-link:hover{color:var(--c-ink)}
+.about-link[hidden],body:not(.loaded) .about-link{display:none}
+.wseg,.seg{border-radius:var(--c-r2);background:var(--c-canvas);border:1px solid var(--c-line);padding:2px}
+.wseg button,.seg button{border-radius:var(--c-r3);transition:background var(--c-fast) var(--c-ease),color var(--c-fast) var(--c-ease)}
+.wseg button{min-height:26px;padding:0 10px}
+.about-link{min-height:28px}
+.wseg button.on,.seg button.on{background:#fff;color:var(--c-ink);box-shadow:0 1px 2px rgba(11,16,32,.14),0 0 0 1px var(--c-line)}
+.nb{min-height:32px;background:#fff;border:1px solid var(--c-line);font-weight:500}
+.nb:hover{background:var(--c-canvas)}
+.nb.on,.nb.on:hover{background:var(--c-ink);border-color:var(--c-ink);color:#fff}
+.nb.ic{width:32px}
+.zoomhint{font-family:var(--c-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--c-slate)}
+/* dock: timeline + pipeline, mono axis */
+.dock.panel{padding:0 20px}
+.tlab,.mlab{font-family:var(--c-mono);font-size:10.5px;letter-spacing:.03em}
+.tick{width:2px;border-radius:0}
+.mtick{background:var(--c-line)}
+.scrub .axis{background:var(--c-line)}
+.read{border-radius:var(--c-r3);font-family:var(--c-mono);font-size:11px;border-color:var(--c-line)}
+/* the readout sits over its own tick (the tick is added after it and used to run through the text) */
+.read{z-index:2}
+.sh,.ph{font-size:12px}
+#sh-t,#ph{font-family:var(--c-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--c-slate)}
+.dock .stage b{font-size:24px}
+.dock .stage span{font-family:var(--c-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;margin-top:3px}
+.dock .pipe{border-left:1px solid var(--c-line-2);padding-left:22px}
+.chev{border-color:var(--c-line)}
+/* record card + hardest hit */
+.peek h3,.hh h3{font-size:19px}
+.facts div{background:var(--c-canvas);border:1px solid var(--c-line-2);border-radius:var(--c-r2);padding:9px 10px}
+.facts span,.peek .sub,.hh .sub{font-size:12px}
+.facts span{font-family:var(--c-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--c-slate)}
+.facts b{font-size:16px}
+.chip{font-size:12px;padding:5px 9px 5px 8px;margin-top:12px;background:var(--c-canvas);border-color:var(--c-line)}
+.tl small{font-family:var(--c-mono);font-size:11px}
+.tl:before{background:var(--c-line)}
+.roofm{font-size:12.5px}
+/* home list: denser rows, the highlight follows the cursor */
+.lst .lh{padding:14px 16px 10px;border-bottom:1px solid var(--c-line-2)}
+.lst h3{font-size:16px}
+.lst .lsub{font-family:var(--c-mono);font-size:11px;color:var(--c-slate)}
+.lst input{height:32px;margin-top:8px;font-size:13px;background:#fff;border-color:var(--c-line);padding:0 10px}
+.lst input:focus{border-color:var(--c-blue);outline:none;box-shadow:0 0 0 3px rgba(39,87,230,.14)}
+.lst .grp{font-family:var(--c-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;background:var(--c-canvas);border-bottom:1px solid var(--c-line-2);min-height:24px;padding:5px 16px;font-weight:400}
+.lst .row{height:58px;padding:8px 16px;border-bottom:1px solid var(--c-line-2);transition:background var(--c-fast) var(--c-ease),box-shadow var(--c-fast) var(--c-ease)}
+.lst .row:hover,.lst .row.on{background:var(--c-tint);box-shadow:inset 2px 0 0 var(--accent)}
+.lst .row b{font-size:13px}
+.lst .row span{font-size:11.5px}
+.lst .row .h{font-family:var(--c-mono);font-size:11.5px;font-weight:400;top:8px;right:16px;color:var(--c-ink)}
+/* search results, tooltip, toast */
+.res button{border-radius:var(--c-r3)}
+/* search results sit above the record card (same z-index used to hide them behind it) and share its column */
+#res.panel{z-index:8}
+body.embedded #res{right:16px;width:336px}
+.res b{font-size:13px}
+.res span{font-family:var(--c-mono);font-size:11px}
+.tip{border-radius:var(--c-r2);border-color:var(--c-line);box-shadow:var(--c-shadow);padding:7px 10px}
+.tip span,.tip em{font-family:var(--c-mono);font-size:11px}
+.tip:after{border-color:var(--c-line)}
+#toast{transform:translate(-50%,8px);transition:opacity 200ms var(--c-ease),transform 200ms var(--c-ease)}
+#toast.on{transform:translate(-50%,0)}
+/* the selected home marker keeps its ring; the ring is the one place the darkest ink lives on the map */
+@media (min-width:601px){
+  #stat{left:16px;top:16px;width:318px;padding:16px 18px 16px}
+  #peek,#hh{right:16px;width:336px;padding:18px 18px 16px}
+  body.embedded #stat{top:16px}
+  body.embedded #peek,body.embedded #hh{top:16px}
+  body.embedded #peek{max-height:calc(100vh - 32px)}
+  .lst{left:16px;top:16px;width:352px;bottom:200px}
+  body.sel .dock{right:calc(16px + 336px + 16px)}
+  body.sel .nav{max-width:calc(100vw - 16px - 336px - 32px)}
+  .dock.panel{left:16px;right:112px;bottom:16px;height:122px}
+  #nav{left:16px;bottom:154px}
+  body.embedded .res{top:8px}
+  #stat .calm .pill{margin-top:14px}
+}
+@media (max-width:600px){
+  .lst{border-radius:0;border:0;box-shadow:none}
+  /* inside the bottom sheet the cards are sections, not boxes: the desktop #id.glass card border used to win here and drew a
+     box with no padding around the calm card (text touching the line) */
+  #stat.glass,#peek.glass,#hh.glass,#lst.glass{background:none;border:0;box-shadow:none;border-radius:0}
+  #hh.glass{border-top:1px solid var(--c-line-2)}
+  #peek.glass{border-bottom:1px solid var(--c-line-2)}
+  .about-link{min-height:44px;margin-top:6px}
+  /* the chip strip snapped its first chip flush to the screen edge (scroll-snap ignored the 14px padding) */
+  .chips{scroll-padding-left:14px}
+  /* the full-screen home list: the console's 32px filter box and 30px Close were under the 44px tap floor */
+  .lst input{height:44px;font-size:16px}
+  .lst .pill,.lst .pill.sm{min-height:44px}
+  .chip-s{border-radius:var(--c-r2);box-shadow:none;border-color:var(--c-line)}
+  .chip-s span{font-family:var(--c-mono);font-size:10.5px}
+  .sheet{border-radius:var(--c-r) var(--c-r) 0 0;box-shadow:0 -1px 0 var(--c-line),0 -16px 40px -28px rgba(11,16,32,.35)}
+  .stage{border-radius:var(--c-r2)}
+  .nav{border-radius:var(--c-r2)}
+  /* phone tap targets: the console's 32px .nb/.nb.ic sizes were overriding the theater's 44px phone rule */
+  .nav .nb,.nav .nb.ic{min-height:44px;width:44px}
+  .cta{border-radius:var(--c-r)}
+  .ask.wide{border-radius:var(--c-r2);background:#fff;border:1px solid var(--c-line);box-shadow:var(--c-shadow);backdrop-filter:none}
+  .res{border-radius:var(--c-r)}
+}
+}
+
+/* =========================================================== TODAY (c4-command-deck/deck.html) =========================================================== */
+html[data-rc="today"]{
+/* phone: the queue (#lpanel) and the map move into bottom sheets that sit OUTSIDE .app, so every rule here matches both
+   roots (:is keeps the specificity of .app) */
+:is(.app,.sheet) .queue,:is(.app,.sheet) .mapwrap,:is(.app,.sheet) .card.paper{border-radius:var(--c-r);border:1px solid var(--c-line);box-shadow:var(--c-shadow)}
+:is(.app,.sheet) .card.paper{box-shadow:var(--c-shadow)}
+:is(.app,.sheet) .ph{border-radius:var(--c-r) var(--c-r) 0 0}
+:is(.app,.sheet) .hello h1{font-size:34px;letter-spacing:-.03em}
+:is(.app,.sheet) .hello p{font-size:14px}
+:is(.app,.sheet) .tstat div{font-family:var(--c-mono);font-size:11.5px;letter-spacing:.01em;color:var(--c-slate)}
+:is(.app,.sheet) .tstat b{font-family:var(--font);font-size:18px}
+:is(.app,.sheet) .qh{padding:12px 14px 8px}
+:is(.app,.sheet) .qh small{font-family:var(--c-mono);font-size:11px;letter-spacing:.02em}
+:is(.app,.sheet) .ltabs button{font-size:14px;height:34px;border-radius:var(--c-r3) var(--c-r3) 0 0}
+:is(.app,.sheet) .ltabs button i{border-radius:var(--c-r3)}
+:is(.app,.sheet) .qlist{padding:0 0 8px;gap:0}
+/* the queue is a column, not a grid: as grid items the rows took their track height from the clamped meta line's
+   intrinsic size (52 px on a phone), so a two-line meta ran under the next row's address */
+:is(.app,.sheet) .qlist{display:flex;flex-direction:column}
+:is(.app,.sheet) .qlist>*{flex:none}
+:is(.app,.sheet) .qrow{border-radius:0;padding:8px 14px 8px 12px;gap:10px;grid-template-columns:24px minmax(0,1fr) auto;border-bottom:1px solid var(--c-line-2);transition:background var(--c-fast) var(--c-ease),box-shadow var(--c-fast) var(--c-ease),opacity .3s}
+:is(.app,.sheet) .qrow .no{width:22px;height:22px;border-radius:var(--c-r3);font-family:var(--c-mono);font-size:11px;font-weight:400;border-color:var(--c-line)}
+:is(.app,.sheet) .qrow .ad{font-size:13px}
+:is(.app,.sheet) .qrow .mt{font-size:11.5px}
+:is(.app,.sheet) .qrow .hz{font-family:var(--c-mono);font-size:12px;font-weight:400;color:var(--c-ink)}
+:is(.app,.sheet) .qrow:hover,:is(.app,.sheet) .qrow.on{background:var(--c-tint);box-shadow:inset 2px 0 0 var(--accent)}
+:is(.app,.sheet) .qrow.on .no{border-radius:var(--c-r3)}
+:is(.app,.sheet) .qrow.on .hz{color:var(--accent-ink)}
+:is(.app,.sheet) .qfoot{font-size:11.5px;line-height:1.45;border-top:1px solid var(--c-line-2);padding:10px 14px}
+:is(.app,.sheet) .find,:is(.app,.sheet) .queue input[type="search"]{border-radius:var(--c-r2)}
+:is(.app,.sheet) .pill{border-radius:var(--c-r2);font-weight:600}
+:is(.app,.sheet) .pill.glass{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--c-ink)}
+:is(.app,.sheet) .pill.line,:is(.app,.sheet) .mtag .pill{border:1px solid var(--c-line);box-shadow:none}
+:is(.app,.sheet) .mtag .pill.dk{border-color:var(--c-ink)}
+:is(.app,.sheet) .mtag .mexp{border-radius:var(--c-r2);box-shadow:none;border:1px solid var(--c-line)}
+:is(.app,.sheet) .ph .bl,:is(.app,.sheet) .ph .open,:is(.app,.sheet) .ph .ex{border-radius:var(--c-r3);box-shadow:none;border:1px solid var(--c-line);font-family:var(--c-mono);font-weight:400;font-size:10.5px;letter-spacing:.01em}
+:is(.app,.sheet) .addr h2{font-size:25px}
+:is(.app,.sheet) .facts{border-radius:var(--c-r2);border-color:var(--c-line)}
+:is(.app,.sheet) .facts div+div{border-left-color:var(--c-line)}
+:is(.app,.sheet) .facts small{font-family:var(--c-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--c-slate);font-weight:400}
+:is(.app,.sheet) .facts b{font-size:19px}
+:is(.app,.sheet) .facts b i{font-family:var(--c-mono);font-size:11px}
+:is(.app,.sheet) .act{border-radius:var(--c-r);border-color:var(--c-line);background:var(--c-canvas)}
+:is(.app,.sheet) .act button{border-radius:var(--c-r2)}
+:is(.app,.sheet) .act .outc button{border-radius:var(--c-r2);border-color:var(--c-line)}
+:is(.app,.sheet) .calls .pill{font-weight:500}
+:is(.app,.sheet) .mleg{border-radius:var(--c-r);background:#fff;border:1px solid var(--c-line);box-shadow:var(--c-shadow)}
+:is(.app,.sheet) .mleg .lh{font-family:var(--c-mono);font-size:10.5px;letter-spacing:.05em;font-weight:400;color:var(--c-slate)}
+:is(.app,.sheet) .mleg .days button{border-radius:var(--c-r3);border-color:var(--c-line)}
+:is(.app,.sheet) .mleg i.hq{border-radius:2px}
+:is(.app,.sheet) .mnext{border-radius:var(--c-r);border:1px solid var(--c-line);box-shadow:var(--c-shadow)}
+:is(.app,.sheet) .mnext .th{border-radius:var(--c-r3)}
+:is(.app,.sheet) .mnext .go{border-radius:var(--c-r2)}
+:is(.app,.sheet) .mnext small{font-family:var(--c-mono);font-size:11px}
+:is(.app,.sheet) .hqm .hql{border-radius:var(--c-r3);box-shadow:none;border:1px solid var(--c-line);font-weight:600}
+:is(.app,.sheet) .rlab .plab{border-radius:var(--c-r3);box-shadow:none;font-family:var(--c-mono);font-weight:400}
+:is(.app,.sheet) .btip{border-radius:var(--c-r3)}
+:is(.app,.sheet) .bpop,:is(.app,.sheet) .hpop{border-radius:var(--c-r);border:1px solid var(--c-line);box-shadow:var(--c-shadow)}
+:is(.app,.sheet) .bpop .bp-ch .ic{border-radius:var(--c-r3)}
+:is(.app,.sheet) .bpop .bp-msg{border-radius:var(--c-r2)}
+:is(.app,.sheet) .bpop .bp-t,:is(.app,.sheet) .bpop .bp-cd{font-family:var(--c-mono);font-weight:400}
+:is(.app,.sheet) .bpop .bp-l,:is(.app,.sheet) .bpop .bp-more b{font-family:var(--c-mono);font-weight:400;letter-spacing:.05em}
+:is(.app,.sheet) .hpop .hp-text{border-radius:var(--c-r2)}
+:is(.app,.sheet) .pipe{border-radius:var(--c-r);border-color:var(--c-line);box-shadow:none}
+:is(.app,.sheet) .stg .c{font-family:var(--c-mono);font-weight:400;font-size:20px;letter-spacing:0}
+:is(.app,.sheet) .stg .l{font-size:12px}
+:is(.app,.sheet) .stg .bar2{border-radius:0}
+:is(.app,.sheet) .pline{font-family:var(--c-mono);font-size:11.5px}
+.toast{border-radius:var(--c-r);transform:translate(-50%,8px);transition:opacity 200ms var(--c-ease),transform 200ms var(--c-ease)}
+.dlg{border-radius:var(--c-r)}
+.dgrid button,.dlg textarea{border-radius:var(--c-r2)}
+.dlg .optin{border-radius:var(--c-r2)}
+.ring .disc{box-shadow:0 0 0 1px var(--c-line)}
+.ring .v small{font-family:var(--c-mono);font-size:10px;letter-spacing:.03em;text-transform:uppercase}
+:is(.app,.sheet) .maplibregl-ctrl-group{border-radius:var(--c-r2)!important;box-shadow:none!important;border:1px solid var(--c-line)}
+/* square controls everywhere (Jack 10-15, the map toolbar's buttons as the rule): 6px on every button, chip, tab, input
+   and segmented control, 4px on tiny tags and counts, 8px on panels and sheets. Round stays only for pins, the base's
+   dot, legend dots and the Nimbus orb. */
+:is(.app,.sheet) .qrow .no{border-radius:var(--c-r3)}
+:is(.app,.sheet) .ltabs button i,.ifil button i,.istg,.qdue,.ich .ic,.hitem .ich .ic{border-radius:var(--c-r3)}
+.ifil,#paneInbox .ifil,.dseg{border-radius:var(--c-r2);background:var(--c-canvas);border:1px solid var(--c-line);padding:2px}
+.ifil button,.dseg button{border-radius:var(--c-r3)}
+.ifil button[aria-pressed="true"],.dseg button[aria-pressed="true"]{box-shadow:0 1px 2px rgba(11,16,32,.14),0 0 0 1px var(--c-line)}
+.isearch,.ithread textarea,.dsel,.dlg input.dsel{border-radius:var(--c-r2);border:1px solid var(--c-line);background:#fff}
+.isearch:focus-within,.ithread textarea:focus,.dsel:focus{border-color:var(--c-blue);outline:none;box-shadow:0 0 0 3px rgba(39,87,230,.14)}
+.srow .sact button,.dbtn,.ithread .dbtn,.toast button,.iback,.hpop .hp-text,.rchips button,.sheet .sh button,.peek button,.mtag .mexp{border-radius:var(--c-r2)}
+.srow,.irow{border-radius:var(--c-r2)}
+.inext,.isugg,.ireply,.dlg .optin,.dlg .draft,.dconf,#dWhy,#eWhy,.hbody,.bpop .bp-msg,.bpop .bp-msg.note,.blist:focus-within{border-radius:var(--c-r2)}
+.bpop .bp-x,.blist button,.hqm .hqd,.rtip,.roofwrap,.roofwrap .rleg,.mnext .th{border-radius:var(--c-r2)}
+:is(.app,.sheet) .mtag .pill.skel:empty{border-radius:var(--c-r2)}
+.peek,.sheet,.rsheet,.pipe,.dlg{border-radius:var(--c-r)}
+.rsheet .roofwrap,.sheet .pmap{border-radius:var(--c-r2)}
+.bpop .bp-open{border-radius:var(--c-r3)}
+/* two clips found on the 10-15 click-through: a two-pitch roof ("10/12 + 14/12") overran its 140px fact cell, and the
+   inline legend's longer keys ("To each home, in order") ran past the 176px card edge */
+:is(.app,.sheet) .facts b{white-space:normal;overflow-wrap:anywhere}
+:is(.app,.sheet) .mleg .k{white-space:normal;line-height:1.25}
+/* a held-back dialog button (Schedule for a cold homeowner) reads as held back, not as a second white button */
+.dlg .dbtn.off,.ithread .dbtn.off{background:var(--c-canvas);border:1px solid var(--c-line-2);color:var(--c-slate);box-shadow:none}
+/* the undo toast sat over Email and Skip for 7 s; on a desktop it docks over the map's bottom edge, left of Nimbus */
+@media (min-width:641px){ .toast{left:auto;right:116px;transform:translateY(8px)} .toast.open{transform:none} }
+/* laptop height (768 tall): the full Why today ran 7 lines and squeezed the roof art to a 20 px sliver; four lines here,
+   the whole reason stays on the home's record */
+@media (min-width:641px) and (max-height:820px){ :is(.app,.sheet) .why{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden} }
+@media (max-width:640px){
+  /* .embed sits on <html> itself: &.embed, not a descendant */
+  &.embed .ph{min-height:96px}
+  &.embed .addr p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  &.embed .cb{padding-top:10px}
+  &.embed .facts{margin-top:10px}
+  &.embed .facts div{padding:7px 8px}
+  &.embed .facts b{font-size:16px;margin-top:3px}
+  &.embed .why{margin-top:8px}
+  &.embed .calls{margin-top:6px}
+  &.embed .act{margin-bottom:8px}
+  &.embed .ph .ex{min-height:44px;font-size:12.5px}
+  /* phone pass 10-15: the card body scrolls when its copy outgrows the card (skip reasons open, a two-pitch roof, a long
+     owner line) and the action bar stays pinned at its foot, so Text, Email, Skip and the skip Cancel are never cut off by
+     the card edge (they ran 10 px past it on open, 30 px with the skip reasons up). The roof art gives way first. */
+  &.embed .card .ph{flex-shrink:40}
+  &.embed .card .cb{flex:0 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:none}
+  &.embed .card .cb::-webkit-scrollbar{display:none}
+  &.embed .card .cb>*{flex-shrink:0}
+  &.embed .card .cb .act{position:sticky;bottom:8px;z-index:2;margin-bottom:8px;box-shadow:0 9px 0 0 #fff}
+  /* body copy at 15px on a phone: the address line, Why today and the peek bar labels */
+  &.embed .addr p{font-size:15px;line-height:1.4}
+  &.embed .why{font-size:15px;line-height:1.4}
+  &.embed .peek button{font-size:15px}
+  &.embed .peek button small{font-size:13px}
+  /* the rest of the phone's sentences at 15px: the Text/Email dialog, the skip question and reasons, the map legend's
+     note, the roof sheet's edge line; the draft box at 16px so iOS does not zoom when it takes focus */
+  .dlg .optin,.dlg .snote,.dlg .dsub,.dseg button{font-size:15px}
+  .dlg textarea{font-size:16px}
+  .dlg .dlab,.dlg .dhint{font-size:14px}
+  :is(.app,.sheet) .act .aq,:is(.app,.sheet) .act .outc button{font-size:15px}
+  :is(.app,.sheet) .mleg .lnote{font-size:15px;line-height:1.4}
+  .rsheet p{font-size:15px;line-height:1.45}
+  .rsheet .rchips button{font-size:15px}
+  &.embed :is(.app,.sheet) .qrow .mt,&.embed :is(.app,.sheet) .qfoot{font-size:14px}
+  &.embed .sheet .queue .find{height:44px}
+  /* 44px taps: the map legend's All / Today days and the dialog's Text / Email switch; the opt-in heading at 15px */
+  &.embed :is(.app,.sheet) .mleg .days button{min-height:44px;min-width:52px;font-size:14px}
+  &.embed .dseg button{height:44px}
+  .dlg .optin b{font-size:15px}
+  /* the roof sheet is a scrolling flex column: the 3D roof (overflow hidden, so min-height 0) shrank to 0 px and the sheet
+     opened on the facet table with no roof; nothing in the sheet shrinks now, the sheet scrolls instead */
+  .rsheet>*{flex-shrink:0}
+  &.embed .sheet .queue .find input{font-size:16px}
+  :is(.app,.sheet) .card.paper{border-radius:var(--c-r)}
+  :is(.app,.sheet) .ph{border-radius:var(--c-r) var(--c-r) 0 0}
+  :is(.app,.sheet) .peek{border-radius:var(--c-r) var(--c-r) 0 0;border-color:var(--c-line)}
+  :is(.app,.sheet) .peek button{border-radius:var(--c-r2)}
+  :is(.app,.sheet) .qrow{padding:10px 14px 10px 12px}
+  :is(.app,.sheet) .qrow .ad{font-size:15px}
+  :is(.app,.sheet) .qrow .mt{font-size:12.5px}
+  :is(.app,.sheet) .hello h1{font-size:25px}
+  :is(.app,.sheet) .hello p{font-size:13px}
+  :is(.app,.sheet) .tstat div{font-size:11.5px}
+  :is(.app,.sheet) .tstat b{font-size:15px}
+  :is(.app,.sheet) .facts b{font-size:17px}
+  :is(.app,.sheet) .facts div{padding:9px 9px}
+  :is(.app,.sheet) .facts small{font-size:11px;letter-spacing:.02em}
+  :is(.app,.sheet) .facts b i{font-size:12px}
+  :is(.app,.sheet) .facts small .ic{display:none}
+  :is(.app,.sheet) .addr h2{font-size:22px}
+  .sheet{border-radius:var(--c-r) var(--c-r) 0 0}
+  .sheet .pmap{border-radius:var(--c-r2);border-color:var(--c-line)}
+  .rsheet .roofwrap{border-radius:var(--c-r2)}
+}
+}
+
+/* =========================================================== CRM (c5-home: home.css + crm.css) =========================================================== */
+html[data-rc="crm"]{
+/* the inbox's blue haze goes; the Wing stage gradient is the one canvas on every screen */
+body[data-view]{background:radial-gradient(ellipse 60% 48% at 50% 40%,rgba(255,255,255,.95),rgba(255,255,255,0) 70%),linear-gradient(180deg,#B9BEC9 0%,#D5D9E0 30%,#ECEEF2 62%,#F7F8FA 100%);background-attachment:fixed}
+.vtabs{border-radius:var(--c-r2);padding:3px;background:var(--c-canvas);border:1px solid var(--c-line);backdrop-filter:none;-webkit-backdrop-filter:none}
+.vtabs button{border-radius:var(--c-r3);height:30px;font-size:13px;transition:background var(--c-fast) var(--c-ease),color var(--c-fast) var(--c-ease)}
+.vtabs button[aria-pressed="true"]{background:#fff;color:var(--c-ink);box-shadow:0 1px 2px rgba(11,16,32,.14),0 0 0 1px var(--c-line)}
+.vtabs button i{border-radius:var(--c-r3);font-family:var(--c-mono);font-weight:400}
+.vtabs button[aria-pressed="true"] i{background:var(--c-canvas);color:var(--c-ink)}
+.cl,.cv,.ch{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--c-line);border-radius:var(--c-r);box-shadow:none}
+.clh{padding:16px 18px 8px}
+.clh h2{font-size:17px}
+.csearch{border-radius:var(--c-r2);height:34px;margin:2px 12px 8px;background:#fff;border:1px solid var(--c-line);transition:border-color var(--c-fast) var(--c-ease),box-shadow var(--c-fast) var(--c-ease)}
+.csearch:focus-within{border-color:var(--c-blue);box-shadow:0 0 0 3px rgba(39,87,230,.14)}
+.cfil{margin:0 12px 8px}
+.cfil button{border-radius:var(--c-r3);background:var(--c-canvas);height:26px;font-size:11.5px}
+.cfil button[aria-pressed="true"]{background:var(--c-ink)}
+.cfil button i{border-radius:var(--c-r3);font-family:var(--c-mono);font-weight:400}
+.cstf select{border-radius:var(--c-r3);background:var(--c-canvas)}
+.clist{padding:0 0 10px;gap:0}
+.crow{border-radius:0;padding:10px 14px 10px 12px;border-bottom:1px solid var(--c-line-2);transition:background var(--c-fast) var(--c-ease),box-shadow var(--c-fast) var(--c-ease)}
+.crow:hover{background:var(--c-tint)}
+.crow.sel{background:var(--c-tint);color:var(--c-ink);box-shadow:inset 2px 0 0 var(--accent)}
+.crow.sel .cwho,.crow.sel time,.crow.sel .clast{color:var(--c-slate)}
+.crow.sel .cstg,.crow.sel .ccad{background:rgba(11,16,32,.06);color:var(--ink-2)}
+.crow.sel .ccad.c-due{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-ink)}
+.crow.sel .cav .ic{background:#fff;color:var(--accent-ink);box-shadow:0 0 0 1px var(--c-line)}
+.crow.sel .cav .ic::after{border-color:#fff}
+.cav .ic{border-radius:var(--c-r2)}
+.ct time{font-family:var(--c-mono);font-size:10.5px}
+.ccad,.cstg{border-radius:var(--c-r3);font-family:var(--c-mono);font-weight:400;font-size:10.5px;letter-spacing:.01em}
+.cvh{padding:16px 18px 0}
+.cvt b{font-size:18px}
+.cback{border-radius:var(--c-r2)}
+.cstage select{border-radius:var(--c-r2);background:var(--c-canvas);color:var(--c-ink);border:1px solid var(--c-line);box-shadow:none;height:36px;font-weight:600;padding:0 28px 0 12px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230B1020' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 10px center}   /* secondary: Book inspection is the one filled accent in the inbox */
+.cstage select.lost{background-color:var(--c-ink);color:#fff;border-color:var(--c-ink);background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>")}
+.cprog .bars span{height:4px;border-radius:1px}
+.cprog .bars span.on{background:var(--accent-hi)}
+.cprog .lbl{font-family:var(--c-mono);font-size:10.5px}
+.cbtn{border-radius:var(--c-r2);background:#fff;border-color:var(--c-line);min-height:34px}
+.cbtn.pri{background:var(--c-ink);border-color:var(--c-ink)}
+.cvm{background:none;padding:8px 18px 12px}
+.msg{border-radius:var(--c-r);padding:10px 13px}
+.msg.out{background:var(--accent);box-shadow:none;border-bottom-right-radius:var(--c-r3)}
+.msg.out.email{background:var(--c-ink)}
+.msg.in{background:var(--c-canvas);border:1px solid var(--c-line-2);border-bottom-left-radius:var(--c-r3)}
+.msg.sys{border-radius:var(--c-r3);background:var(--c-canvas)}
+.msg.sched{border-radius:var(--c-r);background:#fff}
+.msg.sched .mm button{border-radius:var(--c-r3)}
+.msg .mm{font-family:var(--c-mono);font-size:10.5px}
+.msg:hover{box-shadow:0 0 0 1px var(--c-line)}
+.cnext,.csugg,.creply{border:1px solid var(--c-line);border-radius:var(--c-r);background:#fff;box-shadow:none;padding:12px 14px}
+.csugg{background:color-mix(in srgb,var(--accent) 6%,#fff)}
+.cnext.nx-stop{background:var(--c-canvas)}
+.cseg{border-radius:var(--c-r2);background:var(--c-canvas);border:1px solid var(--c-line);padding:2px}
+.cseg button{border-radius:var(--c-r3)}
+.cvf textarea{border-radius:var(--c-r2);border-color:var(--c-line)}
+.cvf textarea:focus{border-color:var(--c-blue);outline:none;box-shadow:0 0 0 3px rgba(39,87,230,.14)}
+.cempty .ic{border-radius:var(--c-r2);background:var(--c-canvas)}
+.cfrom{border-radius:var(--c-r2);background:var(--c-canvas)}
+.ckpi div{border-radius:var(--c-r2);background:var(--c-canvas);border:1px solid var(--c-line-2)}
+.ckpi span{letter-spacing:.06em;font-variant-caps:normal;text-transform:uppercase;font-size:10.5px}
+.ckpi b{font-size:17px}
+.ckpi small{font-family:var(--c-mono);font-size:10.5px}
+.cfg div{border-radius:var(--c-r3);background:var(--c-canvas)}
+.cstrip{border-radius:var(--c-r2);background:var(--c-canvas);border:1px solid var(--c-line-2)}
+.cst + .cst{border-left-color:var(--c-line-2)}
+.cst .d{border-radius:var(--c-r3);font-family:var(--c-mono);font-weight:400}
+.cst b{font-size:10.5px}
+.cact.book .cbtn.pri{border-radius:var(--c-r2);background:var(--accent);box-shadow:none;min-height:42px}
+#chstage .stage{border-radius:var(--c-r2);background:var(--c-canvas);border:1px solid var(--c-line-2)}
+#chstage .stage::after{display:none}
+#chstage .title{border-radius:var(--c-r3);backdrop-filter:none;background:var(--c-ink)}
+#chstage .chips,#chstage .ctl{backdrop-filter:none;background:#fff;border-color:var(--c-line);border-radius:var(--c-r2)}
+#chstage .chip,#chstage .ctl button{border-radius:var(--c-r3)}
+#chstage .legend{border-radius:var(--c-r2)}
+.ch.flash{animation:cflash2 .7s ease-out}
+@keyframes cflash2{0%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:none}}
+/* pipeline board */
+body[data-view="pipeline"] .pipe{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--c-line);border-radius:var(--c-r);box-shadow:none}
+body[data-view="pipeline"] .pcol{background:var(--c-canvas)}
+.pcount{border-radius:var(--c-r2);border-color:var(--c-line)}
+.pcn + .pcn{border-left-color:var(--c-line)}
+.pcn b{font-family:var(--c-mono);font-weight:400;font-size:17px;letter-spacing:0}
+.pcn span{font-size:11px}
+.pcn i{border-radius:0}
+.pcol{border-radius:var(--c-r2);background:var(--c-canvas)}
+.pcol h4 span{border-radius:var(--c-r3);font-family:var(--c-mono)}
+.pc{border-radius:var(--c-r2);border-color:var(--c-line)}
+.pco{border-radius:var(--c-r2) var(--c-r2) 0 0}
+.ptab{border-radius:var(--c-r2);padding:3px;background:var(--c-canvas);border:1px solid var(--c-line);box-shadow:none}
+.ptab button{border-radius:var(--c-r3);height:30px;font-size:13px}
+.ptab button[aria-selected="true"]{background:#fff;color:var(--c-ink);box-shadow:0 1px 2px rgba(11,16,32,.14),0 0 0 1px var(--c-line)}
+.ptab i{border-radius:var(--c-r3);font-family:var(--c-mono);font-weight:400}
+.ptab button[aria-selected="true"] i{background:var(--c-canvas);color:var(--c-ink)}
+/* the home record (home.css) */
+body[data-view="home"] .panel,.panel{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--c-line);border-radius:var(--c-r);box-shadow:var(--c-shadow)}
+body[data-view="home"] .pipe,.pane.pipe{border-radius:var(--c-r);background:#fff;border:1px solid var(--c-line);box-shadow:var(--c-shadow);backdrop-filter:none;-webkit-backdrop-filter:none}
+body[data-view="home"] .steps,.steps{border-radius:var(--c-r2);background:#fff;border:1px solid var(--c-line);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.st + .st{border-left-color:var(--c-line-2)}
+.st .d{border-radius:var(--c-r3);font-family:var(--c-mono);font-weight:400}
+.st small{font-family:var(--c-mono);font-size:11px}
+body[data-view="home"] .stage,.stage{border-radius:var(--c-r);background:var(--c-canvas);border:1px solid var(--c-line);box-shadow:none}
+.rt h1{font-size:34px}
+.rt .sub{font-size:13.5px}
+.stagepill{border-radius:var(--c-r3);height:26px;font-size:12px}
+.acts button,.acts a.p{border-radius:var(--c-r2);height:40px;font-size:14px;border-color:var(--c-line)}
+.acts .p,.acts a.p{box-shadow:none}
+.acts .sq{width:40px}
+.ph h3{font-size:14.5px}
+.pill{border-radius:var(--c-r3)}
+.ptabs{border-radius:var(--c-r2);background:var(--c-canvas);border:1px solid var(--c-line);padding:2px}
+.ptabs span{border-radius:var(--c-r3)}
+.pin{border-radius:var(--c-r3);border-color:var(--c-line);box-shadow:none;font-family:var(--c-mono);font-size:11.5px}
+.pin i{border-radius:2px}
+.epin{border-radius:var(--c-r3)}
+.hpin{border-radius:var(--c-r2)}
+.legend{border-radius:var(--c-r2);border-color:var(--c-line);box-shadow:none;background:#fff}
+.legend b{font-family:var(--c-mono);font-weight:400}
+.chips,.ctl{border-radius:var(--c-r2);border-color:var(--c-line);box-shadow:none;padding:3px}
+.chip,.ctl button{border-radius:var(--c-r3);height:32px;font-size:13px}
+.tot,.fx,.next{border-radius:var(--c-r2)}
+.tot{border-color:var(--c-line)}
+.tot div+div{border-left-color:var(--c-line)}
+.tot small{font-family:var(--c-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--c-slate)}
+.tot b{font-size:20px}
+.tot b i{font-family:var(--c-mono);font-size:11px}
+.fx{background:var(--c-canvas);border:1px solid var(--c-line-2)}
+.fx .fh i{border-radius:var(--c-r3)}
+.fx .back{border-radius:var(--c-r2);border-color:var(--c-line)}
+.roof th{font-family:var(--c-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--c-slate)}
+.roof td:not(:first-child){font-family:var(--c-mono);font-size:12.5px}
+.roof td:first-child{border-radius:var(--c-r3) 0 0 var(--c-r3)}
+.roof td:last-child{border-radius:0 var(--c-r3) var(--c-r3) 0}
+.roof td .tag{border-radius:var(--c-r3);font-family:var(--c-mono);font-weight:400}
+.next{background:var(--c-canvas);border-color:var(--c-line-2)}
+.next .row button{border-radius:var(--c-r2);border-color:var(--c-line)}
+.next .due{font-family:var(--c-mono);font-size:12px}
+.tabs button{border-radius:var(--c-r3) var(--c-r3) 0 0}
+.tabs button i{border-radius:var(--c-r3);font-family:var(--c-mono);font-weight:400}
+.tabs{border-bottom-color:var(--c-line)}
+.afil{border-radius:var(--c-r2);background:var(--c-canvas);border:1px solid var(--c-line);padding:2px}
+.afil button{border-radius:var(--c-r3)}
+.ev + .ev{border-top-color:var(--c-line-2)}
+.ev .dt{border-radius:var(--c-r3)}
+.notecard{border-radius:var(--c-r2);background:var(--c-canvas)}
+.rchips button{border-radius:var(--c-r2);border-color:var(--c-line)}
+.roofwrap{border-radius:var(--c-r2)}
+.roofwrap .rleg{border-radius:var(--c-r2);box-shadow:none;border:1px solid var(--c-line)}
+.rtip{border-radius:var(--c-r2);backdrop-filter:none}
+@media (max-width:640px){
+  .cl,.cv,.ch{border-radius:0;border:0}
+  .ch{display:flex;border-radius:var(--c-r) var(--c-r) 0 0;background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;border-top:1px solid var(--c-line)}
+  body[data-view="pipeline"] .pipe{border:0;background:transparent}
+  .crow{padding:12px 14px 12px 12px}
+  .cad{font-size:15px}.clast{font-size:15px}.cwho{font-size:13.5px}
+  /* phone: the desktop control heights above would undo the 44px tap targets; body text 15px, helper notes 13.5px */
+  .csearch{height:44px}.csearch input{font-size:16px}
+  .cfil button{height:44px;min-width:44px;justify-content:center;font-size:13px;padding:0 12px}
+  .cstf select,.cstage select{height:44px;font-size:14px}
+  .cbtn,.cbtn.sm{min-height:44px}
+  .cseg button{height:44px;font-size:14px;padding:0 14px}
+  .chip,.ctl button{height:44px}
+  .cbtn,.cbtn.sm{font-size:14px}
+  .cvsub{font-size:15px}.cvsub .ccad{font-size:12.5px}.cnote{font-size:15px}.cempty p{font-size:15px}.csubj{font-size:15px}.msg .mb{font-size:15px}
+  .msg .mm{font-size:12px}.clab{font-size:14px}
+  .cvf .cact{padding-right:58px;flex-wrap:nowrap}.cvf .cact .cnote{flex:1 1 auto;min-width:0;font-size:14px}.cvf .cact .cbtn{flex:none}   /* the composer's last row sits on the bottom edge: keep its primary button clear of the Nimbus orb in the corner */
+  .cprog .lbl{gap:2px}.cprog .lbl span{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 1px}   /* six stage names on 343px: one line each, never run together */
+  .cst b{font-size:10px}
+  .pcn span{font-size:13px}   /* pipeline stage counts (3 x 2 on a phone, home.css) */
+}
+}
+
+/* =========================================================== WEEKLY (c7-weekly) =========================================================== */
+html[data-rc="weekly"]{
+.pair .glass{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--c-line);box-shadow:var(--c-shadow);border-radius:var(--c-r)}
+.pair .k,.eyebrow,.week{font-family:var(--c-mono);letter-spacing:.06em}
+.ctl button{border-radius:var(--c-r2);background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--c-line)}
+.place .bar{border-radius:2px;background:var(--c-line-2)}
+.place .bar i{background:var(--accent)}
+.place .n{font-family:var(--c-mono);font-size:.85em}
+.hud i{border-radius:0;height:2px;background:var(--c-line)}
+.logo{border-radius:var(--c-r2)}
+}
+
+/* =========================================================== reduced motion: final states, no motion =========================================================== */
+@media (prefers-reduced-motion:reduce){
+  #stat.rv,.dock.rv,#nav.rv,#toast,.toast,.lst .row,.app .qrow,.crow,body>header nav button,body>header .find,.csearch,.vtabs button,.wseg button,.seg button{transition:none!important}
+  #stat.rv,.dock.rv,#nav.rv{transform:none!important;opacity:1!important}
+  .ch.flash{animation:none}
+}
+/* phone Today card (10-15): the roof thumbnail gets its own spot, clear of the corner chips. The squares pill moves up to
+   the free top-left corner (the hail chip there is hidden on a phone, hail is in the facts row), the roof sits under it
+   on the left, the 1-story chip and "Home n of 50" keep the top right and Measure the bottom right. */
+@media (max-width:640px){
+  html.embed .card .ph{min-height:108px}   /* 128 before Inter; 20px back so Why today clears the action bar */
+  html.embed .card .ph .bl{top:12px;bottom:auto}
+  html.embed .card .ph .rlink{inset:44px 128px 6px 12px}
+}

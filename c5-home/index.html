@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en" data-rc="crm">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roof Command</title>
+<script src="../lib/rc-frame-pause.js"></script><!-- parked by the shell = no drawing -->
+<link rel="stylesheet" href="home.css">
+<link rel="stylesheet" href="crm.css">
+<link rel="stylesheet" href="cal.css"><!-- the built-in calendar view (cal.js) -->
+<link rel="stylesheet" href="features.css">
+<link rel="stylesheet" href="../lib/rc-physical.css">
+<script type="importmap">
+{"imports":{
+  "three":"../vendor/three@0.170.0/build/three.module.min.js",
+  "three/addons/":"../vendor/three@0.170.0/examples/jsm/"
+}}
+</script>
+<link rel="modulepreload" href="../vendor/three@0.170.0/build/three.module.min.js">
+<link rel="modulepreload" href="../vendor/three@0.170.0/examples/jsm/controls/OrbitControls.js">
+<link rel="modulepreload" href="../vendor/three@0.170.0/examples/jsm/environments/RoomEnvironment.js">
+<link rel="modulepreload" href="home.js">
+<link rel="preload" href="assets/fonts/montserrat-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/montserrat-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../lib/rc-console.css"><!-- polish direction B: Ops Console -->
+</head>
+<body>
+<script>/* the view is known before anything paints (crm.js runs last): an inbox or a board never flashes a home record first */
+try { const q = new URLSearchParams(location.search), v = q.get('view'); document.body.dataset.view = v === 'pipeline' || v === 'home' || v === 'inbox' || v === 'calendar' ? v : (q.get('home') || q.get('id')) ? 'home' : 'inbox'; } catch (e) { }</script>
+<header class="bar">
+  <div class="rd" data-r="logo"></div>
+  <div class="co"><b data-r="name">Jackson Roofing</b><span class="sub">Roof Command</span></div>
+  <nav class="crumb" id="crumb" aria-label="Breadcrumb"></nav>
+</header>
+
+<!-- CRM views: Inbox (three panes) | Pipeline (the board) | Home (this record). crm.js owns the switch; the 3D stage moves between the home pane and the record. -->
+<nav class="vtabs" id="vtabs" aria-label="CRM views">
+  <button type="button" data-v="inbox" aria-pressed="true"><span class="ic" data-ci="text"></span>Inbox<i id="vInN" hidden></i></button>
+  <button type="button" data-v="pipeline" aria-pressed="false"><span class="ic" data-ci="layers"></span>Pipeline<i id="vPipeN" hidden></i></button>
+  <button type="button" data-v="calendar" aria-pressed="false"><span class="ic" data-ci="cal"></span>Calendar</button>
+  <button type="button" data-v="home" aria-pressed="false" id="vHome"><span class="ic" data-ci="roof"></span><span id="vHomeLbl">Home</span></button>
+</nav>
+
+<div class="crm" id="crm" data-screen="list">
+  <aside class="cl" id="cl" aria-label="Inbox">
+    <div class="clh"><h2>Inbox</h2><span id="autoSlot"></span><small id="clN"></small></div>
+    <label class="csearch"><span class="ic" data-ci="search"></span><input type="search" id="cq" placeholder="Search address or owner" aria-label="Search the inbox by address or owner" autocomplete="off"></label>
+    <div class="cfil" id="cfil" role="group" aria-label="Show"></div>
+    <div class="clist" id="clist" role="list"></div>
+  </aside>
+  <section class="cv" id="cv" aria-label="Conversation">
+    <div class="cvh" id="cvh"></div>
+    <div class="cvm" id="cvm"></div>
+    <div class="cvf" id="cvf"></div>
+  </section>
+  <aside class="ch" id="ch" aria-label="This home">
+    <div class="chh" id="chh"></div>
+    <div class="chstage" id="chstage"></div>
+    <div class="chf" id="chf"></div>
+  </aside>
+</div>
+
+<!-- the calendar view (cal.js paints it): every booked inspection, book, move, cancel; nothing sends -->
+<section class="cal" id="cal" aria-label="Calendar"></section>
+
+<section class="rh">
+  <div class="rt">
+    <div class="stopnav" id="stopnav" hidden></div>
+    <h1 id="addr"></h1>
+    <div class="kf" id="keyf" aria-label="Key facts"></div><!-- rec.js keyFacts (Jack 10-23: key facts first) -->
+    <div class="sub" id="rsub"></div>
+    <div class="proofst" id="proofSt" hidden></div><!-- rec.js renderProof: Proof Page sent / opened / consent (Bet 3, 10-23) -->
+  </div>
+  <div class="actwrap">
+    <div class="acts">
+      <button type="button" class="p" data-act="text"><span class="ic" data-i="text"></span>Text</button>
+      <button type="button" data-act="email"><span class="ic" data-i="mail"></span>Email</button>
+      <button type="button" data-act="book"><span class="ic" data-i="cal"></span><span class="bookLbl">Book</span></button>
+      <button type="button" data-act="proof" title="Send the Proof Page: this home's storm record, by text or email"><span class="ic" data-i="doc"></span>Proof page</button>
+      <button type="button" id="bProposal" onclick="window.open('proposal.html?id='+encodeURIComponent((window.HOME||{}).rawId||'')+(/[?&]dev=1/.test(location.search)?'&dev=1':''),'_blank')"><span class="ic" data-i="layers"></span>Proposal</button>
+      <button type="button" class="sq" id="bMore" aria-label="More"><span class="ic" data-i="more"></span></button>
+    </div>
+    <p class="callwhy" hidden></p>
+  </div>
+</section>
+
+<nav class="steps" id="steps" aria-label="Stage"></nav>
+
+<main class="main">
+  <div class="left">
+  <section class="stage" id="stage" aria-label="Roof X-Ray">
+    <canvas id="gl"></canvas>
+    <div class="title" id="title">
+      <h2 id="titleH"></h2>
+      <p id="titleP">Drag to turn the house. Click a plane to measure it.</p>
+    </div>
+    <div class="labels" id="labels"></div>
+    <div class="legend" id="legend" hidden></div>
+    <div class="dock" id="dock">
+      <div class="chips" id="chips" role="group" aria-label="View">
+        <button type="button" class="chip on" data-m="planes" aria-pressed="true"><span class="ic" data-i="roof"></span>Planes</button>
+        <button type="button" class="chip" data-m="edges" aria-pressed="false"><span class="ic" data-i="layers"></span>Edges</button>
+        <button type="button" class="chip" data-m="dims" aria-pressed="false"><span class="ic" data-i="ruler"></span>Dimensions</button>
+        <button type="button" class="chip" data-m="hail" aria-pressed="false"><span class="ic" data-i="hail"></span>Hail</button>
+        <button type="button" class="chip" id="bMeasure" title="Top view of the roof lines and lengths"><span class="ic" data-i="ruler"></span>LiDAR measurements</button>
+      </div>
+      <div class="ctl">
+        <button type="button" id="bWhole" class="whole">Whole roof</button>
+        <button type="button" id="bExplode">Explode</button>
+      </div>
+    </div>
+  </section>
+
+  </div>
+  <aside class="col">
+    <div class="ptab" id="ptab" role="tablist" aria-label="Right side">
+      <button type="button" role="tab" data-p="pipe" aria-controls="pipePane" aria-selected="true">Pipeline<i id="pipeN">0</i></button>
+      <button type="button" role="tab" data-p="home" aria-controls="homePane" aria-selected="false">This home</button>
+    </div>
+    <section class="pane pipe on" id="pipePane" role="tabpanel" aria-label="Pipeline">
+      <div class="pph"><h3>Pipeline</h3><p><span class="mse">Drag a home to a new stage, or use Move to. Click a home to open it.</span><span class="tch">Hold a home, then drag it to a new stage, or use Move to. Tap a home to open it.</span></p></div>
+      <div class="pcount" id="pcount" aria-label="Homes per stage"></div>
+      <div class="pcols" id="pcols"></div>
+    </section>
+    <div class="pane" id="homePane" role="tabpanel" aria-label="This home">
+    <section class="next" id="next" aria-label="Next task"></section>
+    <section class="panel facts" id="factsPanel" aria-label="Home facts"><div class="ph"><h3>Home facts</h3><span class="pill">Public records</span></div><div class="kv" id="facts"></div></section><!-- rec.js houseFacts (lead card 10-22) -->
+    <section class="panel prop" id="proposal" aria-label="Proposal" hidden></section>
+    <section class="panel knock" id="knockPanel" aria-label="At the door"></section><!-- knock.js (10-19) -->
+    <section class="panel hailp" id="hailPanel" aria-label="Hail at this address" hidden></section><!-- hailpanel.js (10-19) -->
+    <section class="panel roof" id="measPanel">
+      <div class="ph"><h3 id="measTitle">Roof</h3><span class="pill" id="measPill">Whole roof</span></div>
+      <div id="focus"></div>
+      <div class="tabs" role="tablist" aria-label="Record" id="tabs">
+        <button type="button" class="on" data-t="meas" role="tab" aria-selected="true">Measurements</button>
+        <button type="button" data-t="report" role="tab" aria-selected="false">LiDAR measurements</button>
+        <button type="button" data-t="mat" role="tab" aria-selected="false">Materials</button>
+        <button type="button" data-t="act" role="tab" aria-selected="false">Activity<i id="actN">0</i></button>
+        <button type="button" data-t="notes" role="tab" aria-selected="false">Notes<i id="noteN">0</i></button>
+        <button type="button" data-t="contact" role="tab" aria-selected="false">Contact</button>
+      </div>
+      <div class="tab on" data-t="meas">
+        <div class="tablewrap"><table id="table"></table></div>
+        <p class="note" id="measNote">Estimated from the drawing, sample. Plane area is plan area times the pitch factor, squares are area over 100. Estimated from public building outlines and 2018 LiDAR. Verify on site. A field measurement replaces these before the proposal.</p>
+      </div>
+      <div class="tab" data-t="report">
+        <div class="report" id="report" aria-live="polite"></div>
+      </div>
+      <div class="tab" data-t="mat">
+        <div class="mat" id="mat" aria-live="polite"></div><!-- materials.js (10-19) -->
+      </div>
+      <div class="tab" data-t="act">
+        <div class="afil" id="afil" role="group" aria-label="Show">
+          <button type="button" data-f="all" aria-pressed="true">All</button><button type="button" data-f="emails" aria-pressed="false">Emails</button><button type="button" data-f="texts" aria-pressed="false">Texts</button><button type="button" data-f="knocks" aria-pressed="false">Knocks</button><button type="button" data-f="notes" aria-pressed="false">Notes</button>
+        </div>
+        <div class="tl" id="tl"></div>
+      </div>
+      <div class="tab" data-t="notes">
+        <div class="notes">
+          <div id="notelist"></div>
+          <form class="noteform" id="noteform" hidden>
+            <label class="fl">New note<textarea id="noteText" rows="3" placeholder="Gate code, dog, best time to knock"></textarea></label>
+            <div class="drow"><button type="submit" class="pbtn">Save note</button><button type="button" id="noteCancel">Cancel</button></div>
+          </form>
+          <button type="button" class="add" id="addNote"><span class="ic" data-i="note"></span>Add a note</button>
+        </div>
+      </div>
+      <div class="tab" data-t="contact">
+        <div class="kv" id="kv"></div>
+      </div>
+    </section>
+    </div>
+  </aside>
+
+</main>
+<p class="brandline"><img src="assets/wing-mark.svg" alt="" width="14" height="15">Roof Command by Wing Digital. Homes, addresses, owners and radar hail are county and weather records; phones, texts and opt-ins are sample.</p>
+
+<div class="stick"><p class="callwhy" hidden></p><button type="button" class="p" data-act="text"><span class="ic" data-i="text"></span>Text</button><button type="button" data-act="email"><span class="ic" data-i="mail"></span>Email</button><button type="button" data-act="book"><span class="ic" data-i="cal"></span><span class="bookLbl">Book</span></button><button type="button" data-act="proof"><span class="ic" data-i="doc"></span>Proof</button></div>
+<div class="sheet" id="sheet"><span class="grab"></span><div class="sh"><b id="sheetTitle">Plane</b><button type="button" id="sheetClose" aria-label="Back to whole roof"><span class="ic" data-i="close"></span></button></div><div class="schips" id="schips"></div><div class="sb" id="sheetBody"></div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+<dialog class="dlg" id="dlg" aria-labelledby="dlgTitle"><div class="dh"><b id="dlgTitle"></b><button type="button" id="dlgClose" aria-label="Close"><span class="ic" data-i="close"></span></button></div><div id="dlgBody"></div></dialog>
+
+<script src="../lib/rc-state.js"></script>
+<script src="../lib/brand.js"></script>
+<script src="../lib/rc-copy.js"></script>
+<script src="../lib/rc-proof.js"></script><!-- Proof Page: link, send dialog, opened / consent log (Bet 3, 10-23) -->
+<script src="../lib/rc-traced.js" onerror="this.remove()"></script><!-- git-ignored; written by scripts/leads/tracerfy.py, absent = nothing shown -->
+<script src="../lib/rc-traced-ui.js"></script>
+<script>/* the roofer brands the page (lib/brand.js) */ applyRoofer(rooferKey()); document.documentElement.style.setProperty('--accent-hi', activeRoofer().accentHi || activeRoofer().accent);</script>
+<script src="../lib/rc-roof.js"></script>
+<script src="../lib/rc-lines.js"></script><!-- shared per-home roof lines (map work): the LiDAR measurements view reads RCLINES -->
+<script src="../lib/rc-measure.js"></script><!-- LiDAR measurements view (Jack 10-23) --><!-- per-facet LiDAR roof record + report (stories chip, Roof report tab) -->
+<script src="../lib/st-meta.js"></script>
+<script src="../lib/rc-queue.js"></script>
+<script src="../c4-command-deck/inbox.js"></script><!-- read-only: Inbox.classify, the one reply classifier Today and the CRM share -->
+<script src="draw.js"></script><!-- Draw the roof: outline tracing on the satellite view for homes with no outline on file -->
+<script src="rec.js"></script>
+<script src="../lib/rc-hail.js"></script><!-- one home's hail on every storm + neighbors who took the same hail (10-19) -->
+<script src="hailpanel.js"></script>
+<script src="knock.js"></script><!-- At the door: Not home / Talked / Not interested / Book, each logged with Undo (10-19) -->
+<script src="materials.js"></script><!-- Materials tab: a starting order from the measured roof (10-19) -->
+<script src="pipe.js"></script>
+<script src="crm.js"></script>
+<script src="cal.js"></script><!-- the built-in calendar: reads RC.pipeline()[id].booked, writes the same booking line the Book button does -->
+<script src="find.js"></script><!-- the header search: a street, subdivision, ZIP or city opens here with its homes listed -->
+<script src="../lib/rc-automation.js"></script>
+<script src="../lib/rc-features.js"></script><!-- kept features switchboard (10-11) -->
+<script src="features.js"></script><!-- roof-build stamp, odometer counts -->
+<script type="module" src="home.js"></script>
+</body>
+</html>

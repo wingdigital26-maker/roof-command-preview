@@ -1,0 +1,20 @@
+/* Physical buttons and cards (kept trial, 10-11): a press sinks the element a touch, letting go springs it back.
+   Subtle, transforms only, zero-specificity base rule (:where) so any element with its own transition keeps it and
+   just snaps back; the :active rule is the only one that competes. html.rc-phys is set by lib/rc-features.js.
+   Left out: the Nimbus dock and orb, map markers and controls, anything disabled. */
+:where(html.rc-phys) :where(button, [role="button"], a.pill, .crow, .pc, .qrow, .card.tl, .sc) {
+  transition: transform .38s cubic-bezier(.2, 1.6, .4, 1), background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease, opacity .2s ease;
+}
+:where(html.rc-phys) :where(button, [role="button"], a.pill):not([disabled]):not([aria-disabled="true"]):not(.nb-orb):not(.nb-hit):not(.maplibregl-ctrl *):not(.nb-dock *):not(.wmp *):not(.stop):not(.hqm):active {
+  transform: scale(.96) translateY(1px);
+  transition-duration: .08s;
+}
+:where(html.rc-phys) :where(.crow, .pc, .qrow, .card.tl, .sc):active {
+  transform: scale(.985);
+  transition-duration: .08s;
+}
+:where(html.rc-phys) .crow.sel { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  :where(html.rc-phys) :where(button, [role="button"], a.pill, .crow, .pc, .qrow, .card.tl, .sc) { transition-property: background, color, border-color, box-shadow, opacity; }
+  :where(html.rc-phys) :where(button, [role="button"], a.pill, .crow, .pc, .qrow, .card.tl, .sc):active { transform: none; }
+}

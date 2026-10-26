@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hail report | Roof Command</title>
+<link rel="stylesheet" href="proposal.css">
+<style>
+/* Hail report (10-19): the proposal's document style plus the storm chart and table */
+.hrc{margin:6px 0 4px}
+.hrc .bars{position:relative;height:150px;display:flex;align-items:flex-end;border-bottom:1px solid var(--hair)}
+.hrc .b{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:0 4px}
+.hrc .b i{display:block;width:100%;max-width:34px;border-radius:3px 3px 0 0;background:var(--panel-3)}
+.hrc .b.big i{background:var(--accent)}
+.hrc .b em{font-style:normal;font-size:12px;font-weight:700;color:var(--accent-ink);margin-bottom:4px}
+.hrc .b:not(.big) em{color:var(--muted);font-weight:600}   /* the biggest storm under 1 in is labelled too, in text ink (10-24) */
+.hrc .one{position:absolute;left:0;right:0;border-top:1px dashed rgba(11,16,32,.35)}
+.hrc .one b{position:absolute;right:0;top:-18px;font-size:11px;color:var(--muted);background:#fff;padding:0 4px;font-weight:600}
+.hrc .lab{display:flex;margin-top:6px}
+.hrc .lab span{flex:1;text-align:center;font-size:11px;color:var(--muted);white-space:nowrap}
+.t td.big{font-weight:700;color:var(--accent-ink)}
+.t td.z{color:var(--muted)}
+.mean{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.mean>div{border:1px solid var(--rule);border-radius:6px;padding:12px 14px;font-size:13.5px;color:var(--ink-2)}
+.mean b{display:block;font-size:14px;color:var(--ink);margin-bottom:2px}
+.street{display:grid;grid-template-columns:260px minmax(0,1fr);gap:22px;align-items:center}
+.street b.n{display:block;font-size:26px;letter-spacing:-.02em}
+.street p{font-size:13.5px;color:var(--ink-2);margin-top:4px}
+.street ul{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:5px}
+.street li{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2)}
+.street li i{width:11px;height:11px;border-radius:50%;flex:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.street svg circle{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+/* visual check (10-23): the storm table got squeezed to a third by the roof table's long permit line; even halves, lines wrap */
+.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.two>div{min-width:0}.two .t td{white-space:normal}
+@media (max-width:640px){.street{grid-template-columns:1fr}.street #streetMap{max-width:280px}.mean{grid-template-columns:1fr}.hrc .lab span:nth-child(even){visibility:hidden}
+  /* phone (10-23): the page scrolled sideways (13 storm labels and the storm table): one column, labels clip inside their bar */
+  .two{grid-template-columns:minmax(0,1fr)!important}.two>div{min-width:0}.hrc .lab span{min-width:0;overflow:visible;font-size:10.5px}.t{width:100%}.t td.n{white-space:normal}}
+@media print{.hrc .b.big i{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<!-- Hail report for one address (10-19): every storm on file with the radar hail size at the house (lib/rc-hail.js), roof
+     facts from the county record, and how many neighbors took 1 in+ on the same storm. For the homeowner; printed or saved
+     as a PDF by the roofer. No owner name, no price, no claim promises. Nothing is sent anywhere. -->
+<header class="tools noprint" aria-label="Report tools">
+  <div class="tl"><a class="back" id="bBack" hidden>&larr; Back to the home</a><b>Hail report</b></div>
+  <button type="button" class="pbtn" id="bPrint">Print or save PDF</button>
+</header>
+
+<main class="wrap">
+  <p class="loading" id="loading">Reading the radar for every storm on file...</p>
+  <article class="doc" id="doc" hidden>
+    <header class="dh">
+      <div class="brand"><div class="mark" data-r="logo"></div><div><b data-r="name"></b><span data-r="region"></span></div></div>
+      <div class="dt"><h1>Hail report</h1><p id="dDate"></p></div>
+    </header>
+    <section class="addr"><span>Hail history for the home at</span><b id="dAddr"></b></section>
+
+    <section class="blk"><h2>At a glance</h2><div class="kpis" id="kpis"></div></section>
+    <section class="blk"><h2>Hail at this house, storm by storm</h2><div class="hrc" id="chart"></div></section>
+    <section class="blk" id="streetBlk" hidden><h2 id="streetH">Your street on that storm</h2><div class="street"><div id="streetMap"></div><div id="streetKey"></div></div></section>
+    <section class="blk"><div class="two"><div id="tbl"></div><div id="roofBlk"></div></div></section>
+    <section class="blk"><h2>What this means</h2><div class="mean" id="mean"></div></section>
+
+    <footer class="fine">
+      <p><b>Radar estimate, not a certified weather report.</b> Hail sizes are NOAA MRMS radar estimates (maximum expected size) at this home's location for each storm on file. Hail on the ground can be bigger or smaller than radar shows.</p>
+      <p>Only an inspection on the roof shows whether it was damaged. Insurance filing windows differ by policy; the homeowner's policy decides.</p>
+      <p id="srcLine"></p>
+    </footer>
+  </article>
+</main>
+<script src="../lib/rc-state.js"></script>
+<script src="../lib/brand.js"></script>
+<script>/* the roofer brands the page (lib/brand.js) */ applyRoofer(rooferKey());</script>
+<script src="../lib/st-meta.js"></script>
+<script src="../lib/rc-hail.js"></script>
+<script src="hail-report.js"></script>
+</body>
+</html>

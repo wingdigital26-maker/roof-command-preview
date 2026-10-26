@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 630 660" width="630" height="660">
+  <!-- Wing Digital mark, analytic reconstruction fitted to wing-mark.png (IoU 0.981).
+       Square minus two notch rectangles (upper-right, lower-left), each with its inner
+       corner rounded (radius 0.26 w). Params: a=0.46 b=0.54 r=0.26 rc=0.02, aspect 63:66. -->
+  <path fill="#2757E6" d="M12.6,0 L289.8,0 L289.8,192.6 A163.8,163.8 0 0 0 453.6,356.4 L630,356.4 L630,647.4 A12.6,12.6 0 0 1 617.4,660 L340.2,660 L340.2,467.4 A163.8,163.8 0 0 0 176.4,303.6 L0,303.6 L0,12.6 A12.6,12.6 0 0 1 12.6,0 Z"/>
+</svg>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Walk sheet | Roof Command</title>
+<link rel="stylesheet" href="proposal.css">
+<style>
+/* Walk sheet (10-19): the street around one home, the doors in walking order, a box per outcome. Prints on one or two pages. */
+.ws-top{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;align-items:center}
+.ws-top b.n{display:block;font-size:26px;letter-spacing:-.02em}
+.ws-top p{font-size:13.5px;color:var(--ink-2);margin-top:4px}
+.ws-map svg text.no{font:700 8.5px Inter,system-ui,sans-serif;fill:#0B1020}
+.wst{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.wst th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 6px;border-bottom:2px solid var(--ink)}
+.wst td{padding:8px 6px;border-bottom:1px solid var(--rule);vertical-align:middle}
+.wst td.no{font-weight:700;width:30px}
+.wst td.ad b{display:block;font-size:13.5px}
+.wst td.ad small{color:var(--muted)}
+.wst td.h{font-weight:700;color:var(--accent-ink);white-space:nowrap}
+.wst td.bx{white-space:nowrap;color:var(--ink-2);font-size:12px}
+.wst td.bx span{display:inline-flex;align-items:center;gap:4px;margin-right:9px}
+.wst td.bx span::before{content:'';width:12px;height:12px;border:1.5px solid var(--ink);border-radius:2px;display:inline-block}
+.wst td.nt{width:22%;border-bottom:1px solid var(--rule)}
+.wst tr{break-inside:avoid}
+@media (max-width:700px){.ws-top{grid-template-columns:1fr}.ws-map{max-width:320px}.wst td.nt{display:none}.wst th.nt{display:none}.wst td.bx span{margin-right:5px}}
+@media print{.ws-map svg circle{-webkit-print-color-adjust:exact;print-color-adjust:exact}.doc{padding:0}}
+</style>
+</head>
+<body>
+<!-- Walk sheet (10-19): from one home, the closest homes that took 1 in+ radar hail on the same storm and have no reroof
+     permit since (lib/rc-hail.js), in walking order, with boxes to tick at each door. Addresses only, never owner names.
+     Printed or saved as a PDF by the roofer; nothing is sent. -->
+<header class="tools noprint" aria-label="Walk sheet tools">
+  <div class="tl"><a class="back" id="bBack" hidden>&larr; Back to the home</a><b>Walk sheet</b></div>
+  <button type="button" class="pbtn" id="bPrint">Print or save PDF</button>
+</header>
+<main class="wrap">
+  <p class="loading" id="loading">Finding the doors that took the same hail...</p>
+  <article class="doc" id="doc" hidden>
+    <header class="dh">
+      <div class="brand"><div class="mark" data-r="logo"></div><div><b data-r="name"></b><span data-r="region"></span></div></div>
+      <div class="dt"><h1>Walk sheet</h1><p id="dDate"></p></div>
+    </header>
+    <section class="addr"><span>Starting from</span><b id="dAddr"></b></section>
+    <section class="blk"><div class="ws-top"><div class="ws-map" id="map"></div><div id="sum"></div></div></section>
+    <section class="blk"><h2>Doors in walking order</h2><table class="wst"><thead><tr><th>#</th><th>Address</th><th>Hail</th><th>Built</th><th>At the door</th><th class="nt">Notes</th></tr></thead><tbody id="rows"></tbody></table></section>
+    <footer class="fine"><p>Hail is the NOAA MRMS radar estimate at each house on that storm, not a certified report. Homes with a reroof permit after the storm are left off. Log each knock on the home's record in Roof Command (At the door) so the follow-up is planned.</p></footer>
+  </article>
+</main>
+<script src="../lib/rc-state.js"></script>
+<script src="../lib/brand.js"></script>
+<script>applyRoofer(rooferKey());</script>
+<script src="../lib/st-meta.js"></script>
+<script src="../lib/rc-hail.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = s => document.querySelector(s), esc = RC.esc, Q = new URLSearchParams(location.search);
+  const rawId = Q.get('id') || '', mm = /^m(\d+)$/.exec(rawId), gi = mm ? +mm[1] : null, N = Math.min(60, +(Q.get('n') || 40));
+  $('#bPrint').onclick = () => window.print();
+  if (rawId) { const b = $('#bBack'); b.href = '../product.html' + (Q.get('dev') === '1' ? '?dev=1&nointro=1' : '') + '#/crm/home/' + encodeURIComponent(rawId); b.hidden = false; }
+  if (gi == null) { $('#loading').textContent = 'Open a home first: this page needs ?id=m<home number>.'; return; }
+  Promise.all([STM.meta(gi), RCH.neighbors(gi, { radius: 402, limit: N, iso: Q.get('iso') || null })]).then(([m, nb]) => {
+    if (!nb || !nb.storm || !nb.list.length) { $('#loading').textContent = 'No nearby homes took 1 in+ hail on the same storm as this one.'; return; }
+    const st = nb.storm, start = { x: 0, y: 0 };
+    // walking order: from the start home, always the nearest door not yet visited
+    const lat0 = nb.list[0].lat, mx = 111320 * Math.cos(lat0 * Math.PI / 180), my = 111320;
+    return STM.lonlat(gi).then(p => {
+      const [lon, lat] = p || [nb.list[0].lon, nb.list[0].lat];
+      const pts = nb.list.map(h => Object.assign(h, { x: (h.lon - lon) * mx, y: (h.lat - lat) * my }));
+      const order = [], left = pts.slice(); let at = start;
+      while (left.length) { let k = 0, d = Infinity; left.forEach((h, j) => { const e = Math.hypot(h.x - at.x, h.y - at.y); if (e < d) { d = e; k = j; } }); at = left.splice(k, 1)[0]; order.push(at); }
+      const walk = order.reduce((s, h, i) => s + Math.hypot(h.x - (i ? order[i - 1].x : 0), h.y - (i ? order[i - 1].y : 0)), 0);
+      $('#dAddr').textContent = m && m.addr ? m.addr + (m.place ? ', ' + m.place : '') : 'Home on file';
+      document.title = 'Walk sheet, ' + $('#dAddr').textContent;
+      $('#dDate').textContent = 'Storm of ' + st.date + ' · printed ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      $('#sum').innerHTML = `<b class="n">${order.length} doors</b><p>Numbers on the map follow the walking line (every 5th shown). The closest of ${RC.fmt(nb.total)} homes within a quarter mile that took 1 in+ hail on ${esc(st.date)} (${st.inches >= 1 ? 'this house took ' + st.inches.toFixed(2) + ' in' : 'starting near the middle of the neighbourhood'}), no reroof permit since. About ${(walk * 3.28084 / 5280).toFixed(1)} miles on foot in this order.</p>`;
+      // the map: the area's dots, the route's homes numbered
+      // zoomed to the route (never tighter than 120 m), the walking line drawn, every 5th stop numbered
+      const reach = Math.max(120, ...order.map(h => Math.hypot(h.x, h.y))) * 1.12;
+      return RCH.area(gi, { radius: reach, iso: st.iso }).then(A => {
+        const size = 320, R = A ? A.radius : reach, s = size / (2 * R), c = size / 2, X = h => (c + h.x * s).toFixed(1), Y = h => (c - h.y * s).toFixed(1);
+        let svg = A ? RCH.areaSVG(A, size) : `<svg viewBox="0 0 ${size} ${size}"></svg>`;
+        const line = `<polyline points="${[{ x: 0, y: 0 }].concat(order).map(h => X(h) + ',' + Y(h)).join(' ')}" fill="none" stroke="#0B1020" stroke-width="1.4" stroke-opacity=".55" stroke-linejoin="round"/>`;
+        const labels = order.map((h, i) => (i === 0 || (i + 1) % 5 === 0 || i === order.length - 1) ? `<text class="no" x="${(+X(h) + 4).toFixed(1)}" y="${(+Y(h) - 4).toFixed(1)}" paint-order="stroke" stroke="#fff" stroke-width="3">${i + 1}</text>` : '').join('');
+        $('#map').innerHTML = svg.replace('</svg>', line + labels + '</svg>');
+        $('#rows').innerHTML = order.map((h, i) => `<tr><td class="no">${i + 1}</td><td class="ad"><b>${esc(h.addr)}</b><small>${esc(h.city || '')} · ${Math.round(Math.hypot(h.x, h.y) * 3.28084 / 10) * 10} ft away</small></td><td class="h">${h.inches.toFixed(2)} in</td><td>${h.year || ''}</td><td class="bx"><span>Not home</span><span>Talked</span><span>No</span><span>Booked</span></td><td class="nt"></td></tr>`).join('');
+        $('#loading').hidden = true; $('#doc').hidden = false;
+      });
+    });
+  }).catch(e => { console.warn(e); $('#loading').textContent = 'The radar data did not load. Reload the page.'; });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Book a Free Roof Inspection</title>
+<!-- Public booking page (no sign-in). ?t=<thread token> from the AI reply. Slots come from roof-engine/booking, which builds
+     them only from the roofer's configured weekly hours minus booked slots (crm_kv automation.config). No calendar sync yet.
+     Ops Console look (10-15): light only, Inter, square controls (6px), one filled primary. -->
+<style>
+@font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;src:url(../c5-home/assets/fonts/inter-var-latin.woff2) format('woff2')}
+:root{--bg:#EEF0F3;--card:#fff;--ink:#0B1020;--muted:#5A6378;--line:#D5D9E0;--line-2:#E6E8ED;--canvas:#F1F5FA;--accent:#2757E6;--accent-ink:#fff;--ok:#16794c;--r:8px;--r2:6px;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'Inter',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:640px;margin:0 auto;padding:28px 16px 48px}
+h1{font-size:26px;line-height:1.2;margin:0 0 6px;letter-spacing:-.02em;font-weight:600}p{margin:0 0 16px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-top:18px}
+.day{margin:0 0 16px}.day h2{font-size:15px;font-weight:600;margin:0 0 8px;color:var(--ink)}
+.slots{display:flex;flex-wrap:wrap;gap:8px}
+.slots button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:var(--r2);padding:0 14px;min-height:44px;font:inherit;font-size:15px;font-weight:500;cursor:pointer;min-width:92px;transition:background .12s,border-color .12s}
+.slots button:hover{background:var(--canvas);border-color:var(--ink)}
+.slots button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:#fff}
+.slots button:focus-visible,.go:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.go{display:block;width:100%;margin-top:14px;border:1px solid var(--accent);border-radius:var(--r2);padding:0 14px;min-height:48px;font:inherit;font-size:16px;font-weight:600;line-height:1.2;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.go[disabled]{background:var(--canvas);border-color:var(--line);color:var(--muted);cursor:default}
+.ok{color:var(--ok);font-weight:600}.err{color:#B3261E}
+a{color:var(--accent)}
+@media (max-width:480px){main{padding:20px 14px 40px}h1{font-size:23px}.slots button{flex:0 0 calc(50% - 4px);min-width:0}}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="h">Book a free roof inspection</h1>
+  <p id="sub">Loading open times...</p>
+  <div class="card" id="box" hidden></div>
+</main>
+<script>
+(function () {
+  'use strict';
+  var FN = 'https://preview.invalid/functions/v1/roof-engine/booking';
+  var t = new URLSearchParams(location.search).get('t') || '';
+  var h = document.getElementById('h'), sub = document.getElementById('sub'), box = document.getElementById('box');
+  var info = null, pick = null;
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function fmt(iso, o) { return new Date(iso).toLocaleString('en-US', Object.assign({ timeZone: info.tz }, o)); }
+  function callLine() { return info && info.call ? ' Prefer to talk? Call ' + esc(info.owner) + ' at <a href="tel:' + esc(info.call.replace(/[^\d+]/g, '')) + '">' + esc(info.call) + '</a>.' : ''; }
+  function done(when) {
+    h.textContent = 'You are booked';
+    sub.innerHTML = '<span class="ok">' + esc(info.company) + ' will see you ' + esc(when) + '.</span> We will text or email you a confirmation.' + callLine();
+    box.hidden = true;
+  }
+  function render() {
+    h.textContent = 'Book a free roof inspection with ' + info.company;
+    if (info.booked) return done(fmt(info.booked, { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }));
+    if (!info.slots.length) { sub.innerHTML = 'No open times in the next two weeks.' + callLine(); return; }
+    sub.innerHTML = 'Pick a time that works. Times are ' + esc(info.tz === 'America/Chicago' ? 'Central' : info.tz) + '.' + callLine();
+    var days = {}, order = [];
+    info.slots.forEach(function (s) { var k = fmt(s, { weekday: 'long', month: 'long', day: 'numeric' }); if (!days[k]) { days[k] = []; order.push(k); } days[k].push(s); });
+    box.innerHTML = order.map(function (k) { return '<div class="day"><h2>' + esc(k) + '</h2><div class="slots">' + days[k].map(function (s) {
+      return '<button type="button" data-s="' + esc(s) + '" aria-pressed="false">' + esc(fmt(s, { hour: 'numeric', minute: '2-digit' })) + '</button>'; }).join('') + '</div></div>'; }).join('') +
+      '<button type="button" class="go" id="go" disabled>Book this time</button><p id="msg" style="margin:10px 0 0" aria-live="polite"></p>';
+    box.hidden = false;
+    box.querySelectorAll('[data-s]').forEach(function (b) { b.onclick = function () {
+      box.querySelectorAll('[data-s]').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      b.setAttribute('aria-pressed', 'true'); pick = b.dataset.s;
+      var g = document.getElementById('go'); g.disabled = false; g.textContent = 'Book ' + fmt(pick, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }; });
+    document.getElementById('go').onclick = book;
+  }
+  function book() {
+    var g = document.getElementById('go'), msg = document.getElementById('msg');
+    g.disabled = true; g.textContent = 'Booking...';
+    fetch(FN, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ t: t, slot: pick }) })
+      .then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
+      .then(function (r) {
+        if (r.s === 200) return done(r.j.when);
+        msg.className = 'err'; msg.textContent = (r.j && r.j.error) || 'Something went wrong. Please try again.';
+        return load();
+      }).catch(function () { msg.className = 'err'; msg.textContent = 'Could not reach the booking service. Please try again.'; g.disabled = false; g.textContent = 'Try again'; });
+  }
+  function load() {
+    return fetch(FN + '?t=' + encodeURIComponent(t)).then(function (r) { return r.json().then(function (j) { return { s: r.status, j: j }; }); })
+      .then(function (r) { if (r.s !== 200) { h.textContent = 'This link has expired'; sub.textContent = (r.j && r.j.error) || 'Please reply to our text and we will send a new one.'; return; } info = r.j; render(); })
+      .catch(function () { sub.textContent = 'Could not load open times. Please refresh the page.'; });
+  }
+  if (!/^[a-f0-9]{16,64}$/.test(t)) { h.textContent = 'This link is not complete'; sub.textContent = 'Please open the full link from our text or email.'; }
+  else load();
+})();
+</script>
+</body>
+</html>

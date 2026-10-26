@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Roof Command</title>
+<link rel="stylesheet" href="dk.css">
+<style>
+.rh{padding:20px 28px 0;display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center}
+.crumb{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:-6px}
+.crumb .ic{width:15px;height:15px}
+.crumb b{color:var(--ink);font-weight:600}
+.rt h1{font-size:36px;font-weight:600;letter-spacing:-.035em;line-height:1.05}
+.rt .sub{margin-top:9px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13.5px;color:var(--muted)}
+.stage{display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 12px 0 10px;border-radius:6px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:700}
+.stage .ic{width:15px;height:15px}
+.acts{display:flex;gap:8px}
+.acts button{height:44px;padding:0 18px;border-radius:6px;display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;background:#fff;border:1px solid var(--hair);color:var(--ink);transition:transform .15s,border-color .2s}
+.acts button:hover{border-color:var(--edge)}.acts button:active{transform:scale(.97)}
+.acts .ic{width:17px;height:17px}
+.acts .p{background:var(--accent);border-color:var(--accent);color:#fff}
+.acts .p:hover{background:var(--accent-hi)}
+.acts .sq{width:44px;padding:0;justify-content:center}
+/* stage bar */
+.steps{display:grid;grid-template-columns:repeat(5,1fr);margin:18px 28px 0;background:#fff;border-radius:16px;box-shadow:var(--shadow-soft);border:1px solid var(--hair-2);overflow:hidden}
+.st{padding:13px 18px 15px;position:relative;display:flex;gap:11px;align-items:center}
+.st + .st{border-left:1px solid var(--hair-2)}
+.st::before{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:transparent}
+.st.dn::before{background:#AEB4C2}
+.st.on::before{background:var(--accent)}
+.st.on{background:var(--accent-soft)}
+.st .d{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--hair);color:var(--muted);font-size:11px;font-weight:700;flex:none}
+.st.dn .d{background:var(--ink);border-color:var(--ink);color:#fff}
+.st.dn .d .ic{width:13px;height:13px}
+.st.on .d{background:var(--accent);border-color:var(--accent);color:#fff}
+.st b{display:block;font-size:13.5px;font-weight:600}
+.st small{font-size:12px;color:var(--muted)}
+.st:not(.dn):not(.on) b{color:var(--muted)}
+/* body */
+.body{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;padding:20px 28px 28px;color:var(--ink)}
+.panel{background:#fff;border-radius:18px;box-shadow:var(--shadow-soft);border:1px solid var(--hair-2)}
+.ph2{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;gap:12px;flex-wrap:wrap}
+.ph2 h3{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.ptabs{display:flex;gap:3px;padding:3px;border-radius:6px;background:var(--mist)}
+.ptabs span{padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;color:var(--slate)}
+.ptabs span.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(14,27,61,.1)}
+/* roof hero */
+.hero{grid-column:1;display:grid;grid-template-rows:auto minmax(0,1fr) auto}
+.hero .roofwrap{height:440px;margin:0 20px;border:1px solid var(--hair-2)}
+.hero .hfoot{padding:12px 20px 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.hero .src{font-size:12px;color:var(--slate);line-height:1.5;max-width:520px}
+/* measurements */
+.meas{padding:4px 20px 16px}
+.meas table{width:100%;border-collapse:collapse;font-size:13px}
+.meas th{text-align:left;font-weight:500;color:var(--slate);font-size:11.5px;padding:0 0 8px}
+.meas th:not(:first-child),.meas td:not(:first-child){text-align:right;white-space:nowrap}
+.meas td{padding:9px 0;border-top:1px solid #EEF1F6;cursor:pointer;transition:background .2s}
+.meas tr.hit td:first-child::after{content:"hail";margin-left:7px;font-size:10.5px;font-weight:700;color:var(--accent-ink);background:var(--accent-soft);padding:2px 6px;border-radius:6px;vertical-align:middle}
+.meas tbody tr:hover td{background:var(--mist)}
+.meas tr.sel td{color:var(--accent-ink);font-weight:700;background:var(--accent-soft)}
+.meas tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.meas td b{font-weight:700}
+.meas tfoot td{border-top:2px solid var(--ink);font-weight:700;cursor:default}
+.meas tfoot tr:hover td{background:none}
+.tot{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin:0 20px;border:1px solid var(--rule);border-radius:14px}
+.tot div{padding:12px 14px}
+.tot div+div{border-left:1px solid var(--rule)}
+.tot small{font-size:11.5px;color:var(--slate);font-weight:500;display:block}
+.tot b{font-size:21px;font-weight:700;letter-spacing:-.02em;display:block;margin-top:4px}
+.tot b i{font-style:normal;font-size:12px;color:var(--slate);font-weight:600;margin-left:3px}
+.lf{margin:14px 20px 4px}
+.lf .rleg{gap:10px 16px}
+.selbox{margin:0 20px 0;padding:12px 14px;border-radius:12px;background:var(--mist);font-size:13px;line-height:1.5;color:var(--ink-2);min-height:60px}
+.selbox b{color:var(--ink);font-weight:700}
+.selbox .pill{margin-top:6px}
+.note-s{margin:10px 20px 16px;font-size:11.5px;color:var(--muted)}
+/* timeline */
+.tl{padding:4px 20px 14px;position:relative}
+.ev{display:grid;grid-template-columns:48px 1fr;gap:14px;padding:10px 0;position:relative}
+.ev + .ev{border-top:1px solid #EEF1F6}
+.ev::before{content:"";position:absolute;left:23.5px;top:60px;bottom:-10px;width:1px;background:var(--rule)}
+.ev:last-child::before{display:none}
+.dt{width:48px;height:50px;border-radius:12px;background:var(--panel-2);display:grid;place-content:center;text-align:center;position:relative;z-index:1}
+.dt small{font-size:10.5px;color:var(--slate);font-weight:600}
+.dt b{font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:1.05}
+.ev.hot .dt{background:var(--accent-soft)}
+.ev.hot .dt b,.ev.hot .dt small{color:var(--accent-ink)}
+.et{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
+.et .ic{width:16px;height:16px;color:var(--slate)}
+.et time{margin-left:auto;font-size:12px;color:var(--slate);font-weight:500}
+.ed{font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.5}
+.ed q{display:block;margin-top:6px;padding:8px 11px;border-radius:10px;background:var(--mist);quotes:none;font-size:12.5px}
+.ev .who{font-size:11.5px;color:var(--slate);margin-top:5px}
+/* right */
+.col{display:grid;gap:20px;align-content:start}
+.task{background:#fff;color:var(--ink);border:1px solid var(--hair-2);border-radius:18px;padding:18px 20px;box-shadow:var(--shadow-soft)}
+.task h4{font-size:18px;font-weight:600;letter-spacing:-.02em;margin-top:8px;line-height:1.3}
+.task .when{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--ink-2)}
+.task .when .ic{width:16px;height:16px;color:var(--brass)}
+.task .row{display:flex;gap:8px;margin-top:16px}
+.task button{flex:1;height:42px;border-radius:11px;font-weight:700;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px;background:#fff;border:1px solid var(--hair)}
+.task button.p{background:var(--accent);color:#fff;border-color:var(--accent)}
+.task .ic{width:16px;height:16px}
+.kv{padding:2px 20px 14px}
+.kv div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;font-size:13px}
+.kv div + div{border-top:1px solid #EEF1F6}
+.kv span{color:var(--slate)}
+.kv b{font-weight:600;text-align:right}
+.notes{padding:0 20px 16px;display:grid;gap:10px}
+.note{padding:11px 13px;border-radius:12px;background:var(--mist);font-size:13px;line-height:1.5;color:var(--ink-2)}
+.note small{display:block;font-size:11.5px;color:var(--slate);margin-top:5px}
+.add{display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border-radius:11px;border:1px solid var(--rule);font-size:13px;color:var(--slate)}
+.add .ic{width:16px;height:16px}
+.below{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px}
+.stick,.psheet{display:none}
+@media (max-width:1380px){
+  .bar{gap:14px;padding:0 22px}.tabs{margin-left:10px}.tabs button{padding:7px 12px;font-size:13px}.find{width:150px}
+  .rh,.steps,.body{padding-left:22px;padding-right:22px}.steps{margin-left:22px;margin-right:22px}
+  .rt h1{font-size:30px}.hero .roofwrap{height:380px}
+  .body{grid-template-columns:minmax(0,1fr) 320px}.below{grid-template-columns:minmax(0,1fr) 320px}
+  .st{padding:11px 14px 13px}.tot b{font-size:19px}
+}
+@media (max-height:820px){.hero .roofwrap{height:340px}.rh{padding-top:14px}.rt h1{font-size:30px}}
+@media (max-width:640px){
+  body{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+  .bar{height:auto;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;gap:10px}
+  .tabs,.find,.sig,.me{display:none}
+  .rh{display:block;padding:12px 16px 0}
+  .crumb{margin-bottom:8px}
+  .rt h1{font-size:24px}.rt .sub{margin-top:6px;gap:8px 10px;font-size:12.5px}
+  .acts{display:none}
+  .steps{display:flex;overflow-x:auto;scrollbar-width:none;margin:12px 16px 0;border-radius:14px}
+  .st{flex:none;padding:10px 14px 12px}.st b{font-size:13px}.st small{display:none}.st.on small{display:block}
+  .body{display:block;padding:14px 16px 0}
+  .panel{margin-bottom:14px}
+  .hero .roofwrap{height:72vw;margin:0 12px}
+  .hero .ph2{padding:14px 16px 10px}
+  .hero .hfoot{padding:10px 12px 12px}
+  .hero .src{font-size:11.5px}
+  .meas{padding:0 14px 12px}.tot{margin:0 14px}.lf{margin:12px 14px 4px}.selbox{margin:0 14px}.note-s{margin:10px 14px 14px}
+  .meas table{font-size:12.5px}
+  .below{display:block}
+  .tl{padding:0 14px 10px}
+  .stick{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-top:1px solid var(--hair-2)}
+  .stick button{height:54px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:15px;background:#fff;border:1px solid var(--hair);color:var(--ink);flex:1}
+  .stick button.p{background:var(--accent);border-color:var(--accent);color:#fff;flex:1.5}
+  .stick .ic{width:18px;height:18px}
+  .psheet{display:flex}
+  .psheet .pb{padding:4px 18px 18px;font-size:14px;color:var(--ink-2);line-height:1.5}
+  .psheet .pb .big{font-size:30px;font-weight:700;letter-spacing:-.03em;color:var(--ink);margin:4px 0 2px}
+  .psheet .pb .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .psheet .pb .grid div{padding:10px 12px;border:1px solid var(--rule);border-radius:12px}
+  .psheet .pb .grid small{display:block;font-size:11.5px;color:var(--slate)}
+  .psheet .pb .grid b{font-size:17px;display:block;margin-top:2px}
+  .concept{bottom:auto;top:calc(62px + env(safe-area-inset-top));right:14px;left:auto;max-width:60vw;text-align:right;font-size:9px}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <header class="bar">
+    <div class="co"><span class="mk" data-logo></span><div><b data-r="name"></b><small data-r="area"></small></div></div>
+    <nav class="tabs" aria-label="Sections"><button>Today</button><button class="on">Pipeline</button><button>Map</button><button>Homes</button><button>Storms</button></nav>
+    <span class="sp"></span>
+    <div class="find"><span class="ic" data-i="search"></span>Find an address</div>
+    <div class="sig">Powered by <span class="wm" data-wing="#5B82FF"></span><b>Wing Digital</b></div>
+    <div class="me" id="me">C</div>
+  </header>
+  <section class="rh">
+    <div class="crumb"><span class="ic" data-i="back"></span>Pipeline <span>/</span> <b>Proposal</b></div>
+    <div class="rt">
+      <h1 id="addr">1418 Westlawn Drive</h1>
+      <div class="sub"><span class="stage"><span class="ic" data-i="doc"></span>Proposal sent</span><span><span data-r="city"></span>, <span data-r="state"></span> <span data-r="zip"></span></span><span>Owner on file</span><span>Assigned to <b style="color:var(--ink);font-weight:600" data-r="rep"></b></span></div>
+    </div>
+    <div class="acts">
+      <button class="p"><span class="ic" data-i="phone"></span>Call</button>
+      <button><span class="ic" data-i="text"></span>Text</button>
+      <button><span class="ic" data-i="cal"></span>Book</button>
+      <button class="sq" aria-label="More"><span class="ic" data-i="more"></span></button>
+    </div>
+  </section>
+  <nav class="steps" aria-label="Stage">
+    <div class="st dn"><span class="d" data-i="check"></span><span><b>New hit</b><small>Sep 12</small></span></div>
+    <div class="st dn"><span class="d" data-i="check"></span><span><b>Called</b><small>Sep 22, talked 6 min</small></span></div>
+    <div class="st dn"><span class="d" data-i="check"></span><span><b>Inspection booked</b><small>Sat Sep 26, 9am</small></span></div>
+    <div class="st on"><span class="d">4</span><span><b>Proposal</b><small>Sent Oct 1, opened twice</small></span></div>
+    <div class="st"><span class="d">5</span><span><b>Won</b><small>Signed contract</small></span></div>
+  </nav>
+</div>
+
+<main class="body">
+  <section class="panel hero">
+    <div class="ph2"><h3>Roof</h3><div class="rchips" id="chips"><button class="on" data-m="planes"><span class="ic" data-i="roof"></span>Planes</button><button data-m="edges"><span class="ic" data-i="layers"></span>Edges</button><button data-m="dims"><span class="ic" data-i="ruler"></span>Dimensions</button><button class="hail" data-h><span class="ic" data-i="hail"></span>Hail</button></div></div>
+    <div class="roofwrap" id="roof"></div>
+    <div class="hfoot"><p class="src" id="src">Hover a plane for its measurements, click to pin it. Edge mode colours ridge, hip, valley, eave and rake with their lengths. Hail shows impact marks on the slopes that faced the storm.</p><div class="rleg" id="leg"></div></div>
+  </section>
+
+  <aside class="col">
+    <div class="task">
+      <span class="pill acc">Next task</span>
+      <h4>Follow up on the proposal. Ask if they want to walk through it.</h4>
+      <div class="when"><span class="ic" data-i="clock"></span>Today, 5 to 7pm (their best time)</div>
+      <div class="row"><button class="p"><span class="ic" data-i="phone"></span>Call now</button><button>Reschedule</button></div>
+    </div>
+    <div class="panel">
+      <div class="ph2"><h3>Measurements</h3><span class="pill line">From the drawing</span></div>
+      <div class="tot" id="tot"></div>
+      <div class="meas" id="meas"></div>
+      <div class="selbox" id="selbox"></div>
+      <p class="note-s">Estimated from the drawing, sample. Plane area is plan area times the pitch factor; squares are area over 100. A field measurement replaces these before the proposal.</p>
+    </div>
+  </aside>
+
+  <div class="below">
+    <section class="panel">
+      <div class="ph2"><h3>Activity</h3><div class="ptabs"><span class="on">All</span><span>Calls</span><span>Texts</span><span>Notes</span></div></div>
+      <div class="tl">
+        <div class="ev hot"><div class="dt"><small>Oct</small><b>1</b></div><div><div class="et"><span class="ic" data-i="doc"></span>Proposal sent<time>4:12pm</time></div><div class="ed">Full replacement, architectural shingle, <span class="vsq"></span> squares plus <span class="vw"></span>% waste. Opened Oct 1 and Oct 3.</div><div class="who">By <span data-r="rep"></span></div></div></div>
+        <div class="ev"><div class="dt"><small>Sep</small><b>26</b></div><div><div class="et"><span class="ic" data-i="roof"></span>Inspection done<time>9:05am</time></div><div class="ed">14 photos. Bruising on the north and west slopes, two cracked ridge caps.</div><div class="who">By <span data-r="rep"></span></div></div></div>
+        <div class="ev"><div class="dt"><small>Sep</small><b>22</b></div><div><div class="et"><span class="ic" data-i="cal"></span>Inspection booked<time>6:41pm</time></div><div class="ed">Saturday Sep 26, 9am. Confirmation text sent.</div></div></div>
+        <div class="ev"><div class="dt"><small>Sep</small><b>22</b></div><div><div class="et"><span class="ic" data-i="phone"></span>Call, talked 6 min<time>6:34pm</time></div><div class="ed"><q>Saw the neighbors getting roofs. Saturday morning works.</q></div><div class="who">Tapped by <span data-r="rep"></span></div></div></div>
+        <div class="ev"><div class="dt"><small>Sep</small><b>19</b></div><div><div class="et"><span class="ic" data-i="phone"></span>Call, no answer<time>10:12am</time></div><div class="ed">1 of 3 calls in 24h. Best time moved to 5 to 7pm.</div></div></div>
+        <div class="ev"><div class="dt"><small>Sep</small><b>12</b></div><div><div class="et"><span class="ic" data-i="hail"></span>Storm hit this home<time>4:50pm</time></div><div class="ed"><span class="vh">1.62</span> in hail at this address from the Sep 12 storm. Radar swath and home count in the Storms tab.</div></div></div>
+      </div>
+    </section>
+    <aside class="col">
+      <div class="panel">
+        <div class="ph2"><h3>Contact</h3></div>
+        <div class="kv">
+          <div><span>Owner</span><b>On file</b></div>
+          <div><span>Phone</span><b>On file, ends 18</b></div>
+          <div><span>Texts</span><b>Opted in Sep 19</b></div>
+          <div><span>Calls in 24h</span><b>0 of 3</b></div>
+          <div><span>Storms over this roof</span><b id="priors"></b></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph2"><h3>Notes</h3></div>
+        <div class="notes">
+          <div class="note">Gate code at the side yard. Dog is friendly. Prefers texts before calls.<small><span data-r="rep"></span>, Sep 26</small></div>
+          <div class="add"><span class="ic" data-i="note"></span>Add a note</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+<div class="stick"><button class="p"><span class="ic" data-i="phone"></span>Call</button><button><span class="ic" data-i="text"></span>Text</button><button><span class="ic" data-i="cal"></span>Book</button></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet psheet" id="psheet"><span class="grab"></span><div class="sh"><b id="psName">Plane</b><button data-close><span class="ic" data-i="close"></span></button></div><div class="pb" id="psBody"></div></div>
+<div class="concept"><b>Concept.</b><span class="long"> Storm date and home count from the Roof Command MRMS catalog. Timeline, contact and measurements are sample.</span><span class="short"> Sample data, real storm date.</span></div>
+<script src="data/routes-dfw.js"></script>
+<script src="../lib/rc-state.js"></script>
+<script src="../lib/brand.js"></script>
+<script src="dk.js"></script>
+<script>
+const KEY = DK.rooferKey(); const R = DK.theme(KEY);
+document.getElementById('me').textContent = R.rep[0];
+const H = DK.homes(KEY)[0], M = H.M, I = DK.I;
+const phone = matchMedia('(max-width:640px)').matches;
+document.getElementById('addr').textContent = H.addr;
+document.querySelectorAll('.vh').forEach(e=>e.textContent=H.hail);
+document.querySelectorAll('.vsq').forEach(e=>e.textContent=M.squares);document.querySelectorAll('.vw').forEach(e=>e.textContent=M.waste);
+document.getElementById('priors').textContent = R.prior.join(', ')+' (lighter)';
+
+const leg = document.getElementById('leg'), chips = document.getElementById('chips');
+function renderLeg(mode){
+  if(mode==='edges') leg.innerHTML = ['ridge','hip','valley','eave','rake'].filter(t=>M.edges[t]>0).map(t=>`<span><i style="background:${DK.EDGE_COL[t]}"></i>${DK.EDGE_LABEL[t]} <b>${M.edges[t]} ft</b></span>`).join('');
+  else if(mode==='dims') leg.innerHTML = `<span><i style="background:var(--ink)"></i>Eave runs in feet <b>${M.edges.eave} ft total</b></span>`;
+  else leg.innerHTML = `<span><i style="background:hsl(222 16% 83%)"></i>North faces</span><span><i style="background:hsl(222 16% 71%)"></i>South faces</span><span>Shaded by slope, light from the north-west</span>`;
+}
+function renderMeas(sel){
+  document.getElementById('tot').innerHTML = `<div><small>Total</small><b>${M.squares}<i>sq</i></b></div><div><small>Pitch</small><b>${M.predominant}</b></div><div><small>Facets</small><b>${M.facets}</b></div>`;
+  document.getElementById('meas').innerHTML = `<table><thead><tr><th>Plane</th><th>Pitch</th><th>Area</th><th>Squares</th></tr></thead><tbody>${M.planes.map(p=>`<tr data-p="${p.id}" class="${p.hit?'hit':''} ${sel&&sel.id===p.id?'sel':''}"><td>${p.name}</td><td>${p.rise}/12</td><td>${p.area.toLocaleString()} sq ft</td><td><b>${p.squares}</b></td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td>${M.predominant}</td><td>${M.area.toLocaleString()} sq ft</td><td>${M.squares}</td></tr></tfoot></table>`;
+  document.getElementById('selbox').innerHTML = sel
+    ? `<b>${sel.name}</b>: ${sel.plan.toLocaleString()} sq ft plan, ${sel.rise}/12 pitch, factor ${Math.sqrt(1+(sel.rise/12)**2).toFixed(3)}, so ${sel.area.toLocaleString()} sq ft of roof. ${sel.hit?'Faced the storm, hail marks noted at inspection.':'Lee side of the storm.'}`
+    : `Order ${M.order} squares with ${M.waste}% waste for ${M.facets} facets: ridge ${M.edges.ridge} ft, hip ${M.edges.hip} ft, valley ${M.edges.valley} ft, eave ${M.edges.eave} ft, rake ${M.edges.rake} ft.`;
+  document.querySelectorAll('#meas tbody tr').forEach(tr=>{ tr.onclick=()=>ctl.select(ctl.state.selected===tr.dataset.p?null:tr.dataset.p); tr.onmouseenter=()=>ctl.hover(tr.dataset.p); tr.onmouseleave=()=>ctl.hover(null); });
+}
+function openPlaneSheet(p){
+  if(!p) return; document.getElementById('psName').textContent = p.name;
+  document.getElementById('psBody').innerHTML = `<div class="big">${p.squares} squares</div>${p.area.toLocaleString()} sq ft of roof from ${p.plan.toLocaleString()} sq ft plan at ${p.rise}/12.<div class="grid"><div><small>Pitch</small><b>${p.rise}/12</b></div><div><small>Pitch factor</small><b>${Math.sqrt(1+(p.rise/12)**2).toFixed(3)}</b></div><div><small>Storm side</small><b>${p.hit?'Faced it':'Lee side'}</b></div><div><small>Share of roof</small><b>${Math.round(p.area/M.area*100)}%</b></div></div>`;
+  document.getElementById('psheet').classList.add('open'); document.getElementById('scrim').classList.add('open');
+}
+const closeAll=()=>{document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'));document.getElementById('scrim').classList.remove('open');};
+document.getElementById('scrim').onclick=closeAll; document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeAll);
+
+const ctl = DK.mountRoof(document.getElementById('roof'), H.spec, { onSelect:(p)=>{ renderMeas(p); if(phone) openPlaneSheet(p); } });
+if(!phone) document.getElementById('roof').appendChild(leg);
+chips.onclick=(e)=>{ const b=e.target.closest('button'); if(!b) return; if(b.dataset.m){ chips.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b)); ctl.setMode(b.dataset.m); renderLeg(b.dataset.m);} else { ctl.toggleHail(); b.classList.toggle('on', ctl.state.hail);} };
+renderMeas(null); renderLeg('planes');
+// capture hooks: ?mode=edges|dims  ?hail=1  ?hover=S  ?plane=S
+const m = DK.param('mode'); if(m){ chips.querySelector(`[data-m="${m}"]`).click(); }
+if(DK.param('hail')){ chips.querySelector('[data-h]').click(); }
+setTimeout(()=>{ const hv=DK.param('hover'); if(hv) ctl.hover(hv); const pl=DK.param('plane'); if(pl) ctl.select(pl); window.__ready = true; }, 500);
+</script>
+</body>
+</html>

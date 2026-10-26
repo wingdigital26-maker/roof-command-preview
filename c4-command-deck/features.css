@@ -1,0 +1,64 @@
+/* features.css: the kept Today trials (features.js). Same tokens as dk.css: light, frosted glass, the roofer's accent. */
+
+/* ---------- new storm takeover: one frosted sheet over the Today frame ---------- */
+.idw{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(ellipse 60% 48% at 50% 40%,rgba(255,255,255,.92),rgba(255,255,255,0) 70%),linear-gradient(180deg,rgba(214,218,226,.94) 0%,rgba(236,238,242,.96) 60%,rgba(247,248,250,.98) 100%);
+  backdrop-filter:blur(18px) saturate(1.1);-webkit-backdrop-filter:blur(18px) saturate(1.1);color:var(--ink);cursor:default;
+  opacity:0;transition:opacity .5s ease}
+.idw.in{opacity:1}
+.idw.out{opacity:0;pointer-events:none}
+.idw canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.idw .idc{position:relative;display:grid;justify-items:center;text-align:center;gap:14px;max-width:560px;width:100%}
+.idw .idmk{height:62px;width:auto;display:flex;align-items:center;justify-content:center;padding:0 16px;border-radius:8px;background:#000;box-shadow:0 1px 2px rgba(11,16,32,.08),0 18px 40px -18px rgba(11,16,32,.45);
+  transform:translateY(10px);opacity:0;transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
+.idw .idmk img{height:40px;width:auto;display:block}
+.idw .idmk svg{height:40px;width:auto}
+.idw.in .idmk{opacity:1;transform:none}
+.idw .ideb{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink);
+  background:var(--accent-soft);padding:5px 11px;border-radius:4px;opacity:0;transition:opacity .5s ease .15s}
+.idw.in .ideb{opacity:1}
+.idw h1{font-weight:500;font-size:clamp(28px,4.4vw,44px);letter-spacing:-.035em;line-height:1.04;color:var(--ink);margin:0;
+  opacity:0;transform:translateY(8px);transition:opacity .6s ease .25s,transform .6s cubic-bezier(.2,.7,.2,1) .25s}
+.idw.in h1{opacity:1;transform:none}
+.idw .idsub{color:var(--muted);font-size:15px;line-height:1.5;max-width:460px;text-wrap:pretty;margin:0;
+  opacity:0;transition:opacity .6s ease .4s}
+.idw.in .idsub{opacity:1}
+.idw .idsub b{color:var(--ink);font-weight:600}
+@media (prefers-reduced-motion:reduce){ .idw .idmk,.idw .ideb,.idw h1,.idw .idsub,.idw .idbtns,.idw .idfacts{opacity:1;transform:none} }
+.idw .idbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px;opacity:0;transition:opacity .5s ease .7s}
+.idw.in .idbtns{opacity:1}
+.idw .idbtn{height:44px;padding:0 20px;border-radius:6px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:transform .15s ease,box-shadow .2s ease}
+.idw .idbtn.pri{background:var(--accent);color:#fff;box-shadow:0 10px 24px -10px color-mix(in srgb,var(--accent) 60%,transparent)}
+.idw .idbtn.pri:hover{transform:translateY(-1px)}
+.idw .idbtn.sec{background:rgba(255,255,255,.85);border:1px solid var(--hair);color:var(--ink-2)}
+.idw .idbtn:active{transform:scale(.97)}
+.idw .idfacts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;opacity:0;transition:opacity .5s ease .55s}
+.idw.in .idfacts{opacity:1}
+.idw .idfacts span{display:inline-flex;flex-direction:column;align-items:center;gap:2px;min-width:92px;padding:10px 14px;border-radius:8px;background:rgba(255,255,255,.82);border:1px solid var(--hair-2);box-shadow:var(--shadow-soft)}
+.idw .idfacts b{font-size:22px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.idw .idfacts small{font-size:11.5px;color:var(--muted)}
+@media (max-width:640px){ .idw .idmk{height:52px} .idw .idmk img,.idw .idmk svg{height:32px} .idw .idsub{font-size:14px} .idw .idfacts span{min-width:84px;padding:8px 10px} .idw .idfacts b{font-size:19px} }
+
+/* ---------- mission briefing: a line under the greeting that counts in, then settles ---------- */
+.idb{margin-top:8px;color:var(--muted);font-size:14.5px;line-height:1.5;display:flex;flex-wrap:wrap;gap:4px 0;align-items:baseline}
+.idb .f{display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap}
+/* every fact carries its dot; the line is shifted left and clipped so a wrapped line never starts with a dot (visual check 10-23) */
+.idb{margin-left:-23px;clip-path:inset(-20px -40px -20px 23px)}
+.idb .f::before{content:"";display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--edge);margin:0 10px;position:relative;top:-3px}
+.idb b{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;transition:color .6s ease}
+.idb.count b{color:var(--accent)}
+.idb .f{opacity:0;transform:translateY(4px);transition:opacity .45s ease,transform .45s cubic-bezier(.2,.7,.2,1)}
+.idb .f.in{opacity:1;transform:none}
+@media (max-width:640px){ .idb{font-size:12.5px;margin-top:3px;line-height:1.4} .idb{margin-left:-17px;clip-path:inset(-20px -40px -20px 17px)} .idb .f::before{margin:0 7px} }
+.embed .idb{font-size:12.5px;margin-top:2px}
+@media (prefers-reduced-motion:reduce){ .idb .f{opacity:1;transform:none} }
+
+/* ---------- time-of-day lighting: a soft tint over the light map, never a dark theme ---------- */
+.idtint{position:absolute;inset:0;pointer-events:none;z-index:1;opacity:0;transition:opacity 1.2s ease}
+.idtint.on{opacity:1}
+.idtint[data-tod="dawn"]{background:linear-gradient(180deg,rgba(255,206,176,.26) 0%,rgba(255,236,224,.10) 38%,rgba(255,255,255,0) 60%)}
+.idtint[data-tod="dusk"]{background:linear-gradient(196deg,rgba(255,176,122,.24) 0%,rgba(255,220,196,.08) 40%,rgba(255,255,255,0) 58%,rgba(54,74,132,.08) 100%)}
+.idtint[data-tod="night"]{background:linear-gradient(180deg,rgba(26,44,104,.12) 0%,rgba(26,44,104,.05) 60%,rgba(26,44,104,.09) 100%)}
+
+/* touch screens: the card's Measure button at least 44px tall (visual skills gate 10-24: it measured 40 to 42px on a phone) */
+@media (pointer:coarse){.app .deck .card .ph .ex,.ph .ex{min-height:44px}}

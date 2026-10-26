@@ -1,0 +1,51 @@
+{
+ "iso": "2026-06-02",
+ "date": "Jun 2, 2026",
+ "max_in": 1.41,
+ "homes_1in": 6546,
+ "homes_075": 15771,
+ "homes_150": 0,
+ "regions": [
+  "collin-tx",
+  "denton-tx"
+ ],
+ "region_names": [
+  "Collin County, TX",
+  "Denton County, TX"
+ ],
+ "by_region": {
+  "collin-tx": {
+   "homes_1in": 3092,
+   "homes_075": 9283,
+   "max_in": 1.41
+  },
+  "denton-tx": {
+   "homes_1in": 3454,
+   "homes_075": 6488,
+   "max_in": 1.13
+  },
+  "dallas-tx": {
+   "homes_1in": 0,
+   "homes_075": 0,
+   "max_in": 0.0
+  },
+  "rockwall-tx": {
+   "homes_1in": 0,
+   "homes_075": 0,
+   "max_in": 0.45
+  }
+ },
+ "cities_1in": {
+  "Frisco": 6234,
+  "Plano": 312
+ },
+ "lsr_reports": 6,
+ "previous_iso": "2026-04-27",
+ "new": false,
+ "detected_at": null,
+ "scanned_through": "2026-10-22",
+ "window": "storm day = 7 am to 7 am Central (12Z to 12Z), NOAA MRMS MESH daily max, 1 km grid",
+ "rule": "a storm = 1 in or larger radar hail on at least one home in the service area",
+ "source": "NOAA MRMS MESH_Max_1440min (noaa-mrms-pds, public)",
+ "checked_at": "2026-10-23T09:34:09-05:00"
+}
