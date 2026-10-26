@@ -186,11 +186,11 @@
       if (chan === 'text') {
         const ct = RC.canText(id, h.phone || null);   // texting hours, the 3 per 24 h cap, opt-out
         if (r.canSend && h.phone && ct.ok) send = `<a class="dbtn pri" data-t="send" href="${smsHref(h.phone, r.body)}">Open in Messages</a>`;
-        why = r.blocked === 'opted out' ? 'Opted out.' : !h.phone ? 'No phone on file for this home.' : !r.canSend ? (r.blocked || 'Not ready to send.') : !ct.ok ? ct.reason + '.' : r.noCallback ? 'Goes from your phone, so replies come to you.' : '';
+        why = r.blocked === 'opted out' ? 'Opted out.' : !h.phone ? 'Next: get the phone number.' : !r.canSend ? (r.blocked || 'Not ready to send.') : !ct.ok ? ct.reason + '.' : r.noCallback ? 'Goes from your phone, so replies come to you.' : '';
       } else {
         if (r.canSend) send = `<a class="dbtn pri" data-t="send" href="${mailHref(r.subject, r.body)}">Open in Mail</a>`;
         else send = `<button type="button" class="dbtn pri off" aria-disabled="true">Open in Mail</button>`;
-        why = r.missing && r.missing.includes('mailingAddress') ? 'Add your mailing address to send emails.' : r.blocked || 'No email address on file: you add it in your mail app.';
+        why = r.missing && r.missing.includes('mailingAddress') ? 'Add your mailing address to send emails.' : r.blocked || 'Your mail app opens with the draft. Type the address there.';
       }
       return `<section class="inext"><div class="ilab"><span>Next: Day ${r.dayN || c.step} ${chan}, ${esc(when)}</span>${seg}</div>` +
         (r.body ? (chan === 'email' && r.subject ? `<p class="isubj">${esc(r.subject)}</p>` : '') + `<textarea class="idraft" rows="${chan === 'email' ? 7 : 4}" aria-label="Next ${chan} draft" ${r.canSend ? '' : 'readonly'}>${esc(r.body)}</textarea>` : '') +
@@ -203,7 +203,7 @@
         (s.kind === 'stop' ? `<p class="inote">Opted out. No more texts or follow-ups. One confirmation text is fine.</p>` : '') +
         (park ? `<p class="inote">Sending this also moves the home to Not now, so follow-ups stop.</p>` : '') +
         `<textarea class="isdraft" rows="3" aria-label="Answer">${esc(s.body || '')}</textarea>` +
-        `<div class="iact"><button type="button" class="dbtn" data-t="dismiss">Dismiss</button>${!h.phone ? '<p class="inote">No phone on file.</p>' : (ct => ct.ok || s.kind === 'stop' ? `<a class="dbtn pri" data-t="answer" href="${smsHref(h.phone, s.body || '')}">Open in Messages</a>` : `<p class="inote">${esc(ct.reason)}.</p>`)(RC.canText(id, h.phone))}</div></section>`;
+        `<div class="iact"><button type="button" class="dbtn" data-t="dismiss">Dismiss</button>${!h.phone ? '<p class="inote">Get phone to text or call.</p>' : (ct => ct.ok || s.kind === 'stop' ? `<a class="dbtn pri" data-t="answer" href="${smsHref(h.phone, s.body || '')}">Open in Messages</a>` : `<p class="inote">${esc(ct.reason)}.</p>`)(RC.canText(id, h.phone))}</div></section>`;
     }
     function paintThread() {
       const id = open; if (!id) return;

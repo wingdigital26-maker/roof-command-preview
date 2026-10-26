@@ -1143,7 +1143,7 @@ function draftFor(h, ch, upcoming){
 }
 const smsHref = (to, body) => `sms:${to}?&body=${encodeURIComponent(body)}`;
 const mailHref = (subject, body) => `mailto:?subject=${encodeURIComponent(subject||'')}&body=${encodeURIComponent(body||'')}`;
-const whoLine = h => { const o = h.owner || h.person; return (o ? esc(o)+', ' : '') + (h.phone ? pretty(h.phone) : 'No phone on file'); };
+const whoLine = h => { const o = h.owner || h.person; return (o ? esc(o)+', ' : '') + (h.phone ? pretty(h.phone) : 'Get phone'); };
 function textState(h, r){
   if (r.blocked === 'opted out') return `<div class="optin no"><b>Opted out (STOP)</b>No more texts or follow-ups to this home.</div>`;
   if (r.useChannel === 'email') return `<div class="optin no"><b>Day ${r.dayN} goes by email</b>Only the first touch is a text. Every follow-up after it is an email: switch to Email.</div>`;
@@ -1162,7 +1162,7 @@ function textDlg(h, draft, fromSeg){
   openDlg(`<div class="dtop"><h3 id="dlgT">Text ${esc(h.short)}</h3>${chanSeg('text')}</div><p class="dsub">${whoLine(h)}</p>${textState(h, r)}
     ${r.body ? `<div class="dlab">Day ${r.dayN} text <span class="dhint">${r.chars||body.length} characters</span></div>${r.canSend && h.phone?`<textarea id="dBody" rows="5" aria-label="Text message">${esc(body)}</textarea>`:`<div class="draft" id="dBody0">${esc(body)}</div>`}` : ''}
     ${r.noCallback && ok ? `<p class="snote">No call-back number for ${esc(R.name)} is on file yet, so the draft has no "call or text" line. It goes from your phone, so replies come to you.</p>` : ''}
-    ${!h.phone ? `<p class="snote">No phone on file for this home yet. Knock, or when the homeowner gives you a number, <button type="button" class="dbtn" data-openhome="${esc(h.id)}">add it on the home's record</button> and Text is ready.</p>` : ''}
+    ${!h.phone ? `<p class="snote"><button type="button" class="dbtn" data-openhome="${esc(h.id)}">Get phone</button> on the home's record and Text is ready.</p>` : ''}
     ${h.phone && r.canSend && !w.isOpen ? `<p class="snote" id="dHours">${esc(w.line)} Texts go out ${esc(w.label)} only (state law). Schedule it, or send it then.</p>` : ''}
     ${sch?`<p class="snote on">Scheduled for ${esc(RC.when(sch.due))} (<span data-due="${esc(sch.due)}" data-fmt="short">${esc(RC.countdown(sch.due,'short'))}</span>). Scheduling again replaces it.</p>`:''}
     <p class="snote" id="dWhy" hidden></p>
@@ -1183,7 +1183,7 @@ function emailWhy(r){
 }
 function emailDlg(h){
   const r = draftFor(h, 'email'), why = emailWhy(r), ok = r.canSend, ro = r.blocked === 'opted out';   // the draft stays editable; only an opt-out locks it
-  openDlg(`<div class="dtop"><h3 id="dlgT">Email ${esc(h.short)}</h3>${chanSeg('email')}</div><p class="dsub">${h.owner?RC.blurHTML(h.owner)+'. ':''}No email address on file for this homeowner: you add it in your mail app.</p>
+  openDlg(`<div class="dtop"><h3 id="dlgT">Email ${esc(h.short)}</h3>${chanSeg('email')}</div><p class="dsub">${h.owner?RC.blurHTML(h.owner)+'. ':''}Your mail app opens with the draft. Type the homeowner's address there.</p>
     ${r.body ? `<div class="dlab">Day ${r.dayN} email</div><label class="dlab dsubj" for="eSubj">Subject</label><input id="eSubj" class="dsel" value="${esc(r.subject||'')}" ${ro?'readonly':''}>
     <textarea id="eBody" rows="8" aria-label="Email" ${ro?'readonly':''}>${esc(r.body)}</textarea>` : ''}
     ${why ? `<p class="snote" id="eWhy">${esc(why)}</p>` : ''}

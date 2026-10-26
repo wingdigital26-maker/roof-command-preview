@@ -239,7 +239,7 @@
       const ct = RC.canText(id, h.phone || null);   // texting hours, the 3 per 24 h cap, opt-out
       if (r.canSend && h.phone && ct.ok) send = `<a class="cbtn pri" data-a="send" href="${smsHref(h.phone, r.body)}"><span class="ic">${ICON.send}</span>Open in Messages</a>`;
       else send = `<button type="button" class="cbtn pri off" aria-disabled="true"><span class="ic">${ICON.send}</span>Open in Messages</button>`;
-      why = r.blocked === 'opted out' ? 'Opted out.' : !h.phone ? 'No phone on file for this home.' : !r.canSend ? (r.blocked || 'Not ready to send.') : !ct.ok ? ct.reason + '.' : '';
+      why = r.blocked === 'opted out' ? 'Opted out.' : !h.phone ? 'Next: get the phone number.' : !r.canSend ? (r.blocked || 'Not ready to send.') : !ct.ok ? ct.reason + '.' : '';
     } else {
       if (r.canSend) send = `<a class="cbtn pri" data-a="send" href="${mailHref(r.subject, r.body)}"><span class="ic">${ICON.send}</span>Open in Mail</a>`;
       else send = `<button type="button" class="cbtn pri off" aria-disabled="true"><span class="ic">${ICON.send}</span>Open in Mail</button>`;
@@ -263,7 +263,7 @@
       (s.kind === 'stop' ? `<p class="cnote">Opted out. One confirmation text is fine, then nothing more.</p>` : '') +
       (park ? `<p class="cnote">Sending this also moves the home to Not now.</p>` : '') +
       `<textarea class="csdraft" rows="3" aria-label="Answer">${esc(s.body || '')}</textarea>` +
-      `<div class="cact">${quickHTML(h)}${!h.phone ? '<p class="cnote">No phone on file.</p>' : (ct => ct.ok || s.kind === 'stop' ? `<a class="cbtn pri" data-a="answer" href="${smsHref(h.phone, s.body || '')}"><span class="ic">${ICON.send}</span>Open in Messages</a>` : `<p class="cnote">${esc(ct.reason)}.</p>`)(RC.canText(id, h.phone))}</div></section>`;
+      `<div class="cact">${quickHTML(h)}${!h.phone ? '<p class="cnote">Get phone to text or call.</p>' : (ct => ct.ok || s.kind === 'stop' ? `<a class="cbtn pri" data-a="answer" href="${smsHref(h.phone, s.body || '')}"><span class="ic">${ICON.send}</span>Open in Messages</a>` : `<p class="cnote">${esc(ct.reason)}.</p>`)(RC.canText(id, h.phone))}</div></section>`;
   }
   // a fresh account: the first morning in three steps (the conversation pane on desktop, the list on a phone; 10-19)
   function startHTML(l) { return `<div class="cempty cstart"><span class="ic">${ICON.text}</span><b>Start with Today's 50</b><p>Nothing is logged yet. Your first morning, in three steps:</p><ol class="csteps"><li><i>1</i><span><b>Text the first home</b>One tap on Today opens the draft on your phone. You send it.</span></li><li><i>2</i><span><b>Answer here</b>Each home's texts, emails and replies become one thread, with the next touch ready.</span></li><li><i>3</i><span><b>Book the inspection</b>From the thread or the home. It lands on your calendar.</span></li></ol>${l.length ? `<div class="cact"><button type="button" class="cbtn pri" data-a="today">Open Today's 50</button><button type="button" class="cbtn" data-a="stop1">Stop 1: ${esc(l[0].street || 'first home')}</button></div>` : ''}</div>`; }

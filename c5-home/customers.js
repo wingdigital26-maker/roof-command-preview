@@ -120,7 +120,7 @@
     const draw = () => {
       const w = words(c, k, ch), tw = RC.textWindow ? RC.textWindow() : null, inHours = !RC.inTextWindow || RC.inTextWindow(new Date());
       const noTo = ch === 'sms' ? !c.phone : !c.email;
-      open(hd(`${name} ask: ${esc(c.name || 'customer')}`, ch === 'sms' ? esc(c.phone || 'No phone on file') : esc(c.email || 'No email on file')) +
+      open(hd(`${name} ask: ${esc(c.name || 'customer')}`, ch === 'sms' ? esc(c.phone || 'Get phone') : esc(c.email || 'Get email')) +
         `<div class="bd"><div class="seg" role="group" aria-label="Send by"><button type="button" data-ch="sms" aria-pressed="${ch === 'sms'}">Text</button><button type="button" data-ch="email" aria-pressed="${ch === 'email'}">Email</button></div>
         ${k === 'review' && !reviewUrl() ? '<p class="warn">Add your Google review link on the Past customers page first, so the text carries it.</p>' : ''}
         ${ch === 'sms' && !inHours && tw ? `<p class="warn">Outside your texting hours. ${esc(tw.label || '')}</p>` : ''}
@@ -130,7 +130,7 @@
         d.querySelectorAll('[data-ch]').forEach(b => b.onclick = () => { ch = b.dataset.ch; draw(); });
         const go = d.querySelector('#pcGo');
         go.onclick = e => {
-          if (noTo) { e.preventDefault(); say(ch === 'sms' ? 'No phone on file. Edit the customer to add one.' : 'No email on file. Edit the customer to add one.'); return; }
+          if (noTo) { e.preventDefault(); say(ch === 'sms' ? 'Get the phone first: edit the customer.' : 'Get the email first: edit the customer.'); return; }
           const body = d.querySelector('#pcBody').value;
           go.href = ch === 'sms' ? 'sms:' + String(c.phone).replace(/[^\d+]/g, '') + '?&body=' + encodeURIComponent(body)
             : 'mailto:' + encodeURIComponent(c.email) + '?subject=' + encodeURIComponent(d.querySelector('#pcSj').value) + '&body=' + encodeURIComponent(body);

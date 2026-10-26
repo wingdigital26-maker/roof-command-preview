@@ -239,10 +239,11 @@
 
   // ---------- add a phone the homeowner gave the rep (at the door, a call back): saved with this home on this device ----------
   function phoneDlg() {
-    open('Add a phone number', `<p class="dl">Only a number the homeowner gave you, or one from a source you are allowed to text. It is saved with this home and the Text button uses it.</p>
+    open('Get phone', `<p class="dl">Type a number the homeowner gave you, or one from a source you are allowed to text. It is saved with this home and the Text button uses it. Or ask Wing to find it.</p>
       <input id="phIn" type="tel" inputmode="tel" autocomplete="off" placeholder="(972) 555-1234" class="draft" style="width:100%;box-sizing:border-box;font-size:16px;padding:10px 12px">
-      <p class="dl" id="phWhy" hidden></p><div class="drow"><button type="button" class="pbtn" id="phSave">Save phone</button></div>`, body => {
+      <p class="dl" id="phWhy" hidden></p><div class="drow"><button type="button" class="pbtn" id="phSave">Save phone</button><button type="button" class="pbtn" id="phAsk">Ask Wing to find it</button></div>`, body => {
       const inp = body.querySelector('#phIn'), why = body.querySelector('#phWhy'); inp.value = rec.phone || ''; inp.focus();
+      body.querySelector('#phAsk').onclick = () => { RC.remember({ id, phoneAsked: new Date().toISOString().slice(0, 10) }); RC.note(id, 'Asked Wing for the phone'); dlg.close(); say('Asked. Wing will add it to this home.'); };   // records the request only: no lookup runs, nothing is bought
       body.querySelector('#phSave').onclick = () => {
         const d = inp.value.replace(/\D/g, ''), ok = d.length === 10 || (d.length === 11 && d[0] === '1');
         if (!ok) { why.hidden = false; why.textContent = 'Type a 10 digit US number.'; return; }
@@ -259,7 +260,7 @@
     const r = C ? C.next(f, 0, optin ? 'optin' : 'cold', 'email') : { blocked: 'no outreach library' };
     const ok = !!r.body && !r.blocked;
     const why = r.blocked === 'opted out' ? 'This homeowner opted out. No more emails.' : r.missing && r.missing.includes('mailingAddress') ? 'Add your mailing address to send emails.' : r.blocked ? 'Email is held back: ' + r.blocked + '.' : '';
-    open('Email draft', `<p class="dl">No email address on file for this homeowner: you add it in your mail app.</p>
+    open('Email draft', `<p class="dl">Your mail app opens with the draft. Type the homeowner's address there.</p>
       ${r.body ? `<input id="mSubj" class="draft" value="${esc(r.subject || '')}" aria-label="Subject"><textarea id="mBody" rows="7" class="draft" aria-label="Email">${esc(r.body)}</textarea>` : ''}
       ${why ? `<p class="dl">${esc(why)}</p>` : ''}
       <div class="drow">${ok ? `<a class="pbtn" id="mGo" href="#">${ic('mail')}Open in Mail</a>` : `<button type="button" class="pbtn" disabled>${ic('mail')}Open in Mail</button>`}</div>`, body => {
@@ -371,10 +372,10 @@
     const st = RC.stage(id, dflt);
     $('#rsub').innerHTML = `<span class="stagepill">${esc(RC.stageName(st))}</span>${archivedOf(id) ? '<span class="stagepill nn" title="Parked in Not now on the pipeline board. Restore it there, or move it on the stage bar.">Not now</span>' : ''}${window.RCROOF ? RCROOF.chip(rec.roof) : ''}<span>${esc(place)}</span>${OWNDATA && rec.subdivision ? `<span>${esc(rec.subdivision)}</span>` : ''}<span>${OWNDATA ? (rec.owner ? RC.blurHTML(rec.owner) : RC.OWNER_NONE) : rec.person ? esc(rec.person) + ' <i class="smp">sample</i>' : 'Owner name not available'}</span>`;
     const c = RC.canText(id, tel || null);
-    document.querySelectorAll('.callwhy').forEach(w => { w.hidden = c.ok; w.innerHTML = esc(c.reason) + (tel ? '' : ' <button type="button" class="addph" data-act="addphone">Add phone</button>'); });
+    document.querySelectorAll('.callwhy').forEach(w => { w.hidden = c.ok; w.innerHTML = esc(c.reason) + (tel ? '' : ' <button type="button" class="addph" data-act="addphone">Get phone</button>'); });
     document.querySelectorAll('[data-act="addphone"]').forEach(b => b.onclick = phoneDlg);
     document.querySelectorAll('.bookLbl').forEach(l => { l.textContent = RC.booking(id) ? 'Reschedule' : 'Book'; });
-    const kv = [['Owner', OWNDATA ? (rec.owner ? RC.blurHTML(rec.owner) + (rec.homestead ? ', homestead' : '') + ' (on file)' : RC.OWNER_NONE) : rec.person ? esc(rec.person) + ' (sample)' : 'Owner name not available'], ['Phone', rec.phone ? esc(rec.phone) + (rec.phoneBy === 'you' ? ' <i class="src">added by you</i>' : '') : 'Not on file <button type="button" class="addph" data-act="addphone">Add phone</button>'],
+    const kv = [['Owner', OWNDATA ? (rec.owner ? RC.blurHTML(rec.owner) + (rec.homestead ? ', homestead' : '') + ' (on file)' : RC.OWNER_NONE) : rec.person ? esc(rec.person) + ' (sample)' : 'Owner name not available'], ['Phone', rec.phone ? esc(rec.phone) + (rec.phoneBy === 'you' ? ' <i class="src">added by you</i>' : '') : '<button type="button" class="addph" data-act="addphone">Get phone</button>'],
       ['Texts', optin ? (rec.customer ? 'Past customer' : 'Opted in') : 'Not yet opted in'], ['Texting hours', esc(RC.textWindow().label)],
       ['Hail here', hail != null ? hail.toFixed(2) + ' in' + (window.HOME.hailDate ? ', ' + esc(window.HOME.hailDate) : '') + ' <i class="src">NOAA MRMS radar</i>' : 'No 1 in+ hail on file (last 24 months) <i class="src">NOAA MRMS radar</i>'],
     ].concat(LIC ? [['License on texts', LIC]] : []);
