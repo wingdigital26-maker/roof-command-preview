@@ -95,7 +95,8 @@
     if(BEAT || HOLD) return;
     /* the greeting follows the info (or storm) beat on the first open and the short opening; the About replay has no greeting */
     var GREET = WAIT || SHORT;
-    if(name === 'info') setTimeout(function(){ STORM ? showBeat('storm') : GREET ? showBeat('hi') : beatsOver(); }, SHORT ? (STORM ? 1200 : 1500) : (STORM ? 1300 : 1600));
+    if(name === 'info') setTimeout(function(){ showBeat('money'); }, SHORT ? 1500 : 1600);
+    else if(name === 'money') setTimeout(function(){ STORM ? showBeat('storm') : GREET ? showBeat('hi') : beatsOver(); }, 4200);
     else if(name === 'storm') setTimeout(function(){ GREET ? showBeat('hi') : beatsOver(); }, SHORT ? 2400 : 3400);
     else setTimeout(beatsOver, 1800);   /* the greeting is on for at least this long, then stays up through the hold */
   }

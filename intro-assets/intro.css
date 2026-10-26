@@ -103,4 +103,4 @@ body.go #stage, body.go #hail, body.go #nav, body.go .hero, body.go .beat, body.
   .load-bar::after{animation:none; left:30%}
 }
 
-.intro-prop{position:fixed;left:20px;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);z-index:5;font-size:13px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding:10px 4px}.intro-prop:hover{color:var(--paper)}@media (max-width:640px){.intro-prop{left:auto;right:12px;bottom:auto;top:78px}}
+.intro-prop{position:fixed;left:20px;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);z-index:5;font-size:13px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding:10px 4px}#beat-money{top:60%}@media (max-width:640px){#beat-money{top:56%}}.intro-prop:hover{color:var(--paper)}@media (max-width:640px){.intro-prop{left:auto;right:12px;bottom:auto;top:78px}}

@@ -8,11 +8,11 @@
 <style>
 @font-face{font-family:"Montserrat";font-weight:400;font-display:swap;src:url(intro-assets/fonts/montserrat-400.woff2) format("woff2")}
 @font-face{font-family:"Montserrat";font-weight:600;font-display:swap;src:url(intro-assets/fonts/montserrat-600.woff2) format("woff2")}
-:root{--ink:#14181f;--muted:#586070;--hair:#dfe3ea;--bg:#f6f7f9;--card:#fff;--accent:#0D6C99;--accent-ink:#07547A;--soft:#E3F6FE;--wing:#2757E6}
+:root{--ink:#14181f;--muted:#586070;--hair:#dfe3ea;--bg:#f6f7f9;--card:#fff;--accent:#0D6C99;--accent-ink:#07547A;--soft:#E3F6FE;--good:#0b6b3a;--warn:#8a5a00}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Montserrat",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.55}
-.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
 header.top{background:#fff;border-bottom:1px solid var(--hair)}
 header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;height:68px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;color:var(--ink);text-decoration:none}
@@ -20,34 +20,63 @@ header.top .wrap{display:flex;align-items:center;justify-content:space-between;g
 .cobrand{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px}
 .cobrand .plate{background:#000;border-radius:6px;padding:4px 8px;display:flex}
 .cobrand .plate img{height:30px;width:auto;display:block}
-.hero{padding:56px 0 32px}
+.hero{padding:48px 0 16px}
 .kicker{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
-h1{font-size:clamp(30px,6vw,46px);line-height:1.1;letter-spacing:-.025em;margin:12px 0 16px;font-weight:600}
-.lede{font-size:clamp(17px,2.6vw,20px);color:var(--muted);max-width:60ch;margin:0}
-.price{margin:28px 0 0;display:inline-flex;align-items:baseline;gap:10px;background:var(--card);border:1px solid var(--hair);border-radius:16px;padding:16px 22px}
-.price b{font-size:40px;letter-spacing:-.03em;font-weight:600;color:var(--accent-ink)}
-.price span{color:var(--muted);font-size:15px}
-h2{font-size:clamp(22px,4vw,28px);letter-spacing:-.02em;margin:48px 0 8px;font-weight:600}
-.sub{color:var(--muted);margin:0 0 20px;max-width:62ch}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+h1{font-size:clamp(28px,5.6vw,44px);line-height:1.12;letter-spacing:-.025em;margin:12px 0 14px;font-weight:600}
+.lede{font-size:clamp(16px,2.4vw,19px);color:var(--muted);max-width:62ch;margin:0}
+h2{font-size:clamp(22px,4vw,28px);letter-spacing:-.02em;margin:52px 0 8px;font-weight:600;line-height:1.2}
+.sub{color:var(--muted);margin:0 0 20px;max-width:64ch}
 .card{background:var(--card);border:1px solid var(--hair);border-radius:16px;padding:18px 20px}
-.card h3{margin:0 0 6px;font-size:17px;font-weight:600}
-.card p{margin:0;color:var(--muted);font-size:15px}
-ol.steps{margin:0;padding:0;list-style:none;display:grid;gap:12px}
-ol.steps li{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--hair);border-radius:16px;padding:16px 18px}
-ol.steps .n{flex:none;width:30px;height:30px;border-radius:50%;background:var(--soft);color:var(--accent-ink);font-weight:600;display:grid;place-items:center;font-size:14px}
-ol.steps p{margin:0;color:var(--muted);font-size:15px}
-ol.steps b{color:var(--ink);font-weight:600}
-ul.list{margin:0;padding-left:20px;color:var(--muted)}
-ul.list li{margin:6px 0}
-.cta{margin:48px 0 0;background:var(--accent-ink);color:#fff;border-radius:20px;padding:28px 26px}
-.cta h2{margin:0 0 8px;color:#fff}
-.cta p{margin:0;color:#d6ecf7;max-width:60ch}
-.cta a.btn{display:inline-block;margin-top:18px;background:#fff;color:var(--accent-ink);font-weight:600;text-decoration:none;border-radius:999px;padding:12px 22px}
-footer{padding:36px 0 56px;color:var(--muted);font-size:13px}
-a{color:var(--accent-ink)}
-@media (max-width:520px){.wrap{padding:0 16px}.hero{padding:36px 0 20px}.cobrand .by{display:none}.price b{font-size:34px}}
+.math{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
+.stat{background:var(--card);border:1px solid var(--hair);border-radius:16px;padding:16px 16px 14px}
+.stat b{display:block;font-size:clamp(24px,4vw,32px);letter-spacing:-.03em;line-height:1.1;font-weight:600;color:var(--accent-ink)}
+.stat span{display:block;margin-top:6px;font-size:13px;color:var(--muted);line-height:1.4}
+.stat.big{background:var(--accent-ink);border-color:var(--accent-ink)}
+.stat.big b{color:#fff}.stat.big span{color:#d6ecf7}
+.fine{font-size:12.5px;color:var(--muted);margin:14px 0 0;max-width:72ch;line-height:1.5}
+.proofcard{border-left:4px solid var(--accent);padding:18px 20px;background:var(--card);border:1px solid var(--hair);border-left:4px solid var(--accent);border-radius:16px}
+.proofcard .num{font-size:clamp(26px,5vw,38px);font-weight:600;letter-spacing:-.03em;color:var(--accent-ink);line-height:1.1}
+.proofcard p{margin:8px 0 0;color:var(--muted)}
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
+.calc label{display:block;font-size:13px;font-weight:600;margin:0 0 6px;color:var(--ink)}
+.calc .field{margin-bottom:14px}
+.calc input{width:100%;font:inherit;font-size:18px;padding:12px 14px;border:1px solid var(--hair);border-radius:12px;background:#fff;color:var(--ink)}
+.calc input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.out{background:var(--soft);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;justify-content:center}
+.out .x{font-size:clamp(34px,7vw,52px);font-weight:600;letter-spacing:-.03em;color:var(--accent-ink);line-height:1}
+.out p{margin:8px 0 0;color:#2c4a5a}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ba .card h3{margin:0 0 10px;font-size:15px;letter-spacing:.04em;text-transform:uppercase}
+.ba .before h3{color:var(--warn)}.ba .after h3{color:var(--good)}
+.ba ul{margin:0;padding-left:20px;color:var(--muted);font-size:15px}
+.ba li{margin:6px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.grid .card h3{margin:0 0 6px;font-size:17px;font-weight:600}
+.grid .card p{margin:0;color:var(--muted);font-size:15px}
+.price{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;background:var(--card);border:1px solid var(--hair);border-radius:20px;padding:22px 24px}
+.price .p b{font-size:clamp(38px,8vw,54px);letter-spacing:-.03em;font-weight:600;color:var(--accent-ink);line-height:1}
+.price .p span{display:block;color:var(--muted);margin-top:4px}
+.price ul{margin:0;padding-left:20px;color:var(--muted);font-size:15px}
+.draft{margin-top:14px;border:2px dashed #c77700;background:#fff7e6;border-radius:14px;padding:14px 18px;color:#5a3c00;font-size:15px}
+.draft b{display:inline-block;background:#c77700;color:#fff;border-radius:6px;padding:1px 8px;font-size:12px;margin-right:8px;letter-spacing:.04em}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+a.btn{display:flex;flex-direction:column;gap:4px;text-decoration:none;border-radius:18px;padding:20px 22px;font-weight:600;font-size:20px;background:var(--accent);color:#fff}
+a.btn small{font-weight:400;font-size:14px;opacity:.9}
+a.btn.alt{background:#fff;color:var(--accent-ink);border:2px solid var(--accent)}
+a.btn:hover{filter:brightness(1.06)}
+.next{background:var(--accent-ink);color:#fff;border-radius:20px;padding:26px 26px;margin-top:44px}
+.next h2{margin:0 0 8px;color:#fff}
+.next p{margin:0;color:#d6ecf7;max-width:60ch}
+.next .who{margin-top:14px;font-weight:600;color:#fff}
+footer{padding:34px 0 56px;color:var(--muted);font-size:13px}
+@media (max-width:760px){.math{grid-template-columns:1fr 1fr}.calc,.ba,.btns{grid-template-columns:1fr}}
+@media (max-width:520px){.wrap{padding:0 16px}.hero{padding:32px 0 10px}.cobrand .by{display:none}.math{gap:10px}.stat{padding:14px}h2{margin-top:42px}}
 </style>
+<script>
+/* ONE-LINE CHANGES (Jack): the monthly price, and Grant's contact. Everything on the page reads these two. */
+var PRICE = 1000;
+var CONTACT = { name: "", email: "", phone: "" };
+</script>
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -58,50 +87,119 @@ a{color:var(--accent-ink)}
 <main class="wrap">
   <section class="hero">
     <div class="kicker">Proposal for Jackson Roofing</div>
-    <h1>Know which roofs the storm hit, and who to call first.</h1>
-    <p class="lede">Roof Command shows your crew every home hail hit, ranks the ones most likely to need a roof, and keeps each conversation in one place. Wing Digital runs it for you, so your day starts with a short list instead of a map and a guess.</p>
-    <div class="price"><b>$1,000</b><span>a month, Wing runs it done for you</span></div>
+    <h1>Your June 2 storm put about $1.26 million in roofs within reach.</h1>
+    <p class="lede">This is the math from your own storm data, not a guess. Roof Command finds the homes the storm hit, ranks the ones most likely to need a roof, and keeps every conversation in one place. Wing Digital runs it for you.</p>
+    <div class="math">
+      <div class="stat"><b>6,546</b><span>homes hit by 1 inch hail or larger on June 2, 2026, in your area</span></div>
+      <div class="stat"><b>4,184</b><span>of them were built 2011 or earlier and have no re-roof permit on file</span></div>
+      <div class="stat"><b>~84 roofs</b><span>if you close 2 in 100 of those homes</span></div>
+      <div class="stat big"><b>~$1.26 million</b><span>in jobs at an average ticket of $15,000</span></div>
+    </div>
+    <p class="fine">How we counted: radar hail of 1 inch or larger on June 2 over homes in 4 counties (NOAA radar), year built from county records, re-roof permits from Collin County records (2023 on). Denton County permits are not in the data yet, so a few of these homes may already have a new roof. The 2% close rate and the $15,000 ticket are our estimates for DFW, not promises. Change them in your head: at 1% it is half this number.</p>
   </section>
 
   <section>
-    <h2>What Jackson gets</h2>
-    <p class="sub">Everything below is already built and running on real county, hail and roof data for Collin, Dallas, Denton and Rockwall counties. The link you were sent opens it.</p>
-    <div class="grid">
-      <div class="card"><h3>Storm map</h3><p>Every storm on file, with the homes that took one inch hail or larger lit up street by street. Pick a storm and see where to work.</p></div>
-      <div class="card"><h3>Daily 50</h3><p>Each morning, a ranked list of 50 homes to reach first: age of the roof, hail it took, and whether a re-roof permit is already on file.</p></div>
-      <div class="card"><h3>Turnover Radar</h3><p>Streets where neighbors have re-roofed lately, so you can walk a block with a reason to knock and a story to tell.</p></div>
-      <div class="card"><h3>LiDAR measurements</h3><p>A 3D roof for the home with squares and pitch estimated from LiDAR. It is an estimate, typically within about 10% of permit records, so order a measurement report before you quote.</p></div>
-      <div class="card"><h3>Homeowner proof page</h3><p>A simple page for each home showing the storm date, hail size, how close it was reported and what hit the street. You send it with one tap, from your own phone or email.</p></div>
-      <div class="card"><h3>CRM</h3><p>Inbox, pipeline and calendar for every home you work, from new hit to signed contract, with the next step always on top.</p></div>
+    <h2>Why the list is worth working</h2>
+    <p class="sub">We tested the Turnover Radar on months it had never seen.</p>
+    <div class="proofcard">
+      <div class="num">14 to 27 times</div>
+      <p>In held-out testing (21 months of 2025 and 2026 that the score never saw), homes with 2 or more recent re-roofs within about a block re-roofed 14 to 27 times as often as homes with none. The top 500 homes on the list held 131 of the 2,856 re-roofs in that period. 500 random homes would hold about 7.</p>
+      <p class="fine" style="margin-top:10px">Back-test on Collin County permit records. Hail size is a radar estimate, not an inspection.</p>
     </div>
   </section>
 
   <section>
-    <h2>How it works day to day</h2>
-    <p class="sub">People stay in charge of every message. Nothing goes to a homeowner unless someone on your team taps send.</p>
-    <ol class="steps">
-      <li><span class="n">1</span><p><b>Wing keeps the data fresh.</b> Hail is checked every morning and the Daily 50 is rebuilt for you.</p></li>
-      <li><span class="n">2</span><p><b>Your team works the list.</b> Open a home, see the storm record and the roof, then text, email, call or knock. Each action is yours to tap.</p></li>
-      <li><span class="n">3</span><p><b>Wing handles the setup and the upkeep.</b> New areas, new storms, fixes and questions go to us, not to your office.</p></li>
-    </ol>
+    <h2>What one extra roof is worth</h2>
+    <p class="sub">Try your own numbers.</p>
+    <div class="card calc">
+      <div>
+        <div class="field"><label for="job">Average job size ($)</label><input id="job" type="number" inputmode="numeric" min="0" step="500" value="15000"></div>
+        <div class="field"><label for="roofs">Extra roofs a month</label><input id="roofs" type="number" inputmode="decimal" min="0" step="0.5" value="1"></div>
+      </div>
+      <div class="out" aria-live="polite">
+        <div class="x" id="payx">15x</div>
+        <p id="paytxt">1 extra roof a month pays for Roof Command about 15 times over.</p>
+      </div>
+    </div>
+    <p class="fine">Revenue, before your material and crew costs. The monthly price is <span data-price>$1,000</span>.</p>
   </section>
 
   <section>
-    <h2>What to know</h2>
-    <ul class="list">
-      <li>Homes, hail and roof facts come from public records and radar. Owner names stay hidden until your team has messaged a home. This preview shows no names at all.</li>
-      <li>In this preview, phones, calls and messages are samples and sending is switched off.</li>
-      <li>Roof sizes from LiDAR are estimates. Measure before you price a job.</li>
-    </ul>
+    <h2>Your rep's day, before and after</h2>
+    <div class="ba">
+      <div class="card before"><h3>Before</h3><ul>
+        <li>Drive neighborhoods and guess which roofs are old.</li>
+        <li>Knock doors on streets that were already re-roofed.</li>
+        <li>Notes live in a phone, a truck and someone's head.</li>
+        <li>After a storm, everyone chases the same streets.</li>
+      </ul></div>
+      <div class="card after"><h3>After</h3><ul>
+        <li>50 ranked homes to reach, with hail, roof age and permits shown.</li>
+        <li>A route for the doors and a ready text for the phone. Your rep taps send.</li>
+        <li>Every home, reply and booked inspection in one CRM.</li>
+        <li>Streets that are re-roofing now surface on the Turnover Radar.</li>
+      </ul></div>
+    </div>
   </section>
 
-  <section class="cta">
-    <h2>Ready to start?</h2>
-    <p>Reply to the email this came with and Wing will set Jackson Roofing up for the next storm. It is $1,000 a month and Wing does the running.</p>
-    <a class="btn" href="product.html">Back to the preview</a>
+  <section>
+    <h2>What Jackson gets</h2>
+    <div class="grid">
+      <div class="card"><h3>Storm map</h3><p>Every storm on file, with the homes that took 1 inch hail or larger lit up street by street.</p></div>
+      <div class="card"><h3>Daily 50</h3><p>A ranked list of 50 homes to reach each day: roof age, hail it took, and whether a re-roof permit is on file.</p></div>
+      <div class="card"><h3>Turnover Radar</h3><p>Streets where neighbors have re-roofed lately, so you walk a block with a reason to knock.</p></div>
+      <div class="card"><h3>LiDAR measurements</h3><p>A 3D roof with squares and pitch estimated from LiDAR. An estimate, typically within about 10% of permit records. Order a measurement report before you quote.</p></div>
+      <div class="card"><h3>Homeowner proof page</h3><p>One page per home with the storm date, hail size and what hit the street. Your rep sends it with one tap.</p></div>
+      <div class="card"><h3>CRM</h3><p>Inbox, pipeline and calendar from new hit to signed contract, with the next step always on top.</p></div>
+      <div class="card"><h3>SEO, done for you</h3><p>Wing publishes blog posts and service pages for Jackson so the homeowners who search for a roofer find you too.</p></div>
+    </div>
+    <p class="fine">People stay in charge of every message. Nothing goes to a homeowner unless someone on your team taps send.</p>
+  </section>
+
+  <section>
+    <h2>Price</h2>
+    <div class="price">
+      <div class="p"><b data-price>$1,000</b><span>a month, Wing runs it done for you</span></div>
+      <ul><li>Setup and upkeep by Wing</li><li>New storms and data kept fresh</li><li>Fixes and questions go to us</li></ul>
+    </div>
+    
+  </section>
+
+  <section>
+    <h2>See it for yourself</h2>
+    <div class="btns">
+      <a class="btn" href="product.html">See your software<small>Roof Command, with your storm data</small></a>
+      <a class="btn alt" href="https://wingdigital26-maker.github.io/jackson-roofing/" target="_blank" rel="noopener">See your website<small>The Jackson Roofing site we rebuilt</small></a>
+    </div>
+  </section>
+
+  <section class="next">
+    <h2>Next step</h2>
+    <p>Reply to the email this came with and we will set Jackson Roofing up before the next storm.</p>
+    <div class="who" id="who"></div>
   </section>
 </main>
 
-<footer><div class="wrap">Roof Command by Wing Digital, built for Jackson Roofing.</div></footer>
+<footer><div class="wrap">Roof Command by Wing Digital, built for Jackson Roofing. Numbers on this page come from public records and radar. Homes, hail and roof facts are real. Phones and messages in the software preview are samples.</div></footer>
+<script>
+(function(){
+  var fmt = function(n){ return "$" + Math.round(n).toLocaleString("en-US"); };
+  document.querySelectorAll("[data-price]").forEach(function(e){ e.textContent = fmt(PRICE); });
+  var job = document.getElementById("job"), roofs = document.getElementById("roofs"), x = document.getElementById("payx"), t = document.getElementById("paytxt");
+  function calc(){
+    var j = Math.max(0, parseFloat(job.value) || 0), r = Math.max(0, parseFloat(roofs.value) || 0), m = (j * r) / PRICE;
+    var s = m >= 10 ? String(Math.round(m)) : (Math.round(m * 10) / 10).toString();
+    x.textContent = s + "x";
+    var rs = r === 1 ? "1 extra roof a month" : (r + " extra roofs a month");
+    t.textContent = r > 0 && j > 0 ? rs + " pays for Roof Command about " + s + (s === "1" ? " time" : " times") + " over. That is " + fmt(j * r) + " a month against " + fmt(PRICE) + "." : "Enter a job size and roofs a month.";
+  }
+  job.addEventListener("input", calc); roofs.addEventListener("input", calc); calc();
+  var w = document.getElementById("who"), parts = [];
+  if (CONTACT.name) parts.push(CONTACT.name);
+  if (CONTACT.email) parts.push(CONTACT.email);
+  if (CONTACT.phone) parts.push(CONTACT.phone);
+  w.textContent = parts.join("  |  ");
+})();
+</script>
 </body>
 </html>

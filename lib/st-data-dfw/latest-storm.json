@@ -43,9 +43,9 @@
  "previous_iso": "2026-04-27",
  "new": false,
  "detected_at": null,
- "scanned_through": "2026-10-22",
+ "scanned_through": "2026-10-25",
  "window": "storm day = 7 am to 7 am Central (12Z to 12Z), NOAA MRMS MESH daily max, 1 km grid",
  "rule": "a storm = 1 in or larger radar hail on at least one home in the service area",
  "source": "NOAA MRMS MESH_Max_1440min (noaa-mrms-pds, public)",
- "checked_at": "2026-10-23T09:34:09-05:00"
+ "checked_at": "2026-10-26T09:33:52-05:00"
 }
