@@ -69,7 +69,7 @@ main.phone .stage{width:390px;height:min(844px,100%);border-radius:28px}
 </style>
 <link rel="stylesheet" href="lib/rc-console.css"><!-- polish direction B: Ops Console -->
 <style>.rc-prop{flex:none;height:36px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;background:#0D6C99;color:#fff;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap}.rc-prop:hover{background:#07547A}.rc-prop .ps{display:none}header{transition:opacity .5s ease}html.rc-opening header{opacity:0;pointer-events:none}@media (max-width:899px){.rc-prop{order:2;height:44px;padding:0 14px}}@media (max-width:599px){.rc-prop .pl{display:none}.rc-prop .ps{display:inline}}</style>
-<script>(function(){var d=document.documentElement;function f(){var seen=false;try{seen=!!sessionStorage.getItem('rc.introSeen')}catch(e){}var h=location.hash;d.classList.toggle('rc-opening',/^#\/opening\/?$/.test(h)||(!h&&!seen&&!/[?&]nointro=1/.test(location.search)))}f();addEventListener('hashchange',f)})()</script>
+<script>(function(){var d=document.documentElement;function f(){var seen=false;try{seen=!!sessionStorage.getItem('rc.introSeen')}catch(e){}var h=location.hash;d.classList.toggle('rc-opening',/^#\/opening\/?$/.test(h)||(!h&&!seen&&!/[?&]nointro=1/.test(location.search)))}f();addEventListener('hashchange',f);setInterval(f,250)})()</script>
 </head>
 <body>
 <header>
