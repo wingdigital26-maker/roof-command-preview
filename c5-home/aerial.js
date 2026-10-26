@@ -75,7 +75,10 @@ aside.col{padding-bottom:96px}
       top = Math.max(top, r.bottom - s.top);
     });
     top = Math.round(top + 10);
-    const w = Math.floor(s.width - 2 * side), capEl = aer.querySelector('.aer-cap'); if (capEl) capEl.style.width = w + 'px';
+    const w = Math.floor(s.width - 2 * side);
+    if (!(w > 40)) { if ((place.retry = (place.retry || 0) + 1) < 25) setTimeout(place, 300); return; }   // stage not laid out yet (slow render, hidden tab): never draw a negative-size SVG, try again shortly
+    place.retry = 0;
+    const capEl = aer.querySelector('.aer-cap'); if (capEl) capEl.style.width = w + 'px';
     const capH = (capEl ? capEl.offsetHeight : 40) + 14, dockH = dock.getBoundingClientRect().height + 22;
     let h;
     if (ph) { h = Math.round(w * 0.95); stage.style.height = Math.round(top + h + capH + dockH) + 'px'; }
