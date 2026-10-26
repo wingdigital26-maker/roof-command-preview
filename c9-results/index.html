@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Results | Roof Command</title>
+<script src="../lib/rc-frame-pause.js"></script><!-- parked by the shell = no drawing -->
+<script src="../lib/rc-state.js"></script>
+<script src="../lib/brand.js"></script>
+<script src="../lib/rc-results.js"></script>
+<!-- Results (10-26): homes reached, replies, inspections, proposals, jobs won and revenue, by lead source; alerts and what
+     they led to; reviews and referrals; SEO pages published. Signed in with cloud on = Supabase rc_results() (migration 012).
+     Otherwise this device's own records (lib/rc-results.js). Counts only: no names, phones or emails on this page. -->
+<style>
+@font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;src:url(../lib/st-fonts/inter-var-latin.woff2) format('woff2')}
+:root{--ink:#0B1020;--ink-2:#2A3246;--slate:#5A6378;--line:#D5D9E0;--line-2:#E6E8ED;--tint:#F1F5FA;--blue:#1F47C9;--green:#11734B}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1;
+  background:radial-gradient(ellipse 60% 48% at 50% 40%,rgba(255,255,255,.95),rgba(255,255,255,0) 70%),linear-gradient(180deg,#B9BEC9 0%,#D5D9E0 30%,#ECEEF2 62%,#F7F8FA 100%);background-attachment:fixed}
+a{color:inherit}
+a:focus-visible,button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 24px 110px}
+.pan{background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:14px}
+.hd{padding:18px 20px 14px;border-bottom:1px solid var(--line-2);display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.hd h1,.hd h2{margin:0;font-size:20px;font-weight:650;letter-spacing:-.01em}
+.hd h2{font-size:15px}
+.hd p{margin:4px 0 0;font-size:13px;color:var(--slate);line-height:1.45;max-width:640px}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:8px;background:var(--tint);border:1px solid var(--line-2)}
+.seg button{font:inherit;font-size:13px;font-weight:500;border:0;background:transparent;color:var(--slate);padding:6px 12px;border-radius:6px;cursor:pointer;min-height:32px}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(11,16,32,.12)}
+.tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip{font-size:12px;color:var(--ink-2);background:var(--tint);border:1px solid var(--line-2);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.btn{font:inherit;font-size:12.5px;font-weight:500;height:32px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:0 10px;cursor:pointer}
+.btn:hover{background:var(--tint)}
+.sum{display:grid;grid-template-columns:repeat(6,1fr)}
+.sum div{padding:14px 20px;border-right:1px solid var(--line-2)}
+.sum div:last-child{border-right:0}
+.sum b{display:block;font-size:26px;font-weight:650;letter-spacing:-.02em}
+.sum span{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--slate)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--slate);font-weight:500;text-align:right;padding:10px 20px;border-bottom:1px solid var(--line-2)}
+th:first-child,td:first-child{text-align:left}
+td{padding:12px 20px;border-bottom:1px solid var(--line-2);text-align:right}
+tr:last-child td{border-bottom:0}
+td.z{color:#A3AAB8}
+tfoot td{font-weight:650;border-top:1px solid var(--line)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.two .pan{margin:0}
+ul.kv{list-style:none;margin:0;padding:0}
+ul.kv li{display:flex;justify-content:space-between;gap:16px;padding:11px 20px;border-bottom:1px solid var(--line-2);font-size:13.5px}
+ul.kv li:last-child{border-bottom:0}
+ul.kv li b{font-weight:650}
+ul.kv li small{color:var(--slate)}
+.empty{padding:22px 20px;color:var(--slate);font-size:13.5px;line-height:1.5}
+.foot{margin:4px 2px 0;font-size:12px;color:var(--slate);line-height:1.5}
+.rev{color:var(--green)}
+@media (max-width:760px){
+  .wrap{padding:12px 16px 110px}
+  .sum{grid-template-columns:repeat(3,1fr)}
+  .sum div{border-bottom:1px solid var(--line-2);padding:12px 14px}
+  .sum div:nth-child(3n){border-right:0}
+  .sum b{font-size:21px}
+  .two{grid-template-columns:1fr}
+  .two .pan{margin-bottom:14px}
+  th,td{padding:10px 8px;font-size:12.5px}
+  th:first-child,td:first-child{padding-left:14px}
+  th:last-child,td:last-child{padding-right:14px}
+  .hide-s{display:none}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="pan">
+    <div class="hd">
+      <div><h1>Results</h1><p id="sub">What the work turned into, by where each lead came from.</p></div>
+      <div class="tools">
+        <div class="seg" role="group" aria-label="Period">
+          <button type="button" data-p="week" class="on">This week</button><button type="button" data-p="month">This month</button><button type="button" data-p="90">90 days</button>
+        </div>
+        <span class="chip" id="mode">On this device</span>
+        <button type="button" class="btn" id="dl" title="Counts only, for the weekly summary script">Download counts</button>
+      </div>
+    </div>
+    <div class="sum" id="sum"></div>
+  </section>
+
+  <section class="pan">
+    <div class="hd"><div><h2>By lead source</h2><p>Each home counts once, under where it first came from.</p></div></div>
+    <div id="bySrc"></div>
+  </section>
+
+  <div class="two">
+    <section class="pan">
+      <div class="hd"><div><h2>Morning-after alerts</h2><p>Alerts on file for this period, and the homes added from them.</p></div></div>
+      <ul class="kv" id="alerts"></ul>
+    </section>
+    <section class="pan">
+      <div class="hd"><div><h2>Reviews and referrals</h2><p>Past customers asked, and what came back.</p></div></div>
+      <ul class="kv" id="asks"></ul>
+    </section>
+  </div>
+
+  <section class="pan" style="margin-top:14px">
+    <div class="hd"><div><h2>SEO pages published</h2><p id="seoSub">Blog posts and service pages Wing published on the roofer's site.</p></div></div>
+    <ul class="kv" id="seo"></ul>
+  </section>
+  <p class="foot" id="foot"></p>
+</main>
+<script>
+(function () {
+  'use strict';
+  const $ = s => document.querySelector(s), esc = s => RC.esc(s), fmt = n => Number(n || 0).toLocaleString('en-US');
+  const money = n => '$' + fmt(Math.round(n || 0));
+  let P = 'week', ALERTS = [], SEO = null, LAST = null;
+  try { const q = new URLSearchParams(location.search).get('p'); if (['week', 'month', '90'].includes(q)) P = q; } catch (e) { }
+
+  function range(p) {
+    const now = new Date(), a = new Date(now);
+    if (p === 'week') { a.setHours(0, 0, 0, 0); a.setDate(a.getDate() - ((a.getDay() + 6) % 7)); }        // Monday
+    else if (p === 'month') { a.setHours(0, 0, 0, 0); a.setDate(1); }
+    else a.setTime(now.getTime() - 90 * 864e5);
+    return [a.getTime(), now.getTime() + 60000];
+  }
+  const dlabel = ms => new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  // cloud: signed in with sync on (the shell's rc-cloud.js found the company) -> rc_results(); else this device
+  function cloud() {
+    try { const c = window.top.RC_CLOUD; if (!c || !c.companyId || !c.status().on) return null;
+      const s = JSON.parse(localStorage.getItem('rc.session') || 'null'); return s && s.access_token ? { company: c.companyId, token: s.access_token } : null; } catch (e) { return null; }
+  }
+  function load(a, b) {
+    const c = cloud();
+    if (!c) return Promise.resolve(RCR.compute(a, b, { alerts: ALERTS }));
+    const KEY = 'preview-no-key';
+    return fetch('https://preview.invalid/rest/v1/rpc/rc_results', { method: 'POST', cache: 'no-store',
+      headers: { apikey: KEY, Authorization: 'Bearer ' + c.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_company: c.company, p_from: new Date(a).toISOString(), p_to: new Date(b).toISOString() }) })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status)).then(d => Object.assign(d, { mode: 'cloud' }))
+      .catch(() => RCR.compute(a, b, { alerts: ALERTS }));
+  }
+
+  function paint() {
+    const [a, b] = range(P);
+    document.querySelectorAll('.seg button').forEach(x => x.classList.toggle('on', x.dataset.p === P));
+    load(a, b).then(d => {
+      LAST = d; const t = d.totals || {};
+      $('#mode').textContent = d.mode === 'cloud' ? 'From the cloud' : 'On this device';
+      $('#sub').textContent = `${dlabel(a)} to ${dlabel(b - 60000)}. What the work turned into, by where each lead came from.`;
+      $('#sum').innerHTML = [['reached', 'Homes reached'], ['replies', 'Replies'], ['inspections', 'Inspections'], ['proposals', 'Proposals'], ['won', 'Jobs won'], ['revenue', 'Revenue']]
+        .map(([k, l]) => `<div><b class="${k === 'revenue' && t[k] ? 'rev' : ''}">${k === 'revenue' ? money(t[k]) : fmt(t[k])}</b><span>${l}</span></div>`).join('');
+      const rows = (d.by_source || []).filter(r => r.leads || r.reached || r.replies || r.inspections || r.proposals || r.won);
+      const cell = (v, m, s) => `<td class="${v ? '' : 'z'}${s ? ' hide-s' : ''}">${m ? money(v) : fmt(v)}</td>`;   // s: hidden on phones (the totals above have them)
+      $('#bySrc').innerHTML = rows.length ? `<table><thead><tr><th>Source</th><th class="hide-s">New leads</th><th>Reached</th><th class="hide-s">Replies</th><th class="hide-s">Insp.</th><th class="hide-s">Proposals</th><th>Won</th><th>Revenue</th></tr></thead><tbody>` +
+        rows.map(r => `<tr><td>${esc(RCR.label(r.src))}</td><td class="hide-s ${r.leads ? '' : 'z'}">${fmt(r.leads)}</td>${cell(r.reached)}${cell(r.replies, 0, 1)}${cell(r.inspections, 0, 1)}<td class="hide-s ${r.proposals ? '' : 'z'}">${fmt(r.proposals)}</td>${cell(r.won)}${cell(r.revenue, 1)}</tr>`).join('') +
+        `</tbody><tfoot><tr><td>Total</td><td class="hide-s">${fmt(t.leads)}</td><td>${fmt(t.reached)}</td><td class="hide-s">${fmt(t.replies)}</td><td class="hide-s">${fmt(t.inspections)}</td><td class="hide-s">${fmt(t.proposals)}</td><td>${fmt(t.won)}</td><td>${money(t.revenue)}</td></tr></tfoot></table>`
+        : `<div class="empty">No leads worked in this period yet. Texts, emails, replies, bookings and won jobs show up here as they happen, each under the list the home came from.</div>`;
+      const al = d.alerts || {}, inP = ALERTS.filter(x => x.alert_day && Date.parse(x.alert_day + 'T12:00:00') >= a && Date.parse(x.alert_day + 'T12:00:00') < b);
+      $('#alerts').innerHTML = `<li><span>Alerts on file</span><b>${fmt(d.mode === 'cloud' ? al.sent : inP.length)}</b></li>` +
+        inP.slice(0, 3).map(x => `<li><small>${esc(x.storm_label || x.storm)}: up to ${esc(x.max_in)} in, ${fmt(x.homes_hit)} homes hit</small><small>${esc(dlabel(Date.parse(x.alert_day + 'T12:00:00')))}</small></li>`).join('') +
+        `<li><span>Homes added from alerts and worked</span><b>${fmt(al.leads)}</b></li><li><span>Inspections from alerts</span><b>${fmt(al.inspections)}</b></li><li><span>Jobs won from alerts</span><b>${fmt(al.won)}${al.revenue ? ' <small>(' + money(al.revenue) + ')</small>' : ''}</b></li>`;
+      const k = d.asks || {};
+      $('#asks').innerHTML = [['reviews_asked', 'Reviews asked'], ['reviews_left', 'Reviews left'], ['referrals_asked', 'Referrals asked'], ['referrals_in', 'Referrals in']]
+        .map(([x, l]) => `<li><span>${l}</span><b>${fmt(k[x])}</b></li>`).join('');
+      const seo = SEO ? (SEO.items || []).filter(x => x.date && Date.parse(x.date + 'T12:00:00') >= a && Date.parse(x.date + 'T12:00:00') < b).sort((x, y) => x.date < y.date ? 1 : -1) : [];
+      $('#seoSub').textContent = SEO ? `${fmt(seo.length)} published in this period, ${fmt((SEO.counts || {}).total)} live in all.` : 'SEO page list not loaded.';
+      $('#seo').innerHTML = seo.length ? seo.slice(0, 8).map(x => `<li><span>${esc(x.title)}</span><small>${esc(x.type === 'service' ? 'Service page' : 'Blog post')}, ${esc(dlabel(Date.parse(x.date + 'T12:00:00')))}</small></li>`).join('')
+        + (seo.length > 8 ? `<li><small>and ${fmt(seo.length - 8)} more on the SEO tab</small><span></span></li>` : '') : `<li><small>None published in this period.</small><span></span></li>`;
+      $('#foot').textContent = d.mode === 'cloud' ? 'Counted in the cloud for your company (every device). Counts only: no names, phones or emails are on this page.'
+        : 'Counted from this device\'s own records. Sign in with cloud on to count every device. Counts only: no names, phones or emails are on this page.';
+    });
+  }
+  document.querySelector('.seg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; P = b.dataset.p; paint(); });
+  // counts only, for scripts/results/weekly_summary.py --counts <file>
+  $('#dl').onclick = () => { if (!LAST) return; const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(Object.assign({ roofer: RC.rooferKey(), period: P }, LAST), null, 1)], { type: 'application/json' }));
+    a.download = `results-${RC.rooferKey()}-${P}-${new Date().toISOString().slice(0, 10)}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
+  RC.on(d => { if (d && ['pipe', 'pastCust', 'added', 'homes'].includes(d.key)) paint(); });
+  const root = () => RC.dataRoot || '../lib/st-data-dfw/';
+  Promise.all([
+    RC.factsReady.catch(() => null).then(() => fetch(root() + 'meta/alerts.json', { cache: 'no-cache' })).then(r => r.ok ? r.json() : null).catch(() => null),
+    fetch('../lib/seo-' + RC.rooferKey() + '.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null)
+  ]).then(([al, seo]) => { ALERTS = (al && al.alerts) || []; SEO = seo; paint(); });
+  paint();
+})();
+</script>
+</body>
+</html>

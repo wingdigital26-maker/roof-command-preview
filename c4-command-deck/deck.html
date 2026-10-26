@@ -629,6 +629,7 @@ label.dlab{display:block}
   .act{gap:6px}.act button{gap:6px;padding:0 6px;font-size:15px}.act .ic{width:17px;height:17px} }
 </style>
 <link rel="stylesheet" href="../lib/rc-console.css"><!-- polish direction B: Ops Console -->
+<link rel="stylesheet" href="simple.css"><!-- Today simplified (Jack 10-26): one hero, a clear house band, one-line rows, a calmer map -->
 </head>
 <body>
 <div class="app">
@@ -658,7 +659,7 @@ label.dlab{display:block}
       <div class="lpane" id="paneRadar" role="tabpanel" aria-labelledby="tabRadar"></div><!-- radar.js: Turnover Radar (Jack 10-23) -->
     </aside>
     <section class="deck" id="deck" aria-label="Today's homes"></section>
-    <section class="mapwrap" aria-label="Messages map" id="mapHost">
+    <section class="mapwrap" aria-label="Messages map" id="mapHost" data-nb-clear>
       <div id="map"></div>
       <div class="mtag"><span class="pill dk">Messages today</span><span class="pill skel" id="mStops" aria-label="Counting today's messages"></span><span class="pill" id="mLeg"></span><button class="mexp" id="mExp" type="button" aria-pressed="false" aria-label="Expand the map"><span class="ic" data-i="expand"></span><span class="t">Expand</span></button></div>
       <div class="bpop hpop" id="hpop" role="dialog" aria-label="Home on the map" hidden></div>
@@ -677,6 +678,7 @@ label.dlab{display:block}
 
 <!-- the list's data first (rc-queue starts its download as soon as it runs), then the 2 MB of map libraries -->
 <script src="../lib/rc-state.js"></script>
+<script src="../lib/rc-plain.js"></script><!-- plain words on the surface (Jack 10-26) -->
 <script>/* the right time of day before anything else paints */ try { document.getElementById('greet').textContent = RC.greeting(); } catch (e) {}</script>
 <script src="data/routes-dfw.js"></script>
 <script src="../lib/brand.js"></script>
@@ -920,14 +922,14 @@ function cbHTML(h,i){
   const ph = h.phone ? pretty(h.phone) : '';
   // a no-permit claim only where the city's re-roof list is complete (McKinney about 2015 on, Allen about 2017 on), 10-23
   const fullList = /^mckinney$/i.test(h.city || '') ? '2015' : /^allen$/i.test(h.city || '') ? '2017' : '';
-  const roof = h.permit ? `Re-roofed ${esc(String(h.permit).slice(0,4))}<i>permit on file</i>` : h.year ? `Built ${esc(String(h.year))}<i>${new Date().getFullYear() - h.year} yrs${fullList ? ', no re-roof permit since ' + fullList : ''}</i>` : `No record<i>year not on file</i>`;
+  const roof = h.permit ? `New roof ${esc(String(h.permit).slice(0,4))}<i>on record</i>` : h.year ? `Built ${esc(String(h.year))}<i>${fullList ? 'no new roof since ' + fullList : (new Date().getFullYear() - h.year) + ' years ago'}</i>` : `Not known<i>year not on file</i>`;   // plain words (Jack 10-26)
   return `<div class="addr"><div><h2>${phone ? esc(h.addr) : `<a class="hl" href="${homeHref(h)}" data-a="home">${esc(h.addr)}</a>`}</h2><p>${esc(h.city)}${h.zip?', '+DSTATE+' '+h.zip:''}. ${who}${ph?'. '+ph:''}${/\.$/.test(ph || who) ? '' : '.'}</p></div><span class="pill acc">${RC.stageName(RC.stage(h.id))}</span></div>
     <div class="facts">
-      <div><small>Hail here</small><b>${hailOk(h.hail)?h.hail+' in':'None'}<i>${hailOk(h.hail)?'radar':'on file'}</i></b></div>
+      <div title="${hailOk(h.hail)?esc(h.hail+' in, NOAA radar estimate for this home'):'No hail on file for this home'}"><small>Hail</small><b>${hailOk(h.hail)?RCPLAIN.hail(h.hail):'None on file'}</b></div>
       <div><small>Roof</small><b>${roof}</b></div>
-      <div><small title="Estimated from public building outlines and 2018 LiDAR. Verify on site.">Pitch</small><b>${esc(h.pitch||'6/12')}<i>${h.pitchMeasured?'LiDAR est.':'est.'}</i></b></div>
+      <div title="${esc('Pitch '+(h.pitch||'6/12')+(h.pitchMeasured?', LiDAR estimate':', estimate')+'. Verify on site.')}"><small>Slope</small><b>${RCPLAIN.slope(h.pitch||'6/12')||'Not known'}</b></div>
     </div>
-    <p class="why">${why(h,i)}</p>${tipFor(h)}
+    <p class="why">${RCPLAIN.words(why(h,i))}</p>${RCPLAIN.words(tipFor(h))}
     <div class="act">${actHTML(h)}</div>`;
 }
 const deck = document.getElementById('deck');
@@ -968,12 +970,13 @@ function rowMeta(h, d, sk, stg){
   else if (sk && !reachedToday(h.id)) p.push('Skipped: '+sk.reason.toLowerCase());
   else if (d && reachedToday(h.id) && stg==='new') p.push('Reached today');
   else if (stg !== 'new') p.push(RC.stageName(stg));
-  const o = OWNDATA ? surname(h.owner) : ''; if (o && o.replace(/\./g, '').length > 1) p.push(o);   // initials only (not messaged yet): no bare "R." in the row (10-19)
+  // no owner in the row (Jack 10-26: a blur bar on every row was noise); the card and the record carry the name
   const cb = cadenceBits(h);
   (h.pick && h.pick.why || []).slice(cb ? 1 : 0).forEach(w=>p.push(shortWhy(w)));
   if (!h.pick){ if (h.permit) p.push('Re-roof permit '+String(h.permit).slice(0,4)); else if (h.year) p.push('Built '+h.year); }   // never assume the roof is as old as the house (10-22)
   return p.length ? p.join(' · ') : (hailOk(h.hail) ? h.hail+' in hail' : 'On the list');
 }
+const rowShort = s => RCPLAIN.words(String(s).split(' · ')[0].replace(/no re-roof permit on file since/, 'no new roof since').replace(/ re-roofed nearby \(90 days\)/, ' new roofs nearby'));
 function renderQueue(anim){
   const q = document.getElementById('qlist'), m = query.trim().toLowerCase();
   if (!QREADY){ const html = `<div class="qnone qload">${QERR ? "Today's list could not be built: "+esc(QERR)+'.' : "Picking today's 50 homes most likely to say yes..."}</div>`; if (q.__html !== html){ q.innerHTML = html; q.__html = html; } return; }
@@ -981,11 +984,11 @@ function renderQueue(anim){
   const rows = HOMES.map((h,i)=>{
     if (m && !(h.addr.toLowerCase().includes(m) || h.short.toLowerCase().includes(m) || (h.person||'').toLowerCase().includes(m) || (h.owner||'').toLowerCase().includes(m))) return '';
     const d = isDone(h), sk = skippedToday(h.id), stg = RC.stage(h.id), cb = cadenceBits(h);
-    const meta = rowMeta(h, d, sk, stg);
+    const full = rowMeta(h, d, sk, stg), meta = rowShort(full);   // one reason that fits; the rest on hover and on the card (10-26)
     const sc = RC.scheduledFor(h.id);
     const mt = sc ? `<span class="qsch"><span class="ic">${I.clock}</span>Text <span data-due="${esc(sc.due)}" data-fmt="short">${esc(RC.countdown(sc.due,'short'))}</span></span><span class="qsep">, </span>${esc(meta)}` : esc(meta);
     const due = cb ? `<span class="qdue${/overdue/.test(cb.when)?' late':''}">${esc(cb.step+', '+cb.when)}</span>` : '';
-    return `<button class="qrow ${i===cur?'on':d?'done':''}" data-go="${i}" data-id="${esc(h.id)}"><span class="no">${d&&i!==cur?'<span class="ic" style="width:12px;height:12px">'+I.check+'</span>':h.n}</span><span style="min-width:0"><div class="ad">${esc(h.short)}</div>${due}<div class="mt">${mt}</div></span><span class="hz">${hz ? (hailOk(h.hail) ? h.hail+'"' : '') : h.sq ? Math.round(h.sq)+' sq' : ''}</span></button>`;
+    return `<button class="qrow ${i===cur?'on':d?'done':''}" data-go="${i}" data-id="${esc(h.id)}" title="${esc(full)}"><span class="no">${d&&i!==cur?'<span class="ic" style="width:12px;height:12px">'+I.check+'</span>':h.n}</span><span style="min-width:0"><div class="ad">${esc(h.short)}</div>${due}<div class="mt">${mt}</div></span><span class="hz">${hz ? (hailOk(h.hail) ? h.hail+'"' : '') : h.sq ? Math.round(h.sq)+' sq' : ''}</span></button>`;
   }).join('');
   const html = rows || (HOMES.length ? `<div class="qnone">No stop on today's list matches "${esc(query)}".</div>` : `<div class="qnone">No homes to reach today: every storm home on file is reached, closed or waiting for its next follow-up day.</div>`);
   if (q.__html !== html){ q.innerHTML = html; q.__html = html; q.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(+b.dataset.go, true)); }
@@ -1163,7 +1166,7 @@ function textDlg(h, draft, fromSeg){
     ${r.body ? `<div class="dlab">Day ${r.dayN} text <span class="dhint">${r.chars||body.length} characters</span></div>${r.canSend && h.phone?`<textarea id="dBody" rows="5" aria-label="Text message">${esc(body)}</textarea>`:`<div class="draft" id="dBody0">${esc(body)}</div>`}` : ''}
     ${r.noCallback && ok ? `<p class="snote">No call-back number for ${esc(R.name)} is on file yet, so the draft has no "call or text" line. It goes from your phone, so replies come to you.</p>` : ''}
     ${!h.phone ? `<p class="snote"><button type="button" class="dbtn" data-openhome="${esc(h.id)}">Get phone</button> on the home's record and Text is ready.</p>` : ''}
-    ${h.phone && r.canSend && !w.isOpen ? `<p class="snote" id="dHours">${esc(w.line)} Texts go out ${esc(w.label)} only (state law). Schedule it, or send it then.</p>` : ''}
+    ${h.phone && r.canSend && !w.isOpen ? `<p class="snote" id="dHours">${esc(w.line)} You can text ${esc(w.label)} only (state law). Schedule it, or send it then.</p>` : ''}
     ${sch?`<p class="snote on">Scheduled for ${esc(RC.when(sch.due))} (<span data-due="${esc(sch.due)}" data-fmt="short">${esc(RC.countdown(sch.due,'short'))}</span>). Scheduling again replaces it.</p>`:''}
     <p class="snote" id="dWhy" hidden></p>
     <div class="dact"><button class="dbtn" data-x>Close</button><button class="dbtn${can.ok?'':' off'}" id="dSched" ${can.ok?'':'aria-disabled="true" aria-describedby="dWhy"'}><span class="ic">${I.clock||''}</span>Schedule</button>${ok?`<a class="dbtn pri" id="dSms" href="${smsHref(h.phone, body)}">Open in Messages</a>`:''}</div>`, d=>{
@@ -1414,7 +1417,7 @@ function planMessages(){
   if (!QREADY) return;
   VIS = HOMES.map((h,i)=>i).filter(i=>HOMES[i].loc); ROUTE = VIS.slice();
   const c = msgCounts();
-  const ms = document.getElementById('mStops'); ms.textContent = HOMES.length ? `${c.sent} sent, ${c.sch} scheduled, ${c.togo} to go` : 'No homes on the list'; ms.classList.remove('skel');
+  const ms = document.getElementById('mStops'); ms.textContent = HOMES.length ? `${c.togo} home${c.togo===1?'':'s'} to reach today${c.sent ? ', ' + c.sent + ' done' : ''}${c.sch ? ', ' + c.sch + ' set for later' : ''}` : 'No homes on the list';   // plain words (10-26) ms.classList.remove('skel');
   document.getElementById('peekDist').textContent = HOMES.length ? `${c.sent} of ${TOTAL} sent` : '';
   const k = VIS.join(',');
   if (k !== routeKey){ routeKey = k; if (map){ buildMarkers(); refreshFp(); } }
@@ -1685,6 +1688,7 @@ if (DK.param('sheet')==='roof') setTimeout(()=>openRoof(HOMES[cur]),300);
 <!-- kept features (10-11), switches in lib/rc-features.js: time-of-day light, mission briefing, new storm takeover -->
 <script src="../lib/rc-tips.js"></script><!-- how Roof Command helps: small sourced tidbits (Jack 10-23) -->
 <script src="radar.js"></script><!-- Turnover Radar (Jack 10-23) -->
+<script src="../lib/rc-imagery.js"></script><script src="mapsat.js"></script><script src="cardphoto.js"></script><!-- card band: the roof from above, 3D one tap away (10-26) --><!-- Map | Satellite switch on the map (Jack 10-26) -->
 <script src="alert.js"></script><!-- morning-after storm card + alert history (Jack 10-26); quiet day = nothing -->
 <script>/* tidbits (Jack 10-23): today's one line under the greeting, then the cards redraw once the numbers are in */
 if (window.RCTIP) RCTIP.ready.then(() => { const h = document.querySelector('.hello'); if (h && !document.getElementById('tipHd')) { const d = document.createElement('div'); d.id = 'tipHd'; d.innerHTML = RCTIP.lineHTML(RCTIP.today(), 'hd'); const h1 = h.querySelector('h1'); if (h1) h1.after(d); else h.appendChild(d); }

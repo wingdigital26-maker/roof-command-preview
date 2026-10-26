@@ -82,7 +82,7 @@
     el.addEventListener('click', e => {
       const sh = e.target.closest('.rd-sh'); if (sh) { const k = +sh.dataset.k; open = open === k ? null : k; render();
         const rs = open != null && D ? D.streets[k][5].map(h => h[0]) : []; if (window.STH && STH.ready) STH.ready.then(() => { streetDots(rs); if (rs.length) fit(rs); }); return; }
-      const h = e.target.closest('.rd-home'); if (h) { RC.go('home', { id: 'm' + h.dataset.row }); return; }
+      const h = e.target.closest('.rd-home'); if (h) { const id = 'm' + h.dataset.row; if (!(RC.recall(id) || {}).from) RC.remember({ id, from: 'turnover radar' }); RC.go('home', { id }); return; }   // from: lead source for Results (10-26)
       if (e.target.closest('.rd-showmore')) { shown += 60; render(); }
       if (e.target.closest('.rd-map')) { try { localStorage.setItem('rc.rdOnce', String(Date.now())); } catch (er) {} RC.go('storm', {}); }
     });

@@ -32,3 +32,7 @@
 @media (prefers-reduced-motion:reduce){.rc-built,.rc-built.in,.rc-roll::before,.rc-roll i,.pcn.rc-bump{animation:none!important;transition:none!important}}
 /* the rolling digit never takes a badge's look (.ptab i, .pcn i): one plain glyph, 1em tall (10-19) */
 .rc-odo .rc-roll i{min-width:0!important;padding:0!important;margin:0!important;background:none!important;border-radius:0!important;height:1em!important;display:block!important;font:inherit!important;color:inherit!important}
+/* Today simplified pass (Jack 10-26, "the house is f***ed"): on a short desktop window the build stamp sat on the house's
+   walls. Everything in it is already on the page (the stage title has the squares and pitch, Home facts has the hail), so
+   it steps out where the stage is too short to hold both (a phone, and a desktop window under 900px tall) */
+@media (max-width:640px),(max-height:900px){ #stage .rc-built{display:none!important} }

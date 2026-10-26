@@ -323,15 +323,17 @@
     let done = false;
     window.homeDialog('Mark as won', `<p class="dl">${esc(name)}. Confirm the homeowner signed, and the day they signed.</p>
       <label class="fl">Date signed<input type="date" id="wonD" value="${today}" max="${today}"></label>
+      <label class="fl">Job value, $ (optional, for Results)<input type="number" id="wonV" min="0" max="5000000" step="1" inputmode="numeric" placeholder="e.g. 18450"></label>
       <div class="drow"><button type="button" class="pbtn" id="wonGo">Mark won</button><button type="button" id="wonNo">Cancel</button></div>`, body => {
       body.querySelector('#wonNo').onclick = () => window.homeDialogEl.close();
       body.querySelector('#wonGo').onclick = () => {
         const v = body.querySelector('#wonD').value; if (!v) { body.querySelector('#wonD').focus(); return; }
-        const prevSigned = (RC.pipeline()[id] || {}).signed || null;
+        const prevSigned = (RC.pipeline()[id] || {}).signed || null, prevValue = (RC.pipeline()[id] || {}).jobValue || null;
+        const jv = Math.round(+body.querySelector('#wonV').value), jobValue = jv > 0 && jv <= 5e6 ? jv : null;
         done = true;
-        RC.setStage(id, 'won', 'Won, contract signed ' + fmtDay(v + 'T12:00:00'), { signed: v, archived: null });
+        RC.setStage(id, 'won', 'Won, contract signed ' + fmtDay(v + 'T12:00:00') + (jobValue ? ', $' + jobValue.toLocaleString('en-US') : ''), { signed: v, jobValue, archived: null });
         window.homeDialogEl.close(); render(true);
-        say(name + ' marked won.', () => { RC.setStage(id, prev, 'Moved back to ' + RC.stageName(prev), { signed: prevSigned, archived: parked || null }); render(true); refocus(id); });
+        say(name + ' marked won.', () => { RC.setStage(id, prev, 'Moved back to ' + RC.stageName(prev), { signed: prevSigned, jobValue: prevValue, archived: parked || null }); render(true); refocus(id); });
         if (how === 'key') refocus(id);
       };
     });

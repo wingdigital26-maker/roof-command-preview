@@ -1,0 +1,82 @@
+/* Today, simplified (Jack 10-26 on a ~2000px desktop: "house is f***ed, and I like all of the information but it needs to be
+   more simple"). Loaded last on deck.html, so it wins over dk.css, deck.html's own rules and rc-console.css. Nothing is
+   removed: what steps out of view is one click away (Details on the top card, the row's tooltip, the card's proof line).
+   1. top area: one hero row, the greeting and the morning-after headline with ONE action; the proof line, the stat strip,
+      the 0.75 in+ count, cities, streets and Past alerts sit behind Details (alert.js owns the toggle)
+   2. the home card: the 3D house gets its own clear band, the squares chip is one line under it and never under the house
+   3. the list: address, one reason that fits, the hail size (deck.html rowShort)
+   4. the map: fainter spokes, smaller waiting pins, the base label only on hover, one count chip */
+
+/* ---- 1. hero ---- */
+html[data-rc] .app .head{align-items:center;gap:24px;padding-top:16px;padding-bottom:14px}
+html[data-rc] .app .head .hello h1{font-size:30px;line-height:1.1;display:inline}
+html[data-rc] .app .head:not(.open) #tipHd,html[data-rc] .app .head:not(.open) #rcBrief{display:none}
+html[data-rc] .app .head.open #tipHd{margin-top:8px}
+#hdMore{display:inline-block;margin-left:10px;vertical-align:4px}
+@media (max-height:820px) and (min-width:641px){ html[data-rc] .app .head{padding-top:12px;padding-bottom:10px} html[data-rc] .app .head .hello h1{font-size:28px} }
+@media (max-width:640px){
+  html[data-rc] .app .head{display:block;padding:10px 16px 4px}
+  html[data-rc] .app .head .hello h1{font-size:24px}
+  #hdMore{margin-left:4px;vertical-align:2px}
+}
+
+/* ---- 2. home card ---- */
+@media (min-width:641px){
+  /* the band holds the house: tall enough to read the roof, the chip and the pill on its edges, the house between them */
+  html[data-rc] .app .deck .card .ph{min-height:200px;flex-basis:240px;flex-grow:1;max-height:440px}
+  html[data-rc] .app .deck .card .ph .rlink{inset:50px 24px 44px}
+  /* the squares chip: one line, "~43.5 sq, LiDAR estimate"; the accuracy note is on the record and in Measure */
+  html[data-rc] .app .deck .card .ph .bl{white-space:nowrap;max-width:calc(100% - 140px);border-radius:999px;align-items:center;z-index:3}
+  html[data-rc] .app .deck .card .ph .bl i{display:none}
+  html[data-rc] .app .deck .card .ph .tr{z-index:3}
+  /* body: a little more air, the proof line is one line until tapped */
+  html[data-rc] .app .deck .card .cb .facts{margin-top:14px}
+  html[data-rc] .app .deck .card .cb .why{margin-top:14px}
+  html[data-rc] .app .deck .card .rc-tip.in{margin-top:6px}
+  html[data-rc] .app .deck .card .rc-tip.in span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  html[data-rc] .app .deck .card .rc-tip.in[aria-expanded="true"] span{white-space:normal}
+}
+/* short windows: the house keeps its band */
+@media (min-width:641px) and (max-height:820px){
+  html[data-rc] .app .deck .card .ph{min-height:170px}
+  html[data-rc] .app .deck .card .ph .rlink{inset:46px 20px 40px}
+}
+
+/* ---- 3. list rows: address, one reason line, hail ---- */
+html[data-rc] .app .qrow .mt{-webkit-line-clamp:1;line-clamp:1;white-space:nowrap;text-overflow:ellipsis;display:block}
+html[data-rc] .app .qrow{padding-top:8px;padding-bottom:8px}
+
+/* ---- 4. map ---- */
+html[data-rc] .app .mapwrap canvas.fan,html[data-rc] .app .mapwrap .reach .chn,html[data-rc] .app .mapwrap .reach .chc{display:none}   /* 10-26: no spokes from the office to every home (a sent message still draws its own line) */
+html[data-rc] .app #mLeg{display:none}   /* "6,546 homes hit Jun 2" is the hero's headline */
+html[data-rc]:not(.mapbig) .app .hqm .hql{display:none}
+html[data-rc]:not(.mapbig) .app .hqm:hover .hql{display:block}
+html[data-rc] .app .stop.wait:not(.now):not(.done):not(.reached),html[data-rc] .app .stop:not(.now):not(.done):not(.reached):not(.sched){width:20px;height:20px;font-size:9.5px;border-width:1.5px;border-color:#7D8597;color:#3A4152;box-shadow:0 1px 2px rgba(14,27,61,.18)}
+
+/* ---- phone: the card fits above the peek bar (the action bar sat over the facts) ---- */
+@media (max-width:640px){
+  html[data-rc] .app .deck .card .ph{height:104px;min-height:96px;flex:none}
+  html[data-rc] .app .deck .card .cb{padding-top:10px}
+  html[data-rc] .app .deck .card .cb .facts{margin-top:8px}
+  html[data-rc] .app .deck .card .cb .why{margin-top:8px}
+  html[data-rc] .app .deck .card .cb .facts{grid-template-columns:1fr 1.45fr 1fr}
+  html[data-rc] .app .deck .card .act{margin-bottom:8px}
+  html[data-rc] .app .deck .card .act button{height:48px}
+  html[data-rc] .app .deck .card .cb .why{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}   /* full line on the record */
+  html[data-rc] .app .deck .card .rc-tip.in{display:none}   /* the proof star line: on the desktop card and the record; the phone card keeps Why today */
+}
+
+/* ---- plain and big (Jack 10-26: easy for a roofer in his 50s on a phone) ---- */
+html[data-rc] .app .deck .card .cb .facts small{font-size:13px}
+html[data-rc] .app .deck .card .cb .facts b{font-size:17px}
+html[data-rc] .app .deck .card .cb .facts b i{font-size:13px}
+html[data-rc] .app .deck .card .cb .why{font-size:15px}
+html[data-rc] .app .qrow .ad{font-size:14.5px}
+html[data-rc] .app .qrow .mt{font-size:12.5px}
+html[data-rc] .app .deck .card .ph .bl{font-size:13px}
+@media (max-width:640px){ html[data-rc] .app .deck .card .cb .facts b{font-size:16px} html[data-rc] .app .deck .card .cb .facts small{font-size:13px} }
+/* 10-26 round 3: the card photo's credit line and the size chip share the band's bottom edge without touching */
+html[data-rc] .app .deck .card .ph .bl{max-width:calc(55% - 20px)}
+html.cardphoto .ph .phcred{max-width:42%}
+/* the map's top row fits on one line at 1440 with the Map | Satellite switch: the counts chip says what the map is */
+html[data-rc] .app .mtag .pill.dk{display:none}

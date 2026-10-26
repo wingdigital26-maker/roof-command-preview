@@ -193,12 +193,15 @@ try { const q = new URLSearchParams(location.search), v = q.get('view'); documen
 <script>/* the roofer brands the page (lib/brand.js) */ applyRoofer(rooferKey()); document.documentElement.style.setProperty('--accent-hi', activeRoofer().accentHi || activeRoofer().accent);</script>
 <script src="../lib/rc-roof.js"></script>
 <script src="../lib/rc-lines.js"></script><!-- shared per-home roof lines (map work): the LiDAR measurements view reads RCLINES -->
+<script src="../lib/rc-imagery.js"></script><!-- one imagery adapter: Esri live (about 0.3 m), NAIP fallback (10-26) -->
 <script src="../lib/rc-measure.js"></script><!-- LiDAR measurements view (Jack 10-23) --><!-- per-facet LiDAR roof record + report (stories chip, Roof report tab) -->
 <script src="../lib/st-meta.js"></script>
 <script src="../lib/rc-queue.js"></script>
 <script src="../c4-command-deck/inbox.js"></script><!-- read-only: Inbox.classify, the one reply classifier Today and the CRM share -->
 <script src="draw.js"></script><!-- Draw the roof: outline tracing on the satellite view for homes with no outline on file -->
+<script src="../lib/rc-plain.js"></script>
 <script src="rec.js"></script>
+<script src="aerial.js"></script><!-- the record opens on the aerial photo with the roof edges; 3D model one tap away (Jack 10-26) -->
 <script src="../lib/rc-hail.js"></script><!-- one home's hail on every storm + neighbors who took the same hail (10-19) -->
 <script src="hailpanel.js"></script>
 <script src="knock.js"></script><!-- At the door: Not home / Talked / Not interested / Book, each logged with Undo (10-19) -->
@@ -212,5 +215,6 @@ try { const q = new URLSearchParams(location.search), v = q.get('view'); documen
 <script src="../lib/rc-features.js"></script><!-- kept features switchboard (10-11) -->
 <script src="features.js"></script><!-- roof-build stamp, odometer counts -->
 <script type="module" src="home.js"></script>
+<script>/* plain words on every CRM screen (Jack 10-26); Home facts and the measurements tab keep their detail */ if (window.RCPLAIN) RCPLAIN.watch(document.body);</script>
 </body>
 </html>

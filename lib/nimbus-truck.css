@@ -1,0 +1,39 @@
+/* Truck mode (lib/nimbus-truck.js): one stop, big type, one giant talk button, big tap targets. Phone first (375). */
+.nbt{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;gap:12px;padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));
+  background:#0B1020;color:#fff;font:400 16px/1.4 'Inter',system-ui,sans-serif;overflow-y:auto}
+.nbt.open{display:flex}
+.nbt>*{flex:none}
+.nbt.away{display:none}
+.nbt-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.nbt-n{font-size:15px;color:#B9C3D9;font-variant-numeric:tabular-nums}
+.nbt-x{min-height:44px;min-width:72px;border:1px solid rgba(255,255,255,.25);background:none;color:#fff;border-radius:10px;font:600 15px 'Inter',system-ui,sans-serif;cursor:pointer}
+.nbt-card h2{margin:0 0 2px;font-size:30px;line-height:1.12;font-weight:700;letter-spacing:-.01em}
+.nbt-city{margin:0;color:#B9C3D9;font-size:17px}
+.nbt-facts{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.nbt-facts li{background:#1A2238;border-radius:10px;padding:8px 12px;font-size:16px;color:#DCE3F2}
+.nbt-facts b{color:#fff;font-size:20px}
+.nbt-done{display:inline-block;margin:10px 0 0;background:#1F7A3F;color:#fff;border-radius:8px;padding:4px 10px;font-weight:600;font-size:14px}
+.nbt-say{min-height:48px;font-size:17px;color:#E8EDF8;background:#141B2E;border-radius:12px;padding:10px 14px}
+.nbt-say:empty{display:none}
+.nbt-mic{align-self:center;flex:none;width:min(38vw,150px);height:min(38vw,150px);border-radius:50%;border:0;background:#2757E6;color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font:600 16px 'Inter',system-ui,sans-serif;cursor:pointer;
+  box-shadow:0 10px 30px rgba(39,87,230,.45);touch-action:none;-webkit-user-select:none;user-select:none}
+.nbt-mic svg{width:46px;height:46px}
+.nbt-mic.on{background:#D13B3B;animation:nbtPulse 1.3s ease-out infinite}
+@keyframes nbtPulse{0%{box-shadow:0 0 0 0 rgba(209,59,59,.5)}100%{box-shadow:0 0 0 22px rgba(209,59,59,0)}}
+.nbt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nbt-grid button,.nbt-grid a{display:flex;flex-direction:column;justify-content:center;min-height:64px;padding:10px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);
+  background:#1A2238;color:#fff;text-align:left;text-decoration:none;font:inherit;cursor:pointer}
+.nbt-grid b{font-size:19px;font-weight:700}
+.nbt-grid small{font-size:13px;color:#B9C3D9;margin-top:2px}
+.nbt-grid .p{background:#fff;color:#0B1020;border-color:#fff}
+.nbt-grid .p small{color:#465065}
+.nbt-grid .nbt-dir{background:#173A2A;border-color:#2C6B4C}
+.nbt-mic:focus-visible,.nbt-grid button:focus-visible,.nbt-grid a:focus-visible,.nbt-x:focus-visible{outline:3px solid #8FB0FF;outline-offset:3px}
+.nbt-foot{margin:0;text-align:center;color:#8A94AB;font-size:13px}
+.nbt-back{position:fixed;left:50%;white-space:nowrap;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:81;display:none;min-height:52px;padding:0 22px;border:0;border-radius:26px;
+  background:#0B1020;color:#fff;font:600 16px 'Inter',system-ui,sans-serif;box-shadow:0 10px 30px rgba(11,16,32,.35);cursor:pointer}
+.nbt-back.on{display:block}
+@media (max-height:700px){.nbt{gap:8px}.nbt-mic{width:120px;height:120px}.nbt-grid button,.nbt-grid a{min-height:56px}}
+@media (min-width:700px){.nbt{padding:28px max(24px,calc(50vw - 300px))}.nbt-card h2{font-size:40px}}
+@media (prefers-reduced-motion: reduce){.nbt-mic.on{animation:none}}

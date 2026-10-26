@@ -444,7 +444,9 @@
       t = ps ? { due: 'Sent ' + fmtDay(ps), h: 'Follow up on the proposal. Ask if they want to walk through it.', why: 'No price promises by text.', alt: 'Reschedule' }
         : { due: 'Not sent yet', h: 'Send the proposal', why: 'Open the proposal, print or save it as a PDF for the homeowner, then mark it sent.', done: 'Proposal sent', alt: 'Reschedule' }; }
     else t = { due: 'Signed', h: 'Schedule the install', why: 'Order materials from the estimated squares plus waste, after a site check.', alt: 'Reschedule' };
-    $('#next').innerHTML = `<div class="nh"><span class="pill soft">Next task</span><span class="due">${ic('clock')}${esc(t.due)}</span></div><h4>${t.h}</h4><p class="why">${t.why}</p>
+    // plain words (Jack 10-26): "1 inch hail", no "(radar)", "no new roof on record"; the hours are already in the due line
+    const plainWhy = s => !window.RCPLAIN ? s : RCPLAIN.words(String(s).replace(/ \(radar\)/g, '')).replace(/\s*Texting hours: [^.]*\.$/, '');
+    $('#next').innerHTML = `<div class="nh"><span class="pill soft">Next task</span><span class="due">${ic('clock')}${esc(t.due)}</span></div><h4>${t.h}</h4><p class="why">${plainWhy(t.why)}</p>
       <div class="row"><button type="button" id="tDone">Done</button><button type="button" data-act="book">${t.alt}</button></div>${st === 'inspection' && b ? `<button type="button" class="calx" id="tCal">${ic('cal')}Add to calendar<small>.ics file</small></button>` : ''}`;
     const tc = $('#tCal'); if (tc) tc.onclick = () => { if (icsFile(id)) say('Calendar file saved. Open it to add the inspection to your calendar.'); };
     $('#tDone').onclick = () => {

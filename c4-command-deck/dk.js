@@ -187,7 +187,7 @@
   // per-home radar value, with its county address, its own building outline, LiDAR pitch and reroof-permit lookup
   // (data/build_dfw_route.py). People, phones and opt-ins are added by the page and labelled sample.
   const ABBR = { Avenue: 'Ave', Street: 'St', Drive: 'Dr', Lane: 'Ln', Boulevard: 'Blvd', Court: 'Ct', Parkway: 'Pkwy', Terrace: 'Ter', Road: 'Rd', Place: 'Pl', Circle: 'Cir' };
-  const short = (s) => s.replace(/(Avenue|Street|Drive|Lane|Boulevard|Court|Parkway|Terrace|Road|Place|Circle)/g, (m) => ABBR[m]);
+  const short = (s) => s.replace(/\b(Avenue|Street|Drive|Lane|Boulevard|Court|Parkway|Terrace|Road|Place|Circle)\b/g, (m) => ABBR[m]);
   function roofAge(s) { return s.permit ? 'Reroof permit ' + s.permit.slice(0, 4) : s.year ? `Built ${s.year}, no reroof permit on file` : 'No reroof permit on file, year built not on file'; }
   function homes(key) {
     const r = ROOFERS[key] || ROOFERS[DEFAULT_KEY]; key = dataKey(key); const route = (window.ROUTES || {})[key];
@@ -230,7 +230,7 @@
         // 10-22: squares only from the LiDAR record (an estimate), and the stand-in house says its shape is being checked
         const lidar = !!(h.spec.facetRec || h.spec.facet3d), chk = h.spec.checking ? ', shape being checked' : '';
         // chip: the short form of RCROOF.SQ_NOTE (Jack 10-23: about 10% of permit records, order a report before quoting)
-        const txt = h.spec.loading ? 'Loading the outline' : h.spec.none ? 'No outline on file' : !lidar && !h.spec.drawn ? 'Roof size not measured' + chk : `<span>~${sq} sq<em class="lw">, LiDAR estimate</em><em class="ls"> est.</em><i>, typically within about 10% of permit records; order a measurement report before you quote</i></span>`;   // no 'red took the hail': no plane is drawn red on these stops (10-17)
+        const txt = h.spec.loading ? 'Loading the outline' : h.spec.none ? 'No outline on file' : !lidar && !h.spec.drawn ? 'Roof size not measured' + chk : `<span>${window.RCPLAIN ? RCPLAIN.size(sq) : '~' + sq + ' sq'}<em class="lw"></em><em class="ls"></em><i>, an estimate: order a measurement report before you quote</i></span>`;   // no 'red took the hail': no plane is drawn red on these stops (10-17)
         return html.replace(/(<div class="bl"><span class="sw"><\/span>)[\s\S]*?(<\/div>)/, (m, a, b) => a + txt + b);
       };
     }

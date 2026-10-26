@@ -10,6 +10,7 @@
   const esc = RC.esc || (s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
   const fmt = n => Number(n || 0).toLocaleString('en-US');
   const inch = x => String(+(+x).toFixed(2));
+  const plainIn = x => window.RCPLAIN ? RCPLAIN.hail(x) : inch(x) + ' in';   // "1.4 inches" on the surface (Jack 10-26)
   const HK = 'alertHidden';
   const PREVIEW_LATEST = true;   // scripts/publish/build_preview.py: the public preview shows the newest alert on file (labelled with its date)
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -20,21 +21,25 @@
 
   const css = document.createElement('style');
   css.textContent = `
-.ma{flex:0 1 660px;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 18px;align-items:center;background:#fff;border:1px solid var(--c-line,#D5D9E0);border-left:3px solid var(--accent,#0D6C99);border-radius:8px;padding:12px 14px 12px 16px;box-shadow:0 1px 2px rgba(11,16,32,.06);font-family:inherit;color:var(--c-ink,#0B1020)}
+.ma{flex:0 1 900px;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 20px;align-items:center;position:relative;background:#fff;border:1px solid var(--c-line,#D5D9E0);border-left:3px solid var(--accent,#0D6C99);border-radius:8px;padding:12px 14px 12px 16px;box-shadow:0 1px 2px rgba(11,16,32,.06);font-family:inherit;color:var(--c-ink,#0B1020)}
 .ma .k{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--c-slate,#5A6378);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .ma .k b{color:var(--c-ink,#0B1020);font-weight:600;letter-spacing:.04em}
-.ma h2{margin:3px 0 0;font-size:16px;font-weight:600;letter-spacing:-.01em;line-height:1.3}
-.ma .nums{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:13px;color:var(--c-slate,#5A6378)}
-.ma .nums b{color:var(--c-ink,#0B1020);font-weight:600;font-variant-numeric:tabular-nums}
-.ma .st{margin-top:5px;font-size:12.5px;color:var(--c-slate,#5A6378);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ma .acts{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.ma .k i{font-style:normal}
+.ma h2{margin:3px 0 0;font-size:17px;font-weight:600;letter-spacing:-.01em;line-height:1.3;text-wrap:balance}
+.ma h2 .h2b{color:var(--c-slate,#5A6378);font-weight:500}
+.ma .acts{display:flex;gap:6px;align-items:center}
 .ma button{font:inherit;font-size:13px;font-weight:600;border-radius:6px;min-height:36px;padding:0 14px;cursor:pointer;border:1px solid var(--c-line,#D5D9E0);background:#fff;color:var(--c-ink,#0B1020);white-space:nowrap}
-.ma button.pri{background:var(--c-ink,#0B1020);border-color:var(--c-ink,#0B1020);color:#fff}
-.ma button.pri:hover{background:#1d2436}
+.ma button.pri{background:#fff;border:1.5px solid var(--c-ink,#0B1020);color:var(--c-ink,#0B1020)}
+.ma button.pri:hover{background:var(--c-tint,#F1F5FA)}
 .ma button:not(.pri):hover{background:var(--c-tint,#F1F5FA)}
-.ma .x{position:absolute;top:4px;right:4px;min-height:28px;width:28px;padding:0;border:0;background:none;color:var(--c-slate,#5A6378);font-size:16px;line-height:1}
-.ma{position:relative}
-.ma .acts .lnk{border:0;background:none;color:var(--c-slate,#5A6378);font-weight:500;min-height:28px}
+.ma .lnk,.head .mtog{border:0;background:none;color:var(--c-slate,#5A6378);font-weight:500;min-height:32px;padding:0 8px;display:inline-flex;align-items:center;gap:5px}
+.head .mtog svg{transition:transform .2s ease}.head .mtog[aria-expanded="true"] svg{transform:rotate(180deg)}
+.ma .more{display:none;grid-column:1/-1;border-top:1px solid var(--c-line-2,#E6E8ED);margin-top:8px;padding-top:8px}
+.head.open .ma .more{display:block}
+.ma .nums{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--c-slate,#5A6378)}
+.ma .nums b{color:var(--c-ink,#0B1020);font-weight:600;font-variant-numeric:tabular-nums}
+.ma .st{margin-top:5px;font-size:12.5px;color:var(--c-slate,#5A6378);line-height:1.45}
+.ma .mlinks{display:flex;gap:4px;margin:4px 0 -6px -8px}
 .madlg{margin:auto;border:0;padding:0;border-radius:8px;background:#fff;color:var(--c-ink,#0B1020);width:min(560px,calc(100% - 24px));max-height:calc(100dvh - 60px);box-shadow:0 30px 60px -20px rgba(11,16,32,.4);font-family:inherit}
 .madlg::backdrop{background:rgba(11,16,32,.35)}
 .madlg .hd{display:flex;align-items:flex-start;gap:12px;padding:18px 20px 10px;border-bottom:1px solid var(--c-line-2,#E6E8ED)}
@@ -58,11 +63,12 @@
 .madlg .hist span{display:block;font-size:12.5px;color:var(--c-slate,#5A6378);margin-top:2px}
 @media (max-width:640px){
   .ma{margin-top:8px;grid-template-columns:minmax(0,1fr);gap:8px;padding:11px 12px 12px 13px}
-  .ma h2{font-size:15px;padding-right:22px}
+  .ma h2{font-size:15px}
+  .ma .k{flex-wrap:nowrap;white-space:nowrap}.ma .k .wd{display:none}
   .ma .nums{gap:4px 12px;font-size:12.5px}
-  .ma .acts{flex-direction:row;flex-wrap:wrap}
-  .ma .acts button{flex:1 1 auto;min-height:40px}
-  .ma .acts .lnk{flex:0 0 auto}
+  .ma .acts button{min-height:44px}
+  .ma .acts .pri{flex:1 1 auto}
+  .ma .lnk,.head .mtog{min-height:44px}
   .madlg{width:100%;max-width:none;margin:auto 0 0;border-radius:12px 12px 0 0;max-height:88dvh}
   .madlg .bd{max-height:calc(88dvh - 200px)}
   .madlg .ft{gap:6px;padding:10px 14px 14px}
@@ -85,18 +91,34 @@
     return a && hidden() !== a.id ? a : null;
   }
 
+  /* Today simplified (Jack 10-26: "I like all of the information but it needs to be more simple"): the card shows the one
+     headline (hail, homes hit, old roofs) and one action; the rest (0.75 in+ count, cities, top streets, past alerts, hide)
+     sits behind Details, which also opens the greeting's proof line and stat strip (one toggle for the whole top area). */
   function card(a) {
     const head = document.querySelector('.head'); if (!head) return;
     let el = document.getElementById('maCard');
     if (!el) { el = document.createElement('section'); el.id = 'maCard'; el.className = 'ma'; el.setAttribute('aria-label', 'Morning-after storm alert'); head.appendChild(el); }
     const sts = (a.top_streets || []).slice(0, 3).map(s => esc(s.street) + ' (' + esc(s.city) + ')').join(', ');
-    const today = a.alert_day === dayKey(new Date());
-    el.innerHTML = `<button type="button" class="x" data-ma="hide" aria-label="Hide this alert for today">&times;</button>
-      <div><div class="k"><b>Morning after</b><span>${esc(wk(a.storm))}, ${esc(lbl(a.storm, false))} storm${today ? '' : ', ' + esc(lbl(a.alert_day, false)) + ' alert'}</span></div>
-      <h2>Hail up to ${inch(a.max_in)} in hit ${fmt(a.homes_hit)} of your homes</h2>
-      <div class="nums"><span><b>${fmt(a.old_no_permit)}</b> old roofs, no re-roof permit</span><span class="n075"><b>${fmt(a.homes_075)}</b> with 0.75 in+ hail</span>${(a.cities || []).length ? `<span>${(a.cities || []).slice(0, 2).map(c => esc(c.city) + ' <b>' + fmt(c.homes) + '</b>').join(', ')}</span>` : ''}</div>
-      ${sts ? `<div class="st">Top streets: ${sts}</div>` : ''}</div>
-      <div class="acts"><button type="button" class="pri" data-ma="route">Today's route is ready (${(a.route || []).length})</button><button type="button" class="lnk" data-ma="hist">Past alerts</button></div>`;
+    const today = a.alert_day === dayKey(new Date()), open = head.classList.contains('open');
+    el.innerHTML = `<div class="mh"><div class="k"><b>Morning after</b><span>Storm on <i class="wd">${esc(wk(a.storm))}, </i>${esc(lbl(a.storm, false))}</span></div>
+      <h2>Hail up to ${plainIn(a.max_in)} hit ${fmt(a.homes_hit)} of your homes.<span class="h2b"> ${fmt(a.old_no_permit)} have old roofs.</span></h2></div>
+      <div class="acts"><button type="button" class="pri" data-ma="route">Start today's route (${(a.route || []).length})</button>${moreBtn(open)}</div>
+      <div class="more" id="maMore"><div class="nums"><span><b>${fmt(a.old_no_permit)}</b> old roofs with no new roof on record</span><span class="n075"><b>${fmt(a.homes_075)}</b> took ${plainIn(0.75)} hail or more</span>${(a.cities || []).length ? `<span>${(a.cities || []).slice(0, 2).map(c => esc(c.city) + ' <b>' + fmt(c.homes) + '</b>').join(', ')}</span>` : ''}</div>
+      ${sts ? `<div class="st">Top streets: ${sts}</div>` : ''}
+      <div class="mlinks"><button type="button" class="lnk" data-ma="hist">Past alerts</button><button type="button" class="lnk" data-ma="hide">Hide for today</button></div></div>`;
+    const t = document.getElementById('hdMore'); if (t) t.remove();   // the card carries the one Details toggle
+  }
+  const moreBtn = open => `<button type="button" class="lnk mtog" data-ma="more" aria-expanded="${open}" aria-controls="maMore">${open ? 'Less' : 'Details'}<svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+  function toggleMore() {
+    const head = document.querySelector('.head'); if (!head) return;
+    const on = !head.classList.contains('open'); head.classList.toggle('open', on);
+    document.querySelectorAll('.head [data-ma="more"]').forEach(b => { b.setAttribute('aria-expanded', on); b.firstChild.textContent = on ? 'Less' : 'Details'; });
+  }
+  /* a quiet day (no alert card): the greeting keeps a small Details toggle for the proof line and the stat strip */
+  function quietToggle() {
+    const h1 = document.querySelector('.hello h1'); if (!h1 || document.getElementById('maCard') || document.getElementById('hdMore')) return;
+    const w = document.createElement('span'); w.id = 'hdMore'; w.innerHTML = moreBtn(false); h1.after(w);
+    w.addEventListener('click', e => { if (e.target.closest('[data-ma="more"]')) toggleMore(); });
   }
 
   function openDlg(html) {
@@ -136,19 +158,20 @@
     const o = e.target.closest('[data-ma-open]'); if (o) { const a = ALL.find(x => x.id === o.dataset.maOpen); if (a) route(a); return; }
     const b = e.target.closest('[data-ma]'); if (!b) return;
     const k = b.dataset.ma, a = cur || active(ALL) || ALL[0];
-    if (k === 'route') route(a);
+    if (k === 'more') toggleMore();
+    else if (k === 'route') route(a);
     else if (k === 'hist') history();
     else if (k === 'close') dlg && dlg.close();
     else if (k === 'add') addRoute(a);
     else if (k === 'map') { if (dlg) dlg.close(); RC.go('storm', { iso: a.storm }); }
-    else if (k === 'hide') { if (RC.__set) RC.__set(HK, a.id); const el = document.getElementById('maCard'); if (el) el.remove(); }
+    else if (k === 'hide') { if (RC.__set) RC.__set(HK, a.id); const el = document.getElementById('maCard'); if (el) el.remove(); quietToggle(); }
   }
   document.addEventListener('click', e => { if (e.target.closest('#maCard')) onClick(e); });
 
   (RC.factsReady || Promise.resolve()).then(() => fetch((RC.dataRoot || '../lib/st-data-dfw/') + 'meta/alerts.json', { cache: 'no-cache' }))
     .then(r => r.ok ? r.json() : null).then(d => {
       ALL = (d && Array.isArray(d.alerts) ? d.alerts : []).filter(a => a && a.id && a.storm).sort((a, b) => a.id < b.id ? 1 : -1);
-      const a = active(ALL); cur = a; if (a) card(a);
+      const a = active(ALL); cur = a; if (a) card(a); else quietToggle();
       window.RCAlerts = { all: () => ALL.slice(), active: () => cur, route, history };
-    }).catch(() => { });   // no alerts file = a quiet app: nothing drawn
+    }).catch(() => quietToggle());   // no alerts file = a quiet app: nothing drawn
 })();

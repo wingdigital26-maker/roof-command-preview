@@ -7,6 +7,8 @@
 <link rel="preload" href="lib/st-fonts/montserrat-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="lib/st-fonts/montserrat-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="lib/nimbus-shell.css">
+<link rel="stylesheet" href="lib/nimbus-assistant.css">
+<link rel="stylesheet" href="lib/nimbus-truck.css">
 <link rel="stylesheet" href="lib/rc-physical.css">
 <style>
 @font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;src:url(lib/st-fonts/inter-var-latin.woff2) format('woff2')}
@@ -68,7 +70,16 @@ main.phone .stage{width:390px;height:min(844px,100%);border-radius:28px}
 }
 </style>
 <link rel="stylesheet" href="lib/rc-console.css"><!-- polish direction B: Ops Console -->
-<style>.rc-prop{flex:none;height:36px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;background:#0D6C99;color:#fff;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap}.rc-prop:hover{background:#07547A}.rc-prop .ps{display:none}header{transition:opacity .5s ease}html.rc-opening header{opacity:0;pointer-events:none}@media (max-width:899px){.rc-prop{order:2;height:44px;padding:0 14px}}@media (max-width:599px){.rc-prop .pl{display:none}.rc-prop .ps{display:inline}}@media (max-width:430px){header .co>div{display:none}}</style>
+<style>
+/* Today simplified (Jack 10-26, "the header is crowded", the roofer's name was cut to "Jacks"): the name never shrinks on
+   desktop; the storm chip shows just the date (the homes count is in its tooltip and on Storms) and steps out on Today,
+   whose hero names the storm; "Powered by" shows only where there is room for it */
+@media (min-width:900px){ html[data-rc] body>header .co{flex:none} html[data-rc] body>header .co b{overflow:visible} }
+html[data-rc] body>header .wstorm .n{display:none}
+html[data-rc] body[data-screen="daily"]>header .wstorm{display:none}
+@media (max-width:1599px){ html[data-rc] body>header .sig{display:none} }
+</style>
+<style>.rc-prop{flex:none;height:32px;display:inline-flex;align-items:center;padding:0 12px;border-radius:6px;background:#fff;border:1px solid #D5D9E0;color:#0B1020;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap}.rc-prop:hover{background:#F1F5FA;border-color:#0D6C99;color:#0D6C99}.rc-prop .ps{display:none}header{transition:opacity .5s ease}html.rc-opening header{opacity:0;pointer-events:none}@media (max-width:899px){.rc-prop{order:2;height:44px;padding:0 14px}}@media (max-width:599px){.rc-prop .pl{display:none}.rc-prop .ps{display:inline}}@media (max-width:430px){header .co>div{display:none}}</style>
 <script>(function(){var d=document.documentElement;function f(){var seen=false;try{seen=!!sessionStorage.getItem('rc.introSeen')}catch(e){}var h=location.hash;d.classList.toggle('rc-opening',/^#\/opening\/?$/.test(h)||(!h&&!seen&&!/[?&]nointro=1/.test(location.search)))}f();addEventListener('hashchange',f);setInterval(f,250)})()</script>
 </head>
 <body>
@@ -93,6 +104,7 @@ main.phone .stage{width:390px;height:min(844px,100%);border-radius:28px}
 <script src="lib/auth.js"></script>
 <script src="lib/st-meta.js"></script><!-- the county roll copies: the header search reads them on every screen -->
 <script src="lib/rc-find.js"></script><!-- header search: every home, street, ZIP, city, owner; results open in the CRM -->
+<script src="lib/nimbus-tools.js"></script><script src="lib/nimbus-brain.js"></script><script src="lib/nimbus-assistant.js"></script><script src="lib/nimbus-truck.js"></script><!-- Nimbus assistant: talk, he runs the app (tools ring what they touch; nothing sends) -->
 <script>
 /* One shell, real routes. #/opening (About), #/storm, #/storm/<iso>, #/daily, #/daily/<n>, #/ask (?q=, opens the Nimbus panel), and the CRM:
    #/crm (inbox), #/crm/inbox/<id> (a thread open), #/crm/pipeline (the board), #/crm/home/<id> (one home's record).
@@ -105,13 +117,14 @@ const screens={
   storm:{label:'Storms',page:'1b-storm-theater.html'},
   daily:{label:'Today',page:'c4-command-deck/deck.html'},
   home:{label:'CRM',page:'c5-home/index.html',path:'crm'},   /* screen key stays 'home' (RC.go('home') everywhere); the URL says crm */
-  seo:{label:'SEO',page:'c8-seo/index.html'}   /* the blog posts and service pages Wing published for the roofer (lib/seo-jackson.json, 10-26) */
+  seo:{label:'SEO',page:'c8-seo/index.html'},   /* the blog posts and service pages Wing published for the roofer (lib/seo-jackson.json, 10-26) */
+  results:{label:'Results',page:'c9-results/index.html'}   /* leads, inspections, jobs won and revenue by lead source (lib/rc-results.js, migration 012, 10-26) */
   /* Weekly (c7-weekly) removed from the app (Jack 10-15); old #/weekly links land on Today via ALIAS */
 };
 /* Ask is no longer a tab (Jack 10-11): the Nimbus orb, bottom-right, opens the full Ask Nimbus page (c2-nimbus) as a panel.
    #/ask and RC.go('ask') open that panel on whatever screen is up. */
 const ALIAS={crm:'home',weekly:'daily'};
-const ORDER=['daily','storm','home','seo'];
+const ORDER=['daily','storm','home','seo','results'];
 const nav=document.getElementById('nav'),stage=document.getElementById('f'),main=document.getElementById('main');
 const PLACEHOLDER='<!doctype html><meta charset=utf-8><style>@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(lib/st-fonts/inter-var-latin.woff2) format("woff2")}body{margin:0;height:100vh;display:grid;place-items:center;font-family:"Inter",system-ui,sans-serif;color:#0B1020;background:#F7F8FA}div{text-align:center;max-width:420px;padding:24px}h1{font-size:22px;font-weight:600;margin:0 0 8px}p{margin:0;color:#465065;line-height:1.5}</style><div><h1>The CRM screen is being built</h1><p>Every conversation, the pipeline and each home with its roof. Check back shortly.</p></div>';
 const q=new URLSearchParams(location.search);
@@ -216,6 +229,7 @@ function render(){
   if(screen==='opening'&&params.about) aboutFrom=prev&&prev!=='opening'?lastHash:null;   /* About's Open Roof Command goes back where the roofer came from */
   else if(screen!=='opening') lastHash=location.hash;
   cur=screen;
+  document.body.dataset.screen=screen;   /* header CSS per screen (Today hides the storm chip: its hero names the storm) */
   [...nav.children].forEach(b=>{const on=b.dataset.screen===screen;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
   Nimbus.setScreen(screen,quiet);
   if(screen==='opening'){ Nimbus.hideAll(); }

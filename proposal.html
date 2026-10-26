@@ -5,184 +5,356 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Roof Command for Jackson Roofing | Wing Digital</title>
+<!--
+Design: direction A "Ledger" (Jack's pick 2026-10-26) with direction C's aerial photo as a full-width break before the rep's day.
+Wing brand: Instrument Sans, one accent #2757E6. Numbers are double-brace placeholders filled by scripts/publish/build_preview.py; never type a number in.
+-->
 <style>
-@font-face{font-family:"Montserrat";font-weight:400;font-display:swap;src:url(intro-assets/fonts/montserrat-400.woff2) format("woff2")}
-@font-face{font-family:"Montserrat";font-weight:600;font-display:swap;src:url(intro-assets/fonts/montserrat-600.woff2) format("woff2")}
-:root{--ink:#14181f;--muted:#586070;--hair:#dfe3ea;--bg:#f6f7f9;--card:#fff;--accent:#0D6C99;--accent-ink:#07547A;--soft:#E3F6FE;--good:#0b6b3a;--warn:#8a5a00}
+@font-face{font-family:"Instrument Sans";font-weight:400 700;font-display:swap;src:url(intro-assets/fonts/instrument-sans-var-latin.woff2) format("woff2")}
+@font-face{font-family:"Plex Mono";font-weight:400;font-display:swap;src:url(intro-assets/fonts/ibm-plex-mono-400-latin.woff2) format("woff2")}
+:root{--ink:#0E1424;--body:#2B3347;--muted:#566079;--mist:#F2F4F8;--rule:#DCE1EA;--blue:#2757E6;--on-blue:#E4EAFF;--on-blue-dim:#C9D6FF;--pad:56px;--max:1440px}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Montserrat",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.55}
-.wrap{max-width:900px;margin:0 auto;padding:0 20px}
-header.top{background:#fff;border-bottom:1px solid var(--hair)}
-header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;height:68px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;color:var(--ink);text-decoration:none}
-.brand img{width:26px;height:27px}
-.cobrand{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px}
-.cobrand .plate{background:#000;border-radius:6px;padding:4px 8px;display:flex}
-.cobrand .plate img{height:30px;width:auto;display:block}
-.hero{padding:48px 0 16px}
-.kicker{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
-h1{font-size:clamp(28px,5.6vw,44px);line-height:1.12;letter-spacing:-.025em;margin:12px 0 14px;font-weight:600}
-.lede{font-size:clamp(16px,2.4vw,19px);color:var(--muted);max-width:62ch;margin:0}
-h2{font-size:clamp(22px,4vw,28px);letter-spacing:-.02em;margin:52px 0 8px;font-weight:600;line-height:1.2}
-.sub{color:var(--muted);margin:0 0 20px;max-width:64ch}
-.card{background:var(--card);border:1px solid var(--hair);border-radius:16px;padding:18px 20px}
-.math{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
-.stat{background:var(--card);border:1px solid var(--hair);border-radius:16px;padding:16px 16px 14px}
-.stat b{display:block;font-size:clamp(24px,4vw,32px);letter-spacing:-.03em;line-height:1.1;font-weight:600;color:var(--accent-ink)}
-.stat span{display:block;margin-top:6px;font-size:13px;color:var(--muted);line-height:1.4}
-.stat.big{background:var(--accent-ink);border-color:var(--accent-ink)}
-.stat.big b{color:#fff}.stat.big span{color:#d6ecf7}
-.fine{font-size:12.5px;color:var(--muted);margin:14px 0 0;max-width:72ch;line-height:1.5}
-.proofcard{border-left:4px solid var(--accent);padding:18px 20px;background:var(--card);border:1px solid var(--hair);border-left:4px solid var(--accent);border-radius:16px}
-.proofcard .num{font-size:clamp(26px,5vw,38px);font-weight:600;letter-spacing:-.03em;color:var(--accent-ink);line-height:1.1}
-.proofcard p{margin:8px 0 0;color:var(--muted)}
-.calc{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
-.calc label{display:block;font-size:13px;font-weight:600;margin:0 0 6px;color:var(--ink)}
-.calc .field{margin-bottom:14px}
-.calc input{width:100%;font:inherit;font-size:18px;padding:12px 14px;border:1px solid var(--hair);border-radius:12px;background:#fff;color:var(--ink)}
-.calc input:focus{outline:2px solid var(--accent);outline-offset:1px}
-.out{background:var(--soft);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;justify-content:center}
-.out .x{font-size:clamp(34px,7vw,52px);font-weight:600;letter-spacing:-.03em;color:var(--accent-ink);line-height:1}
-.out p{margin:8px 0 0;color:#2c4a5a}
-.ba{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.ba .card h3{margin:0 0 10px;font-size:15px;letter-spacing:.04em;text-transform:uppercase}
-.ba .before h3{color:var(--warn)}.ba .after h3{color:var(--good)}
-.ba ul{margin:0;padding-left:20px;color:var(--muted);font-size:15px}
-.ba li{margin:6px 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
-.grid .card h3{margin:0 0 6px;font-size:17px;font-weight:600}
-.grid .card p{margin:0;color:var(--muted);font-size:15px}
-.price{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;background:var(--card);border:1px solid var(--hair);border-radius:20px;padding:22px 24px}
-.price .p b{font-size:clamp(38px,8vw,54px);letter-spacing:-.03em;font-weight:600;color:var(--accent-ink);line-height:1}
-.price .p span{display:block;color:var(--muted);margin-top:4px}
-.price ul{margin:0;padding-left:20px;color:var(--muted);font-size:15px}
-.draft{margin-top:14px;border:2px dashed #c77700;background:#fff7e6;border-radius:14px;padding:14px 18px;color:#5a3c00;font-size:15px}
-.draft b{display:inline-block;background:#c77700;color:#fff;border-radius:6px;padding:1px 8px;font-size:12px;margin-right:8px;letter-spacing:.04em}
-.btns{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
-a.btn{display:flex;flex-direction:column;gap:4px;text-decoration:none;border-radius:18px;padding:20px 22px;font-weight:600;font-size:20px;background:var(--accent);color:#fff}
-a.btn small{font-weight:400;font-size:14px;opacity:.9}
-a.btn.alt{background:#fff;color:var(--accent-ink);border:2px solid var(--accent)}
-a.btn:hover{filter:brightness(1.06)}
-.next{background:var(--accent-ink);color:#fff;border-radius:20px;padding:26px 26px;margin-top:44px}
-.next h2{margin:0 0 8px;color:#fff}
-.next p{margin:0;color:#d6ecf7;max-width:60ch}
-.next .who{margin-top:14px;font-weight:600;color:#fff}
-footer{padding:34px 0 56px;color:var(--muted);font-size:13px}
-@media (max-width:760px){.math{grid-template-columns:1fr 1fr}.calc,.ba,.btns{grid-template-columns:1fr}}
-@media (max-width:520px){.wrap{padding:0 16px}.hero{padding:32px 0 10px}.cobrand .by{display:none}.math{gap:10px}.stat{padding:14px}h2{margin-top:42px}}
+body{margin:0;background:#fff;color:var(--ink);font:400 17px/1.6 "Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:hidden}
+img{max-width:100%}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.w{max-width:var(--max);margin:0 auto;padding:0 var(--pad)}
+h1,h2,h3{font-weight:600;color:var(--ink)}
+h2{font-size:clamp(32px,3.6vw,52px);line-height:1.04;letter-spacing:-.035em;margin:0}
+.lead2{font-size:19px;color:var(--muted);max-width:52ch;margin:18px 0 0}
+.fine{font-size:14px;line-height:1.55;color:var(--muted);max-width:78ch}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;height:90px}
+.wing{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px;letter-spacing:-.01em;text-decoration:none;min-height:44px}
+.wing img{width:24px;height:25px;display:block}
+.for{display:flex;align-items:center;gap:14px;font-size:14px;color:var(--muted)}
+.plate{background:#000;border-radius:4px;padding:6px 10px;display:flex}
+.plate img{height:34px;width:auto;display:block}
+
+/* hero: type left, solid blue slab right */
+.hero{display:grid;grid-template-columns:1.25fr 1fr;max-width:var(--max);margin:0 auto}
+.copy{padding:72px var(--pad) 64px;display:flex;flex-direction:column}
+.date{font-size:15px;color:var(--muted)}
+.date b{color:var(--ink);font-weight:600}
+h1{font-size:clamp(40px,5.4vw,82px);line-height:1;letter-spacing:-.04em;margin:28px 0 0}
+h1 em{font-style:normal;color:var(--blue)}
+.lede{max-width:46ch;font-size:19px;color:var(--muted);margin:30px 0 0}
+.act{margin-top:auto;padding-top:44px;display:flex;align-items:center;flex-wrap:wrap;gap:16px 28px}
+.btn{display:inline-flex;align-items:center;min-height:54px;background:var(--ink);color:#fff;text-decoration:none;font-weight:600;font-size:17px;padding:0 26px;border-radius:6px}
+.btn:hover{background:#1E2740}
+.lnk{display:inline-flex;align-items:center;min-height:44px;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px;text-decoration-color:var(--blue)}
+.slab{background:var(--blue);color:#fff;padding:72px var(--pad) 56px;display:flex;flex-direction:column}
+.slab .k{font-size:15px;color:var(--on-blue-dim)}
+.slab .big{font-size:clamp(54px,6.4vw,104px);font-weight:600;letter-spacing:-.05em;line-height:.95;margin:18px 0 0}
+.slab .sub{display:block;font-size:20px;letter-spacing:-.01em;font-weight:500;line-height:1.35;margin-top:16px;color:var(--on-blue)}
+.rx{margin-top:auto;padding-top:40px}
+.rx div{display:flex;justify-content:space-between;align-items:baseline;gap:20px;padding:15px 0;border-top:1px solid rgba(255,255,255,.24);font-size:16px;color:var(--on-blue)}
+.rx div:first-child{border-top-color:rgba(255,255,255,.45)}
+.rx b{font-size:26px;font-weight:600;letter-spacing:-.02em;color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap}
+.src{font:400 12.5px/1.5 "Plex Mono",ui-monospace,monospace;color:var(--on-blue-dim);margin-top:14px}
+.counted{max-width:var(--max);margin:0 auto;padding:28px var(--pad) 0}
+.counted p{margin:0}
+.counted b{color:var(--body)}
+
+/* proof */
+.proof{padding:128px 0 120px}
+.proof .grid{display:grid;grid-template-columns:5fr 7fr;gap:72px;align-items:start}
+.huge{font-size:clamp(64px,8vw,128px);font-weight:600;letter-spacing:-.05em;line-height:.9;color:var(--ink)}
+.huge span{display:block;font-size:22px;letter-spacing:-.01em;line-height:1.3;color:var(--muted);font-weight:500;margin-top:18px;max-width:26ch}
+.proof p.t{font-size:19px;color:var(--body);margin:36px 0;max-width:56ch}
+.bars{display:grid;gap:22px}
+.bar .l{display:flex;justify-content:space-between;gap:12px;font-size:15px;color:var(--muted);margin-bottom:8px}
+.bar .l b{font-size:22px;color:var(--ink);font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.bar .track{height:22px;background:var(--mist)}
+.bar .fill{height:100%;background:var(--blue);width:var(--v)}
+.bar.dim .fill{background:#8A93A8}
+.proof .fine{margin-top:26px}
+
+/* product + what Jackson gets */
+.product{background:var(--mist);padding:120px 0 128px}
+.product .head{display:grid;grid-template-columns:5fr 7fr;gap:72px;align-items:end;margin-bottom:56px}
+.shot{display:block;background:#fff;border:1px solid var(--rule);border-radius:10px;overflow:hidden;box-shadow:0 30px 70px -40px rgba(14,20,36,.45)}
+.shot .tb{height:32px;display:flex;align-items:center;gap:7px;padding:0 14px;border-bottom:1px solid var(--rule);font-size:12px;color:var(--muted)}
+.shot .tb i{width:9px;height:9px;border-radius:50%;background:var(--rule)}
+.shot .tb span{margin-left:8px}
+.shot img{display:block;width:100%;height:auto}
+.feats{display:grid;grid-template-columns:1fr 1fr;column-gap:72px;margin-top:72px}
+.feat{display:grid;grid-template-columns:200px 1fr;gap:24px;padding:22px 0;border-top:1px solid var(--rule)}
+.feat h3{font-size:19px;letter-spacing:-.015em;margin:0;line-height:1.35}
+.feat p{margin:0;color:var(--body);font-size:16px}
+.feat.lidar{grid-column:1/-1;grid-template-columns:200px 1fr 480px;align-items:start}
+.feat.lidar img{display:block;width:100%;height:auto;border:1px solid var(--rule);border-radius:8px;background:#fff}
+.product .fine{margin-top:28px}
+
+/* calculator */
+.calc{padding:128px 0}
+.calc .grid{display:grid;grid-template-columns:5fr 7fr;gap:72px;align-items:start}
+.form{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:8px}
+.form label{display:block;font-size:15px;font-weight:600;margin:0 0 8px;color:var(--ink)}
+.form input{width:100%;font:inherit;font-size:22px;font-weight:600;padding:12px 16px;border:2px solid var(--rule);border-radius:6px;background:#fff;color:var(--ink);font-variant-numeric:tabular-nums}
+.form input:focus{outline:none;border-color:var(--blue)}
+.out{margin-top:40px;padding-top:28px;border-top:2px solid var(--ink)}
+.out .x{font-size:clamp(56px,7vw,112px);font-weight:600;letter-spacing:-.05em;line-height:.95;color:var(--blue);font-variant-numeric:tabular-nums}
+.out p{margin:14px 0 0;font-size:19px;color:var(--body)}
+.calc .fine{margin-top:20px}
+
+/* photo break (from direction C) */
+.photo{position:relative;min-height:620px;display:flex;align-items:flex-end;background:#1a2230 url(proposal-assets/photo-tearoff.webp) center 42%/cover no-repeat;color:#fff}
+.photo::before{content:"";position:absolute;inset:0;background:rgba(10,14,24,.5)}
+.photo .w{position:relative;width:100%;padding-top:96px;padding-bottom:72px}
+.photo p{margin:0;font-size:clamp(32px,4vw,60px);font-weight:600;letter-spacing:-.035em;line-height:1.05;max-width:20ch}
+
+/* rep's day */
+.day{padding:120px 0 128px}
+.day h2{max-width:16ch}
+.cmp{margin-top:56px}
+.cmp .row{display:grid;grid-template-columns:1fr 1fr;gap:72px;padding:22px 0;border-top:1px solid var(--rule);font-size:18px}
+.cmp .row.hd{border-top:0;padding-bottom:12px;font-size:15px;font-weight:600;color:var(--muted)}
+.cmp .row.hd span:last-child{color:var(--blue)}
+.cmp .b{color:var(--muted)}
+.cmp .a{color:var(--ink);font-weight:500;padding-left:22px;position:relative}
+.cmp .a::before{content:"";position:absolute;left:0;top:.55em;width:10px;height:10px;background:var(--blue)}
+
+/* how it works */
+.how{background:var(--ink);color:#fff;padding:120px 0 128px}
+.how h2{color:#fff}
+.how .lead2{color:#AEB6C8}
+.how .grid{display:grid;grid-template-columns:5fr 7fr;gap:72px}
+.step{display:grid;grid-template-columns:220px 1fr;gap:28px;padding:26px 0;border-top:1px solid rgba(255,255,255,.18)}
+.step:first-child{border-top:0;padding-top:6px}
+.step h3{color:#fff;font-size:20px;letter-spacing:-.015em;margin:0;line-height:1.3}
+.step h3 span{display:block;color:#9FB5FF;font-size:15px;font-weight:500;letter-spacing:0;margin-bottom:6px}
+.step p{margin:0;color:#D3D9E6}
+
+/* see it */
+.see{padding:120px 0 64px}
+.links{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:48px}
+.go{display:block;text-decoration:none;color:var(--ink)}
+.go .pic{aspect-ratio:16/10;overflow:hidden;border:1px solid var(--rule);border-radius:10px;background:var(--mist)}
+.go .pic img{width:100%;height:100%;object-fit:cover;object-position:top left;display:block;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.go:hover .pic img{transform:scale(1.02)}
+.go .t{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-top:18px}
+.go .t b{font-size:26px;letter-spacing:-.025em;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px;text-decoration-color:var(--blue)}
+.go .t span{color:var(--muted);font-size:16px}
+
+/* next step */
+.next{max-width:var(--max);margin:64px auto 0;background:var(--blue);color:#fff;padding:88px var(--pad);display:grid;grid-template-columns:5fr 7fr;gap:72px;align-items:end}
+.next h2{color:#fff}
+.next p{margin:0;font-size:22px;line-height:1.45;color:var(--on-blue);max-width:34ch}
+.next .who{margin-top:18px;font-weight:600;color:#fff;font-size:17px}
+footer{max-width:var(--max);margin:0 auto;padding:36px var(--pad) 64px;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+
+/* intro: shown only when JS adds html.intro, so a reader without JS sees the page */
+#intro{display:none}
+html.intro #intro{display:flex;position:fixed;inset:0;z-index:50;background:#fff;align-items:center;justify-content:center;flex-direction:column;padding:24px;overflow:hidden}
+html.intro body{overflow:hidden}
+#intro .lock{display:flex;align-items:center;gap:22px}
+#intro .lw{display:flex;align-items:center;gap:14px;font-weight:600;font-size:32px;letter-spacing:-.01em;opacity:0;transform:translateY(10px)}
+#intro .lw img{width:42px;height:44px}
+#intro .x{font-size:18px;color:var(--muted);opacity:0}
+#intro .lj{opacity:0;transform:translateX(-10px)}
+#intro .lj .plate img{height:54px}
+#intro .ln{margin-top:44px;text-align:center;font-size:clamp(30px,4.4vw,64px);font-weight:600;letter-spacing:-.04em;line-height:1.04;max-width:18ch;opacity:0;transform:translateY(14px)}
+#intro .ln em{font-style:normal;color:var(--blue)}
+#intro .wipe{position:absolute;left:0;right:0;bottom:0;height:0;background:var(--blue)}
+#intro .skip{position:absolute;right:20px;top:20px;z-index:2;min-height:44px;padding:0 16px;font:inherit;font-size:15px;font-weight:600;color:var(--ink);background:#fff;border:1px solid var(--rule);border-radius:6px;cursor:pointer}
+#intro.go .lw{animation:in .6s cubic-bezier(.2,.7,.2,1) .15s forwards}
+#intro.go .x{animation:fade .4s ease .85s forwards}
+#intro.go .lj{animation:in .6s cubic-bezier(.2,.7,.2,1) 1s forwards}
+#intro.go .ln{animation:in .7s cubic-bezier(.2,.7,.2,1) 1.75s forwards}
+#intro.go .wipe{animation:wipe .5s cubic-bezier(.7,0,.3,1) 3.15s forwards}
+#intro.out{animation:gone .35s ease forwards}
+@keyframes in{to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes gone{to{opacity:0}}
+@keyframes wipe{to{height:100%}}
+
+@media (max-width:1080px){
+  :root{--pad:32px}
+  .proof .grid,.product .head,.calc .grid,.how .grid,.next{grid-template-columns:1fr;gap:36px}
+  .feats{grid-template-columns:1fr}
+  .feat.lidar{grid-template-columns:200px 1fr}.feat.lidar img{grid-column:1/-1}
+}
+@media (max-width:820px){
+  :root{--pad:18px}
+  body{font-size:16px}
+  .top{height:68px}.for span{display:none}.plate img{height:26px}
+  .hero{grid-template-columns:1fr}
+  .copy{padding:36px var(--pad) 32px}.slab{padding:36px var(--pad) 30px}
+  h1{font-size:40px}.lede{font-size:17px;margin-top:22px}.act{padding-top:30px}
+  .slab .big{font-size:52px}.slab .sub{font-size:18px}.rx{padding-top:28px}.rx b{font-size:22px}.rx div{font-size:15px}
+  .counted{padding-top:22px}
+  .proof,.calc,.product,.day,.how{padding:80px 0}.see{padding:80px 0 40px}
+  .lead2{font-size:17px}
+  .huge{font-size:64px}.huge span{font-size:19px}
+  .feat,.feat.lidar{grid-template-columns:1fr;gap:8px}
+  .feats{margin-top:48px}
+  .form{grid-template-columns:1fr}
+  .out .x{font-size:56px}
+  .photo{min-height:440px}.photo .w{padding-bottom:40px}.photo p{font-size:32px}
+  .cmp{margin-top:36px}.cmp .row{grid-template-columns:1fr;gap:10px;font-size:17px}.cmp .row.hd{display:none}
+  .cmp .b::before{content:"Before: ";font-weight:600}
+  .step{grid-template-columns:1fr;gap:8px}
+  .links{grid-template-columns:1fr;gap:40px}
+  .go .t{flex-direction:column;gap:4px}
+  .next{margin-top:40px;padding:56px var(--pad)}.next p{font-size:19px}
+  #intro .lock{flex-direction:column;gap:14px}#intro .lj{transform:translateY(10px)}#intro .ln{margin-top:34px;font-size:32px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 <script>
 /* ONE-LINE CHANGE (Jack): Grant's contact. No price is shown anywhere on this page. */
-var CONTACT = { name: "", email: "", phone: "" };
+var CONTACT = { name: "Grant", email: "granthagins@getwingdigital.com", phone: "" };
+/* Intro plays once per browser tab session, never with reduced motion, never without JS. ?intro=0 turns it off, ?intro=1 forces it. */
+(function(){
+  try {
+    var seen = false; try { seen = sessionStorage.getItem("rc-prop-intro") === "1"; } catch (e) {}
+    var calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var q = location.search;
+    if (/[?&]intro=1/.test(q) || (!seen && !calm && !/[?&]intro=0/.test(q))) document.documentElement.classList.add("intro");
+  } catch (e) {}
+})();
 </script>
 </head>
 <body>
-<header class="top"><div class="wrap">
-  <a class="brand" href="product.html"><img src="intro-assets/wing-mark.png" alt="" width="26" height="27">Wing Digital</a>
-  <div class="cobrand"><span class="by">Built for</span><span class="plate"><img src="img/roofers/jackson/logo.webp" alt="Jackson Roofing"></span></div>
-</div></header>
+<div id="intro" aria-hidden="true">
+  <button type="button" class="skip" id="skip">Skip intro</button>
+  <div class="lock">
+    <div class="lw"><img src="intro-assets/wing-mark.png" alt="" width="34" height="36">Wing Digital</div>
+    <div class="x">for</div>
+    <div class="lj"><span class="plate"><img src="img/roofers/jackson/logo.webp" alt="Jackson Roofing"></span></div>
+  </div>
+  <div class="ln">Your June 2 storm put about <em>$1.26 million</em> in roofs within reach.</div>
+  <div class="wipe"></div>
+</div>
 
-<main class="wrap">
+<header class="w top">
+  <a class="wing" href="product.html"><img src="intro-assets/wing-mark.png" alt="" width="24" height="25">Wing Digital</a>
+  <div class="for"><span>Prepared for</span><span class="plate"><img src="img/roofers/jackson/logo.webp" alt="Jackson Roofing" width="78" height="34"></span></div>
+</header>
+
+<main>
   <section class="hero">
-    <div class="kicker">Proposal for Jackson Roofing</div>
-    <h1>Your June 2 storm put about $1.26 million in roofs within reach.</h1>
-    <p class="lede">This is the math from your own storm data, not a guess. Roof Command finds the homes the storm hit, ranks the ones most likely to need a roof, and keeps every conversation in one place. Wing Digital runs it for you.</p>
-    <div class="math">
-      <div class="stat"><b>6,546</b><span>homes hit by 1 inch hail or larger on June 2, 2026, in your area</span></div>
-      <div class="stat"><b>4,193</b><span>of them have a roof 15 or more years old and no re-roof permit on file</span></div>
-      <div class="stat"><b>~84 roofs</b><span>if you close 2 in 100 of those homes</span></div>
-      <div class="stat big"><b>~$1.26 million</b><span>in jobs at an average ticket of $15,000</span></div>
+    <div class="copy">
+      <div class="date">Storm of <b>June 2, 2026</b>, across the 4 counties you serve</div>
+      <h1>Your June 2 storm put about <em>$1.26 million</em> in roofs within reach.</h1>
+      <p class="lede">Roof Command finds the homes the storm hit, ranks the ones most likely to need a roof, and keeps every conversation in one place. Wing Digital runs it for you.</p>
+      <div class="act"><a class="btn" href="product.html">See your software</a><a class="lnk" href="https://wingdigital26-maker.github.io/jackson-roofing/" target="_blank" rel="noopener">See your website</a></div>
     </div>
-    <p class="fine">How we counted: radar hail of 1 inch or larger on June 2 over homes in 4 counties (NOAA radar), a roof counts as 15 or more years old by the county year built or the last re-roof permit, with permits from Collin County records (2023 on). These are the same numbers the Morning After alert in the software shows. Denton County permits are not in the data yet, so a few of these homes may already have a new roof. The 2% close rate and the $15,000 ticket are our estimates for DFW, not promises. Change them in your head: at 1% it is half this number.</p>
+    <aside class="slab" aria-label="The math">
+      <div class="k">In jobs, from your own storm data</div>
+      <div class="big">~$1.26 million<span class="sub">about 84 roofs at a $15,000 average ticket</span></div>
+      <div class="rx">
+        <div><span>Homes hit by 1 inch hail or larger</span><b>6,546</b></div>
+        <div><span>Roof 15 or more years old, no re-roof permit on file</span><b>4,193</b></div>
+        <div><span>If you close 2 in 100 of those homes</span><b>~84 roofs</b></div>
+      </div>
+      <div class="src">NOAA radar hail, county year built, Collin County permits</div>
+    </aside>
   </section>
+  <div class="counted"><p class="fine"><b>How we counted.</b> Radar hail of 1 inch or larger on June 2 over homes in 4 counties (NOAA radar). A roof counts as 15 or more years old by the county year built or the last re-roof permit, with permits from Collin County records (2023 on). These are the same numbers the Morning After alert in the software shows. Denton County permits are not in the data yet, so a few of these homes may already have a new roof. The 2% close rate and the $15,000 ticket are our estimates for DFW, not promises. At 1% it is half this number.</p></div>
 
-  <section>
-    <h2>Why the list is worth working</h2>
-    <p class="sub">We tested the Turnover Radar on months it had never seen.</p>
-    <div class="proofcard">
-      <div class="num">14 to 27 times</div>
-      <p>In held-out testing (21 months of 2025 and 2026 that the score never saw), homes with 2 or more recent re-roofs within about a block re-roofed 14 to 27 times as often as homes with none. The top 500 homes on the list held 131 of the 2,856 re-roofs in that period. 500 random homes would hold about 7.</p>
-      <p class="fine" style="margin-top:10px">Back-test on Collin County permit records. Hail size is a radar estimate, not an inspection.</p>
+  <section class="proof"><div class="w grid">
+    <div>
+      <h2>Why the list is worth working</h2>
+      <p class="lead2">We tested the Turnover Radar on months it had never seen.</p>
     </div>
-  </section>
+    <div>
+      <div class="huge">14 to 27x<span>as often: homes near recent re-roofs went on to re-roof themselves</span></div>
+      <p class="t">In held-out testing (21 months of 2025 and 2026 that the score never saw), homes with 2 or more recent re-roofs within about a block re-roofed 14 to 27 times as often as homes with none.</p>
+      <div class="bars" role="img" aria-label="Re-roofs held by 500 homes: 131 for the top of the list, about 7 for random homes">
+        <div class="bar"><div class="l"><span>Top 500 homes on the list</span><b>131 re-roofs</b></div><div class="track"><div class="fill" style="--v:100%"></div></div></div>
+        <div class="bar dim"><div class="l"><span>500 random homes</span><b>about 7</b></div><div class="track"><div class="fill" style="--v:5.3%"></div></div></div>
+      </div>
+      <p class="fine">Out of 2,856 re-roofs in that period. Back-test on Collin County permit records. Hail size is a radar estimate, not an inspection.</p>
+    </div>
+  </div></section>
 
-  <section>
-    <h2>What extra roofs are worth to you</h2>
-    <p class="sub">Try your own numbers. We assume about a 25% margin; change it to match yours.</p>
-    <div class="card calc">
-      <div>
-        <div class="field"><label for="job">Average job size ($)</label><input id="job" type="number" inputmode="numeric" min="0" step="500" value="15000"></div>
-        <div class="field"><label for="roofs">Extra roofs a month</label><input id="roofs" type="number" inputmode="decimal" min="0" step="0.5" value="1"></div>
-        <div class="field"><label for="margin">Your margin (%)</label><input id="margin" type="number" inputmode="decimal" min="0" max="100" step="1" value="25"></div>
+  <section class="product"><div class="w">
+    <div class="head">
+      <h2>What Jackson gets</h2>
+      <p class="lead2">One app for the storm, the list, the roof and the conversation. This is your Today screen with your storm data.</p>
+    </div>
+    <div class="shot"><div class="tb"><i></i><i></i><i></i><span>Roof Command for Jackson Roofing, Today</span></div><img src="proposal-assets/app-today.webp" alt="Roof Command Today screen: the Daily 50 list, a home card with hail and roof facts, and the route map" width="1440" height="900"></div>
+    <div class="feats">
+      <div class="feat"><h3>Storm map</h3><p>Every storm on file, with the homes that took 1 inch hail or larger lit up street by street.</p></div>
+      <div class="feat"><h3>Daily 50</h3><p>A ranked list of 50 homes to reach each day: roof age, hail it took, and whether a re-roof permit is on file.</p></div>
+      <div class="feat"><h3>Turnover Radar</h3><p>Streets where neighbors have re-roofed lately, so you walk a block with a reason to knock.</p></div>
+      <div class="feat"><h3>Homeowner proof page</h3><p>One page per home with the storm date, hail size and what hit the street. Your rep sends it with one tap.</p></div>
+      <div class="feat"><h3>CRM</h3><p>Inbox, pipeline and calendar from new hit to signed contract, with the next step always on top.</p></div>
+      <div class="feat"><h3>SEO, done for you</h3><p>Wing publishes blog posts and service pages for Jackson so the homeowners who search for a roofer find you too.</p></div>
+      <div class="feat lidar"><h3>LiDAR measurements</h3><p>A 3D roof with squares and pitch estimated from LiDAR. An estimate, typically within about 10% of permit records. Order a measurement report before you quote.</p><img src="proposal-assets/app-roof3d.webp" alt="The 3D roof in Roof Command: roof planes with squares and pitch, and the hail it took" width="610" height="330"></div>
+    </div>
+    <p class="fine">People stay in charge of every message. Nothing goes to a homeowner unless someone on your team taps send.</p>
+  </div></section>
+
+  <section class="calc"><div class="w grid">
+    <div>
+      <h2>What extra roofs are worth to you</h2>
+      <p class="lead2">Try your own numbers. We assume about a 25% margin; change it to match yours.</p>
+    </div>
+    <div>
+      <div class="form">
+        <div><label for="job">Average job size ($)</label><input id="job" type="number" inputmode="numeric" min="0" step="500" value="15000"></div>
+        <div><label for="roofs">Extra roofs a month</label><input id="roofs" type="number" inputmode="decimal" min="0" step="0.5" value="1"></div>
+        <div><label for="margin">Your margin (%)</label><input id="margin" type="number" inputmode="decimal" min="0" max="100" step="1" value="25"></div>
       </div>
       <div class="out" aria-live="polite">
         <div class="x" id="payx">$3,750</div>
         <p id="paytxt">1 extra roof a month at $15,000 is about $3,750 in profit a month, $45,000 a year.</p>
       </div>
+      <p class="fine">Profit here means the share of the job you keep after material and crew, at the margin you enter. Our 25% is an estimate, not a promise.</p>
     </div>
-    <p class="fine">Profit here means the share of the job you keep after material and crew, at the margin you enter. Our 25% is an estimate, not a promise.</p>
-  </section>
+  </div></section>
 
-  <section>
+  <section class="photo" aria-label="A roof tear-off, photo from the Jackson Roofing site"><div class="w">
+    <p>The storm decides which streets. Roof Command shows you which doors.</p>
+  </div></section>
+
+  <section class="day"><div class="w">
     <h2>Your rep's day, before and after</h2>
-    <div class="ba">
-      <div class="card before"><h3>Before</h3><ul>
-        <li>Drive neighborhoods and guess which roofs are old.</li>
-        <li>Knock doors on streets that were already re-roofed.</li>
-        <li>Notes live in a phone, a truck and someone's head.</li>
-        <li>After a storm, everyone chases the same streets.</li>
-      </ul></div>
-      <div class="card after"><h3>After</h3><ul>
-        <li>50 ranked homes to reach, with hail, roof age and permits shown.</li>
-        <li>A route for the doors and a ready text for the phone. Your rep taps send.</li>
-        <li>Every home, reply and booked inspection in one CRM.</li>
-        <li>Streets that are re-roofing now surface on the Turnover Radar.</li>
-      </ul></div>
+    <div class="cmp">
+      <div class="row hd"><span>Before</span><span>With Roof Command</span></div>
+      <div class="row"><span class="b">Drive neighborhoods and guess which roofs are old.</span><span class="a">50 ranked homes to reach, with hail, roof age and permits shown.</span></div>
+      <div class="row"><span class="b">Knock doors on streets that were already re-roofed.</span><span class="a">A route for the doors and a ready text for the phone. Your rep taps send.</span></div>
+      <div class="row"><span class="b">Notes live in a phone, a truck and someone's head.</span><span class="a">Every home, reply and booked inspection in one CRM.</span></div>
+      <div class="row"><span class="b">After a storm, everyone chases the same streets.</span><span class="a">Streets that are re-roofing now surface on the Turnover Radar.</span></div>
     </div>
-  </section>
+  </div></section>
 
-  <section>
-    <h2>What Jackson gets</h2>
-    <div class="grid">
-      <div class="card"><h3>Storm map</h3><p>Every storm on file, with the homes that took 1 inch hail or larger lit up street by street.</p></div>
-      <div class="card"><h3>Daily 50</h3><p>A ranked list of 50 homes to reach each day: roof age, hail it took, and whether a re-roof permit is on file.</p></div>
-      <div class="card"><h3>Turnover Radar</h3><p>Streets where neighbors have re-roofed lately, so you walk a block with a reason to knock.</p></div>
-      <div class="card"><h3>LiDAR measurements</h3><p>A 3D roof with squares and pitch estimated from LiDAR. An estimate, typically within about 10% of permit records. Order a measurement report before you quote.</p></div>
-      <div class="card"><h3>Homeowner proof page</h3><p>One page per home with the storm date, hail size and what hit the street. Your rep sends it with one tap.</p></div>
-      <div class="card"><h3>CRM</h3><p>Inbox, pipeline and calendar from new hit to signed contract, with the next step always on top.</p></div>
-      <div class="card"><h3>SEO, done for you</h3><p>Wing publishes blog posts and service pages for Jackson so the homeowners who search for a roofer find you too.</p></div>
+  <section class="how"><div class="w grid">
+    <div>
+      <h2>How it works</h2>
+      <p class="lead2">Wing runs the system. Your team does what only your team can do.</p>
     </div>
-    <p class="fine">People stay in charge of every message. Nothing goes to a homeowner unless someone on your team taps send.</p>
-  </section>
-
-  <section>
-    <h2>How it works</h2>
-    <p class="sub">Wing runs the system. Your team does what only your team can do.</p>
-    <div class="grid">
-      <div class="card"><h3>What Wing does each week</h3><p>Keeps the hail and roof data fresh and checks for new storms. Rebuilds your Daily 50. Publishes blog posts and service pages so homeowners find you in search. Handles setup, fixes and your questions.</p></div>
-      <div class="card"><h3>What your team does</h3><p>Works the Daily 50: text, email, call or knock. Taps send on every message. Sends the proof page to homeowners who want to see the storm record. Runs the inspections and the estimates.</p></div>
-      <div class="card"><h3>How results are reported</h3><p>A short weekly summary from Wing: homes reached, replies, inspections booked, jobs won, and what we published. Your pipeline in Roof Command shows the same counts any time you look.</p></div>
+    <div>
+      <div class="step"><h3><span>Every week</span>What Wing does</h3><p>Keeps the hail and roof data fresh and checks for new storms. Rebuilds your Daily 50. Publishes blog posts and service pages so homeowners find you in search. Handles setup, fixes and your questions.</p></div>
+      <div class="step"><h3><span>Every day</span>What your team does</h3><p>Works the Daily 50: text, email, call or knock. Taps send on every message. Sends the proof page to homeowners who want to see the storm record. Runs the inspections and the estimates.</p></div>
+      <div class="step"><h3><span>Every morning</span>What you see</h3><p>Open Roof Command and Today shows the Daily 50, new replies and the next step on each home. The morning after a storm, it leads with the storm and how many homes it hit.</p></div>
+      <div class="step"><h3><span>Every week</span>How results are reported</h3><p>A short weekly summary from Wing: homes reached, replies, inspections booked, jobs won, and what we published. Your pipeline in Roof Command shows the same counts any time you look.</p></div>
     </div>
-    
-  </section>
+  </div></section>
 
-  <section>
+  <section class="see"><div class="w">
     <h2>See it for yourself</h2>
-    <div class="btns">
-      <a class="btn" href="product.html">See your software<small>Roof Command, with your storm data</small></a>
-      <a class="btn alt" href="https://wingdigital26-maker.github.io/jackson-roofing/" target="_blank" rel="noopener">See your website<small>The Jackson Roofing site we rebuilt</small></a>
+    <div class="links">
+      <a class="go" href="product.html"><div class="pic"><img src="proposal-assets/app-storms.webp" alt="" width="1440" height="900"></div><div class="t"><b>See your software</b><span>Roof Command, with your storm data</span></div></a>
+      <a class="go" href="https://wingdigital26-maker.github.io/jackson-roofing/" target="_blank" rel="noopener"><div class="pic"><img src="proposal-assets/photo-truck.webp" alt="" width="1600" height="1204" style="object-position:center"></div><div class="t"><b>See your website</b><span>The Jackson Roofing site we rebuilt</span></div></a>
     </div>
-  </section>
+  </div></section>
 
   <section class="next">
     <h2>Next step</h2>
-    <p>Reply to the email this came with and we will set Jackson Roofing up before the next storm.</p>
-    <div class="who" id="who"></div>
+    <div>
+      <p>Reply to the email this came with and we will set Jackson Roofing up before the next storm.</p>
+      <div class="who" id="who"></div>
+    </div>
   </section>
 </main>
 
-<footer><div class="wrap">Roof Command by Wing Digital, built for Jackson Roofing. Numbers on this page come from public records and radar. Homes, hail and roof facts are real. Phones and messages in the software preview are samples.</div></footer>
+<footer><span>Roof Command by Wing Digital, built for Jackson Roofing.</span><span>Numbers on this page come from public records and radar. Homes, hail and roof facts are real. Phones and messages in the software preview are samples.</span></footer>
 <script>
 (function(){
   var fmt = function(n){ return "$" + Math.round(n).toLocaleString("en-US"); };
@@ -199,6 +371,22 @@ var CONTACT = { name: "", email: "", phone: "" };
   if (CONTACT.email) parts.push(CONTACT.email);
   if (CONTACT.phone) parts.push(CONTACT.phone);
   w.textContent = parts.join("  |  ");
+
+  /* intro: Wing mark, then the Jackson co-brand, then the headline, then a blue wipe into the page; about 3.8 s, skippable */
+  var root = document.documentElement, el = document.getElementById("intro");
+  if (!root.classList.contains("intro")) return;
+  var done = false;
+  function end(){
+    if (done) return; done = true;
+    try { sessionStorage.setItem("rc-prop-intro", "1"); } catch (e) {}
+    el.classList.add("out");
+    setTimeout(function(){ root.classList.remove("intro"); }, 340);
+  }
+  el.classList.add("go");
+  setTimeout(end, 3750);
+  document.getElementById("skip").addEventListener("click", end);
+  el.addEventListener("click", end);
+  document.addEventListener("keydown", function(e){ if (!done && (e.key === "Escape" || e.key === "Enter" || e.key === " ")) { e.preventDefault(); end(); } });
 })();
 </script>
 </body>
