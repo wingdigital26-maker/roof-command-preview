@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="home.css">
 <link rel="stylesheet" href="crm.css">
 <link rel="stylesheet" href="cal.css"><!-- the built-in calendar view (cal.js) -->
+<link rel="stylesheet" href="customers.css"><!-- Past customers view (customers.js) -->
 <link rel="stylesheet" href="features.css">
 <link rel="stylesheet" href="../lib/rc-physical.css">
 <script type="importmap">
@@ -26,7 +27,7 @@
 </head>
 <body>
 <script>/* the view is known before anything paints (crm.js runs last): an inbox or a board never flashes a home record first */
-try { const q = new URLSearchParams(location.search), v = q.get('view'); document.body.dataset.view = v === 'pipeline' || v === 'home' || v === 'inbox' || v === 'calendar' ? v : (q.get('home') || q.get('id')) ? 'home' : 'inbox'; } catch (e) { }</script>
+try { const q = new URLSearchParams(location.search), v = q.get('view'); document.body.dataset.view = v === 'pipeline' || v === 'home' || v === 'inbox' || v === 'calendar' || v === 'customers' ? v : (q.get('home') || q.get('id')) ? 'home' : 'inbox'; } catch (e) { }</script>
 <header class="bar">
   <div class="rd" data-r="logo"></div>
   <div class="co"><b data-r="name">Jackson Roofing</b><span class="sub">Roof Command</span></div>
@@ -38,6 +39,7 @@ try { const q = new URLSearchParams(location.search), v = q.get('view'); documen
   <button type="button" data-v="inbox" aria-pressed="true"><span class="ic" data-ci="text"></span>Inbox<i id="vInN" hidden></i></button>
   <button type="button" data-v="pipeline" aria-pressed="false"><span class="ic" data-ci="layers"></span>Pipeline<i id="vPipeN" hidden></i></button>
   <button type="button" data-v="calendar" aria-pressed="false"><span class="ic" data-ci="cal"></span>Calendar</button>
+  <button type="button" data-v="customers" aria-pressed="false" id="vCust"><span class="ic" data-ci="check"></span><span class="lg">Past customers</span><span class="sh">Customers</span></button>
   <button type="button" data-v="home" aria-pressed="false" id="vHome"><span class="ic" data-ci="roof"></span><span id="vHomeLbl">Home</span></button>
 </nav>
 
@@ -62,6 +64,8 @@ try { const q = new URLSearchParams(location.search), v = q.get('view'); documen
 
 <!-- the calendar view (cal.js paints it): every booked inspection, book, move, cancel; nothing sends -->
 <section class="cal" id="cal" aria-label="Calendar"></section>
+<!-- Past customers (customers.js, 10-26): import / add past jobs, review, referral and testimonial asks (you tap send), neighbors to knock -->
+<section class="pc" id="pc" aria-label="Past customers"></section>
 
 <section class="rh">
   <div class="rt">
@@ -202,6 +206,7 @@ try { const q = new URLSearchParams(location.search), v = q.get('view'); documen
 <script src="pipe.js"></script>
 <script src="crm.js"></script>
 <script src="cal.js"></script><!-- the built-in calendar: reads RC.pipeline()[id].booked, writes the same booking line the Book button does -->
+<script src="customers.js"></script><!-- Past customers: reviews, referrals, testimonials, neighbors (10-26); nothing sends -->
 <script src="find.js"></script><!-- the header search: a street, subdivision, ZIP or city opens here with its homes listed -->
 <script src="../lib/rc-automation.js"></script>
 <script src="../lib/rc-features.js"></script><!-- kept features switchboard (10-11) -->

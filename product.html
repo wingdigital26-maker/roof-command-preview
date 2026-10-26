@@ -129,6 +129,7 @@ function crmSeg(params){
   const id=params.id?encodeURIComponent(params.id):'';
   if(params.view==='pipeline') return 'pipeline';
   if(params.view==='calendar') return 'calendar';   /* #/crm/calendar: the built-in calendar (c5-home/cal.js) */
+  if(params.view==='customers') return 'customers';   /* #/crm/customers: Past customers (c5-home/customers.js, 10-26) */
   if(params.view==='inbox') return id?'inbox/'+id:'';
   return id?'home/'+id:'';
 }
@@ -151,6 +152,7 @@ function parseHash(h){
     if(m[1]==='home'){ if(t[0]){ params.view='home'; params.id=t[0]; } }   /* #/home/<id>: the old route, one home's record */
     else if(t[0]==='pipeline') params.view='pipeline';
     else if(t[0]==='calendar') params.view='calendar';
+    else if(t[0]==='customers') params.view='customers';
     else if(t[0]==='home'&&t[1]){ params.view='home'; params.id=t[1]; }
     else if(t[0]==='inbox'){ params.view='inbox'; if(t[1]) params.id=t[1]; }
     else if(t[0]){ params.view='home'; params.id=t[0]; }

@@ -1685,6 +1685,7 @@ if (DK.param('sheet')==='roof') setTimeout(()=>openRoof(HOMES[cur]),300);
 <!-- kept features (10-11), switches in lib/rc-features.js: time-of-day light, mission briefing, new storm takeover -->
 <script src="../lib/rc-tips.js"></script><!-- how Roof Command helps: small sourced tidbits (Jack 10-23) -->
 <script src="radar.js"></script><!-- Turnover Radar (Jack 10-23) -->
+<script src="alert.js"></script><!-- morning-after storm card + alert history (Jack 10-26); quiet day = nothing -->
 <script>/* tidbits (Jack 10-23): today's one line under the greeting, then the cards redraw once the numbers are in */
 if (window.RCTIP) RCTIP.ready.then(() => { const h = document.querySelector('.hello'); if (h && !document.getElementById('tipHd')) { const d = document.createElement('div'); d.id = 'tipHd'; d.innerHTML = RCTIP.lineHTML(RCTIP.today(), 'hd'); const h1 = h.querySelector('h1'); if (h1) h1.after(d); else h.appendChild(d); }
   try { if (typeof refreshAll === 'function') refreshAll(); } catch (e) {} });

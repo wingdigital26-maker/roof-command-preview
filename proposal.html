@@ -73,8 +73,7 @@ footer{padding:34px 0 56px;color:var(--muted);font-size:13px}
 @media (max-width:520px){.wrap{padding:0 16px}.hero{padding:32px 0 10px}.cobrand .by{display:none}.math{gap:10px}.stat{padding:14px}h2{margin-top:42px}}
 </style>
 <script>
-/* ONE-LINE CHANGES (Jack): the monthly price, and Grant's contact. Everything on the page reads these two. */
-var PRICE = 1000;
+/* ONE-LINE CHANGE (Jack): Grant's contact. No price is shown anywhere on this page. */
 var CONTACT = { name: "", email: "", phone: "" };
 </script>
 </head>
@@ -109,19 +108,20 @@ var CONTACT = { name: "", email: "", phone: "" };
   </section>
 
   <section>
-    <h2>What one extra roof is worth</h2>
-    <p class="sub">Try your own numbers.</p>
+    <h2>What extra roofs are worth to you</h2>
+    <p class="sub">Try your own numbers. We assume about a 25% margin; change it to match yours.</p>
     <div class="card calc">
       <div>
         <div class="field"><label for="job">Average job size ($)</label><input id="job" type="number" inputmode="numeric" min="0" step="500" value="15000"></div>
         <div class="field"><label for="roofs">Extra roofs a month</label><input id="roofs" type="number" inputmode="decimal" min="0" step="0.5" value="1"></div>
+        <div class="field"><label for="margin">Your margin (%)</label><input id="margin" type="number" inputmode="decimal" min="0" max="100" step="1" value="25"></div>
       </div>
       <div class="out" aria-live="polite">
-        <div class="x" id="payx">15x</div>
-        <p id="paytxt">1 extra roof a month pays for Roof Command about 15 times over.</p>
+        <div class="x" id="payx">$3,750</div>
+        <p id="paytxt">1 extra roof a month at $15,000 is about $3,750 in profit a month, $45,000 a year.</p>
       </div>
     </div>
-    <p class="fine">Revenue, before your material and crew costs. The monthly price is <span data-price>$1,000</span>.</p>
+    <p class="fine">Profit here means the share of the job you keep after material and crew, at the margin you enter. Our 25% is an estimate, not a promise.</p>
   </section>
 
   <section>
@@ -157,10 +157,12 @@ var CONTACT = { name: "", email: "", phone: "" };
   </section>
 
   <section>
-    <h2>Price</h2>
-    <div class="price">
-      <div class="p"><b data-price>$1,000</b><span>a month, Wing runs it done for you</span></div>
-      <ul><li>Setup and upkeep by Wing</li><li>New storms and data kept fresh</li><li>Fixes and questions go to us</li></ul>
+    <h2>How it works</h2>
+    <p class="sub">Wing runs the system. Your team does what only your team can do.</p>
+    <div class="grid">
+      <div class="card"><h3>What Wing does each week</h3><p>Keeps the hail and roof data fresh and checks for new storms. Rebuilds your Daily 50. Publishes blog posts and service pages so homeowners find you in search. Handles setup, fixes and your questions.</p></div>
+      <div class="card"><h3>What your team does</h3><p>Works the Daily 50: text, email, call or knock. Taps send on every message. Sends the proof page to homeowners who want to see the storm record. Runs the inspections and the estimates.</p></div>
+      <div class="card"><h3>How results are reported</h3><p>A short weekly summary from Wing: homes reached, replies, inspections booked, jobs won, and what we published. Your pipeline in Roof Command shows the same counts any time you look.</p></div>
     </div>
     
   </section>
@@ -184,16 +186,14 @@ var CONTACT = { name: "", email: "", phone: "" };
 <script>
 (function(){
   var fmt = function(n){ return "$" + Math.round(n).toLocaleString("en-US"); };
-  document.querySelectorAll("[data-price]").forEach(function(e){ e.textContent = fmt(PRICE); });
-  var job = document.getElementById("job"), roofs = document.getElementById("roofs"), x = document.getElementById("payx"), t = document.getElementById("paytxt");
+  var job = document.getElementById("job"), roofs = document.getElementById("roofs"), mg = document.getElementById("margin"), x = document.getElementById("payx"), t = document.getElementById("paytxt");
   function calc(){
-    var j = Math.max(0, parseFloat(job.value) || 0), r = Math.max(0, parseFloat(roofs.value) || 0), m = (j * r) / PRICE;
-    var s = m >= 10 ? String(Math.round(m)) : (Math.round(m * 10) / 10).toString();
-    x.textContent = s + "x";
+    var j = Math.max(0, parseFloat(job.value) || 0), r = Math.max(0, parseFloat(roofs.value) || 0), g = Math.min(100, Math.max(0, parseFloat(mg.value) || 0)) / 100, p = j * r * g;
+    x.textContent = fmt(p);
     var rs = r === 1 ? "1 extra roof a month" : (r + " extra roofs a month");
-    t.textContent = r > 0 && j > 0 ? rs + " pays for Roof Command about " + s + (s === "1" ? " time" : " times") + " over. That is " + fmt(j * r) + " a month against " + fmt(PRICE) + "." : "Enter a job size and roofs a month.";
+    t.textContent = r > 0 && j > 0 ? rs + " at " + fmt(j) + " is about " + fmt(p) + " in profit a month, " + fmt(p * 12) + " a year." : "Enter a job size and roofs a month.";
   }
-  job.addEventListener("input", calc); roofs.addEventListener("input", calc); calc();
+  job.addEventListener("input", calc); roofs.addEventListener("input", calc); mg.addEventListener("input", calc); calc();
   var w = document.getElementById("who"), parts = [];
   if (CONTACT.name) parts.push(CONTACT.name);
   if (CONTACT.email) parts.push(CONTACT.email);

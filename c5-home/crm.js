@@ -364,7 +364,7 @@
     const r = clist.querySelector(`.crow[data-id="${CSS.escape(id || '')}"]`); if (r && how === 'click') r.focus({ preventScroll: true });
   }
   function setView(v, quiet, id) {
-    v = v === 'pipeline' || v === 'home' || v === 'calendar' ? v : 'inbox';
+    v = v === 'pipeline' || v === 'home' || v === 'calendar' || v === 'customers' ? v : 'inbox';
     const was = VIEW; VIEW = v; document.body.dataset.view = v;
     vtabs.querySelectorAll('[data-v]').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v ? 'true' : 'false'));
     if (v === 'inbox') {
@@ -379,9 +379,10 @@
     if (v === 'pipeline' && window.renderPipe) setTimeout(() => { window.renderPipe(true); dispatchEvent(new Event('resize')); }, 30);
     if (v === 'home') { const H = window.HOME; $('#vHomeLbl').textContent = !isPhone() && H && H.rec && H.rec.addr ? H.rec.addr : 'Home'; }
     if (v === 'calendar' && window.renderCal) window.renderCal();   // cal.js paints the calendar view
+    if (v === 'customers' && window.renderPC) window.renderPC();   // customers.js paints Past customers
     placeStage(); paint();
     if (v !== 'inbox' && window.__refit) requestAnimationFrame(() => window.__refit());
-    try { document.title = (v === 'home' && window.HOME && window.HOME.rec ? window.HOME.rec.addr : v === 'pipeline' ? 'Pipeline' : v === 'calendar' ? 'Calendar' : 'CRM') + ' | Roof Command'; } catch (e) { }
+    try { document.title = (v === 'home' && window.HOME && window.HOME.rec ? window.HOME.rec.addr : v === 'pipeline' ? 'Pipeline' : v === 'calendar' ? 'Calendar' : v === 'customers' ? 'Past customers' : 'CRM') + ' | Roof Command'; } catch (e) { }
     if (!quiet && window.homeAnnounce) window.homeAnnounce(was !== v);
   }
   window.crmView = () => VIEW;
