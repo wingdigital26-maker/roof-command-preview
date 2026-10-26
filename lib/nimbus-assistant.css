@@ -96,3 +96,6 @@ body.nbt-on .nbv-pill{display:none}
 .nbv-ring.below span{bottom:auto;top:100%;margin:6px 0 0}
 .nbv-ring span:empty{display:none}
 @media (prefers-reduced-motion: reduce){.nbv,.nbv-ring{transition:none}.nbv-ring.on,.nbv-mic.on{animation:none}.nbv-m.nb.think::after{animation:none;content:"..."}}
+.nbv-call{border:1px solid rgba(11,16,32,.12);border-radius:8px;margin:8px 0;padding:6px 10px 8px}
+.nbv-call legend{font-weight:600;font-size:13px;padding:0 4px}
+.nbv-call input[type=tel]{font:inherit;border:1px solid rgba(11,16,32,.18);border-radius:6px;padding:6px 8px;min-height:36px;margin-left:6px;width:160px}

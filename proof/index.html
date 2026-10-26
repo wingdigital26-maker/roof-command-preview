@@ -97,7 +97,9 @@
 
 <script src="../lib/rc-state.js"></script>
 <script src="../lib/brand.js"></script>
-<script>/* the roofer brands the page (lib/brand.js) */ applyRoofer(rooferKey());</script>
+<script>/* the roofer brands the page (lib/brand.js) */ applyRoofer(rooferKey());
+/* the homeowner's consent and STOP go to the roofer's cloud (Edge Function proof-intake, 10-26); the rep's preview records nothing */
+if (new URLSearchParams(location.search).get('preview') !== '1') window.RCP_SINK = 'https://preview.invalid/functions/v1/proof-intake?r=' + encodeURIComponent(rooferKey());</script>
 <script src="../lib/rc-copy.js"></script>
 <script src="../lib/st-meta.js"></script>
 <script src="../lib/rc-roof.js"></script>

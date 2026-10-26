@@ -11,7 +11,7 @@
    - Basemap tiles, glyphs and sprites from tiles.openfreemap.org: cache first, capped.
    Only GET over http(s) is ever cached; POSTs, Range requests, tel:/sms: links and every other host pass straight through.
    To refresh everything for every visitor: bump CACHE_VERSION. To switch it off for one browser: open any tour page with ?nosw=1. */
-const CACHE_VERSION = 'rc-tour-v19-jackson-coplanar-r24-d1793049315';
+const CACHE_VERSION = 'rc-tour-v19-jackson-coplanar-r24-d1793054917';
 const SHELL = CACHE_VERSION + '-shell';
 const DATA = CACHE_VERSION + '-data';
 const TILES = CACHE_VERSION + '-tiles';
@@ -20,7 +20,7 @@ const TILE_MAX = 3000;
 
 const PRECACHE = [
   'product.html',
-  'lib/nimbus-shell.css', 'lib/rc-physical.css', 'lib/rc-features.js', 'lib/nb-react.js', 'lib/rc-state.js', 'lib/rc-roof.js', 'lib/st-meta.js', 'lib/brand.js', 'lib/wing-mascot.js', 'lib/nimbus-shell.js', 'lib/nimbus-assistant.css', 'lib/nimbus-truck.css', 'lib/nimbus-tools.js', 'lib/nimbus-brain.js', 'lib/nimbus-assistant.js', 'lib/nimbus-truck.js', 'lib/nimbus-kb.json',
+  'lib/nimbus-shell.css', 'lib/rc-physical.css', 'lib/rc-features.js', 'lib/nb-react.js', 'lib/rc-state.js', 'lib/rc-roof.js', 'lib/st-meta.js', 'lib/brand.js', 'lib/wing-mascot.js', 'lib/nimbus-shell.js', 'lib/nimbus-assistant.css', 'lib/nimbus-truck.css', 'lib/nimbus-tools.js', 'lib/nimbus-brain.js', 'lib/nimbus-assistant.js', 'lib/nimbus-truck.js', 'lib/nimbus-kb.json', 'lib/nimbus-settings.js', 'lib/nimbus-data.js', 'lib/nimbus-talk.js', 'lib/nimbus-talk.css',
   'lib/st-fonts/montserrat-400.woff2', 'lib/st-fonts/montserrat-500.woff2', 'lib/st-fonts/montserrat-600.woff2', 'lib/st-fonts/montserrat-700.woff2', 'lib/st-fonts/ibm-plex-mono-400-latin.woff2',
   // Daily 50
   'c4-command-deck/deck.html', 'c4-command-deck/dk.css', 'c4-command-deck/features.css', 'c4-command-deck/features.js', 'c4-command-deck/dk.js', 'c4-command-deck/reach.js', 'c4-command-deck/data/routes-dfw.js',

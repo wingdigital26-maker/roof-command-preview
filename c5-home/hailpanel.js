@@ -46,7 +46,7 @@
         <div class="hacts"><button type="button" class="pbtn" id="hReport"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 3.5h7l4 4V20.5H7z"/><path d="M14 3.5v4h4M10 12h5M10 15.5h5"/></svg></span>Storm report</button>
           <small>One page for the homeowner: print it or save it as a PDF.</small></div>
       </div>
-      ${big ? `<div class="nbh"><h4>Neighbors who took the same hail</h4>${nb ? `<span>${nb.total ? RC.fmt(nb.total) + ' homes within a quarter mile, 1 in+ on ' + esc(big.date) + ', no reroof permit since' : 'None within a quarter mile'}</span>` : '<span>Finding them…</span>'}</div>
+      ${big ? `<div class="nbh"><h4>Neighbors who took the same hail</h4>${nb ? `<span>${nb.total ? RC.fmt(nb.total) + ' homes within a quarter mile, 1 in+ on ' + esc(big.date) + ', no reroof permit on file since' : 'None within a quarter mile'}</span>` : '<span>Finding them…</span>'}</div>
       ${ar ? mapHTML(ar) : ''}
       ${list.length ? `<ul class="nbl">${list.map(n => { const added = RC.isAdded(n.id);
         return `<li><button type="button" class="nbo" data-open="${n.id}">${addrOf(n)}</button><span class="nbd">${feet(n.dist)}</span><span class="nbh2">${n.inches.toFixed(2)} in</span><span class="nby">${n.year ? 'Built ' + n.year : ''}</span>
@@ -71,7 +71,7 @@
   }
   // the record the rest of the app keeps for a home (same shape the storm map and Nimbus add)
   const home = n => ({ id: n.id, addr: n.addr, city: n.city, zip: n.zip, county: n.county, lon: n.lon, lat: n.lat, hail: n.inches, storm: n.iso, year: n.year || null,
-    roofAge: n.permit ? 'Reroof permit ' + String(n.permit).slice(0, 4) : n.year ? 'Built ' + n.year + ', no reroof permit on file' : null });
+    roofAge: n.permit ? 'Reroof permit ' + String(n.permit).slice(0, 4) : n.year ? RC.roofEvidence(n.city, n.year, null).text : null });
 
   function update() {
     const gi = giNow(); if (gi === curGi) return;

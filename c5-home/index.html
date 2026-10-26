@@ -129,6 +129,7 @@ try { const q = new URLSearchParams(location.search), v = q.get('view'); documen
     <div class="pane" id="homePane" role="tabpanel" aria-label="This home">
     <section class="next" id="next" aria-label="Next task"></section>
     <section class="panel facts" id="factsPanel" aria-label="Home facts"><div class="ph"><h3>Home facts</h3><span class="pill">Public records</span></div><div class="kv" id="facts"></div></section><!-- rec.js houseFacts (lead card 10-22) -->
+    <section class="panel evid" id="evidPanel" aria-label="Why this home" hidden></section><!-- evidence.js: score, evidence and how sure (10-26) -->
     <section class="panel prop" id="proposal" aria-label="Proposal" hidden></section>
     <section class="panel knock" id="knockPanel" aria-label="At the door"></section><!-- knock.js (10-19) -->
     <section class="panel hailp" id="hailPanel" aria-label="Hail at this address" hidden></section><!-- hailpanel.js (10-19) -->
@@ -204,6 +205,7 @@ try { const q = new URLSearchParams(location.search), v = q.get('view'); documen
 <script src="aerial.js"></script><!-- the record opens on the aerial photo with the roof edges; 3D model one tap away (Jack 10-26) -->
 <script src="../lib/rc-hail.js"></script><!-- one home's hail on every storm + neighbors who took the same hail (10-19) -->
 <script src="hailpanel.js"></script>
+<script src="../lib/rc-scores.js"></script><script src="evidence.js"></script><!-- the Opportunity Score evidence card (lib/rc-scores.js RCS.explain, 10-26) -->
 <script src="knock.js"></script><!-- At the door: Not home / Talked / Not interested / Book, each logged with Undo (10-19) -->
 <script src="materials.js"></script><!-- Materials tab: a starting order from the measured roof (10-19) -->
 <script src="pipe.js"></script>

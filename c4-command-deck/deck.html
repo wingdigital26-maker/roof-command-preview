@@ -709,7 +709,8 @@ const showcase = R.storm.iso === RC.SHOWCASE;
 // phones are sample; the owner comes from the private county roll when it is loaded (RC.owner), else "Owner not loaded".
 const hash = s => { let h = 7; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 const OWNDATA = !!(R.ownData || (window.activeRoofer && activeRoofer().dataRoot));
-const roofAgeOf = (permit, year) => permit ? 'Reroof permit '+String(permit).slice(0,4) : year ? `Built ${year}, no reroof permit on file` : 'No reroof permit on file, year built not on file';
+// the roof-age rule (RC.roofEvidence, 10-26): a missing permit is "roof age unknown" outside the complete-permit cities
+const roofAgeOf = (permit, year, city) => permit ? 'Reroof permit '+String(permit).slice(0,4) : RC.roofEvidence(city, year, null).text;
 let QREADY = false, QERR = null, QDAY = '';
 // no sample phone numbers (10-22): a home has a phone only when the rep added one (record > Add phone) or a record holds one
 function specFor(gi, seed){
@@ -731,7 +732,7 @@ function pickHomes(){
     const seen = RC.recall(p.id) || {}, line = p.street || (p.address ? p.address.split(',')[0] : null) || seen.addr || 'Home on file';
     const h = { id:p.id, n:i+1, pick:p, addr:line, short:DK.short(line), street:line, loc: isFinite(p.lon) && isFinite(p.lat) ? [+p.lon, +p.lat] : null,
       city:p.city || seen.city || R.city, zip:p.zip || seen.zip || '', hail: p.hail!=null ? (+p.hail).toFixed(2) : null,
-      year:p.yearBuilt || null, permit:p.permit || null, roofAge:roofAgeOf(p.permit, p.yearBuilt), storm:p.storm, gi:p.gi, subdivision:p.subdivision || null,
+      year:p.yearBuilt || null, permit:p.permit || null, roofAge:roofAgeOf(p.permit, p.yearBuilt, p.city || seen.city || R.city), storm:p.storm, gi:p.gi, subdivision:p.subdivision || null,
       seed:900 + hash(p.id)%5000, person:null, phone:seen.phone && !/5550\d{3}$/.test(String(seen.phone)) ? seen.phone : null,
       // opted in / past customer only when a record on this device says so (the check page, the Home screen); the 50 are cold
       optin:!!(seen.optin || seen.optIn), past:!!(seen.past || seen.pastCustomer), textConsent:!!seen.textConsent, added:false };
@@ -813,7 +814,8 @@ function why(h,i){
   const short = w => { let m;
     if (/^Day \d+ follow-up/.test(w)) return w;
     if ((m = w.match(/^Roof is about (\d+) years old/))) return `Roof about ${m[1]} years old`;
-    if ((m = w.match(/^Older home, built/))) return 'Older home, no reroof permit';
+    if ((m = w.match(/^Older home, built/))) return 'Older home, roof age unknown';
+    if (/roof age unknown/.test(w)) return w.replace(/ \(no complete permit list[^)]*\)/, '');
     if (/^[\d.]+ in hail on /.test(w)) return w;   // size and date: the date is not in the tiles
     if ((m = w.match(/^(\d+) neighbors? within about a block re-roofed/))) return `${m[1]} neighbor${m[1]==='1'?'':'s'} within a block re-roofed in the last 90 days`;   // Turnover Radar (10-23)
     if (/^Owner lives here/.test(w)) return 'Owner lives here';

@@ -101,9 +101,9 @@
     const sts = (a.top_streets || []).slice(0, 3).map(s => esc(s.street) + ' (' + esc(s.city) + ')').join(', ');
     const today = a.alert_day === dayKey(new Date()), open = head.classList.contains('open');
     el.innerHTML = `<div class="mh"><div class="k"><b>Morning after</b><span>Storm on <i class="wd">${esc(wk(a.storm))}, </i>${esc(lbl(a.storm, false))}</span></div>
-      <h2>Hail up to ${plainIn(a.max_in)} hit ${fmt(a.homes_hit)} of your homes.<span class="h2b"> ${fmt(a.old_no_permit)} have old roofs.</span></h2></div>
+      <h2>Hail up to ${plainIn(a.max_in)} hit ${fmt(a.homes_hit)} of your homes.<span class="h2b"> ${oldLine(a)}.</span></h2></div>
       <div class="acts"><button type="button" class="pri" data-ma="route">Start today's route (${(a.route || []).length})</button>${moreBtn(open)}</div>
-      <div class="more" id="maMore"><div class="nums"><span><b>${fmt(a.old_no_permit)}</b> old roofs with no new roof on record</span><span class="n075"><b>${fmt(a.homes_075)}</b> took ${plainIn(0.75)} hail or more</span>${(a.cities || []).length ? `<span>${(a.cities || []).slice(0, 2).map(c => esc(c.city) + ' <b>' + fmt(c.homes) + '</b>').join(', ')}</span>` : ''}</div>
+      <div class="more" id="maMore"><div class="nums"><span><b>${fmt(a.old_no_permit)}</b> roofs 15+ years old on record${a.age_unknown != null ? ` (${fmt(a.old_documented || 0)} by permit, ${fmt(a.old_likely || 0)} by year built in a city with full permit records)` : ''}</span>${a.age_unknown != null ? `<span><b>${fmt(a.age_unknown)}</b> older houses, roof age unknown (no full permit records in that city)</span>` : ''}<span class="n075"><b>${fmt(a.homes_075)}</b> took ${plainIn(0.75)} hail or more</span>${(a.cities || []).length ? `<span>${(a.cities || []).slice(0, 2).map(c => esc(c.city) + ' <b>' + fmt(c.homes) + '</b>').join(', ')}</span>` : ''}</div>
       ${sts ? `<div class="st">Top streets: ${sts}</div>` : ''}
       <div class="mlinks"><button type="button" class="lnk" data-ma="hist">Past alerts</button><button type="button" class="lnk" data-ma="hide">Hide for today</button></div></div>`;
     const t = document.getElementById('hdMore'); if (t) t.remove();   // the card carries the one Details toggle
@@ -134,13 +134,23 @@
     const body = groups.map(g => `<div class="grp"><span>${esc(g.street)}, ${esc(g.city)}</span><span>${g.homes.length} home${g.homes.length > 1 ? 's' : ''}</span></div>` +
       g.homes.map(([n, h]) => `<button type="button" class="row" data-openhome="${esc(h.id)}"><i>${n}</i><span>${esc(h.addr)}<small>${esc(h.city)}${h.zip ? ' ' + esc(h.zip) : ''}${h.year ? ', built ' + h.year : ''}</small></span><em>${inch(h.hail)} in</em></button>`).join('')).join('');
     const added = (a.route || []).filter(h => RC.isAdded && RC.isAdded(h.id)).length;
-    openDlg(`<div class="hd"><h3 id="maT">Storm route, ${esc(lbl(a.storm, true))}<small>${(a.route || []).length} homes with ${inch(1)} in+ hail, an old roof and no re-roof permit on file, best streets first, each street by house number.</small></h3><button type="button" data-ma="close">Close</button></div>
-      <div class="bd">${body || '<p class="note">No homes on file for this storm.</p>'}<p class="note">Radar hail is NOAA's estimate per home, not an inspection. Old roof: ${esc(a.old_rule || '')}. Tap a home to open its record.</p></div>
+    openDlg(`<div class="hd"><h3 id="maT">Storm route, ${esc(lbl(a.storm, true))}<small>${(a.route || []).length} homes with ${inch(1)} in+ hail on houses 15+ years old (old roofs on record first, then roof age unknown), best streets first, each street by house number.</small></h3><button type="button" data-ma="close">Close</button></div>
+      <div class="bd">${body || '<p class="note">No homes on file for this storm.</p>'}<p class="note">Radar hail is NOAA's estimate per home, not an inspection. Old roof: ${esc(a.old_rule || '')}${/unknown/.test(a.old_rule || '') ? '' : '. A missing permit does not prove an old roof'}. Tap a home to open its record.</p></div>
       <div class="ft"><button type="button" class="pri" data-ma="add">${added === (a.route || []).length && added ? 'On Today\'s list' : 'Put the route on Today\'s list'}</button><button type="button" data-ma="map">See the storm on the map</button><button type="button" data-ma="hist">Past alerts</button></div>`);
   }
 
+  // roofs 15+ years old ON RECORD (a re-roof permit, or built that long ago in a city with a complete permit list) vs older
+  // houses whose roof age is unknown (no complete permit list there: Plano, Frisco). Alerts before v2 had one number.
+  function oldLine(a, short) {
+    const old = a.old_no_permit || 0, unk = a.age_unknown;
+    if (unk == null) return short ? `${fmt(old)} older houses` : `${fmt(old)} older houses, no re-roof permit on file`;
+    if (short) return old ? `${fmt(old)} old roofs on record` + (unk ? `, ${fmt(unk)} roof age unknown` : '') : `${fmt(unk)} older houses, roof age unknown`;
+    return old ? `${fmt(old)} have roofs 15+ years old on record` + (unk ? `, ${fmt(unk)} more are older houses with roof age unknown` : '')
+      : `${fmt(unk)} are older houses, roof age unknown`;
+  }
+
   function history() {
-    const rows = ALL.map(a => `<button type="button" class="hist" data-ma-open="${esc(a.id)}"><b>${esc(wk(a.storm))}, ${esc(lbl(a.storm, true))}: up to ${inch(a.max_in)} in</b><span>${fmt(a.homes_hit)} homes hit, ${fmt(a.old_no_permit)} old roofs with no permit. Alert ${esc(lbl(a.alert_day, true))}${(a.top_streets || [])[0] ? ', top street ' + esc(a.top_streets[0].street) : ''}.</span></button>`).join('');
+    const rows = ALL.map(a => `<button type="button" class="hist" data-ma-open="${esc(a.id)}"><b>${esc(wk(a.storm))}, ${esc(lbl(a.storm, true))}: up to ${inch(a.max_in)} in</b><span>${fmt(a.homes_hit)} homes hit, ${oldLine(a, true)}. Alert ${esc(lbl(a.alert_day, true))}${(a.top_streets || [])[0] ? ', top street ' + esc(a.top_streets[0].street) : ''}.</span></button>`).join('');
     openDlg(`<div class="hd"><h3 id="maT">Storm alerts<small>Every morning-after alert on file, newest first. One goes out the morning after 1 in+ hail hits your homes.</small></h3><button type="button" data-ma="close">Close</button></div>
       <div class="bd">${rows}</div>`);
   }

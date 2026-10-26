@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find homes | Roof Command</title>
+<script src="../lib/rc-frame-pause.js"></script><!-- parked by the shell = no drawing -->
+<script src="../lib/rc-state.js"></script>
+<script src="../lib/brand.js"></script>
+<script src="../lib/st-meta.js"></script>
+<script src="../lib/rc-scores.js"></script>
+<link rel="stylesheet" href="../vendor/maplibre-gl@4.7.1/maplibre-gl.css">
+<!-- Find homes (Jack's proposal features 3 + 4, 10-26): search every house by roof age and how sure we are, storm, roof,
+     property type, place, CRM status, score and contact eligibility; save a search as a daily work queue (optional alert);
+     the best neighborhoods (blocks) as a ranked list and a map layer; assign homes or a saved search to a rep ("My list").
+     Property and project facts only. Addresses only, never owner names. Nothing sends. -->
+<style>
+@font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;src:url(../lib/st-fonts/inter-var-latin.woff2) format('woff2')}
+:root{--ink:#0B1020;--ink-2:#2A3246;--slate:#5A6378;--line:#D5D9E0;--line-2:#E6E8ED;--tint:#F1F5FA;--blue:#1F47C9;--green:#11734B;--amber:#8A5A00;--grey:#9AA1AF;--bg:#F7F8FA}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1;
+  background:radial-gradient(ellipse 60% 48% at 50% 40%,rgba(255,255,255,.95),rgba(255,255,255,0) 70%),linear-gradient(180deg,#B9BEC9 0%,#D5D9E0 30%,#ECEEF2 62%,#F7F8FA 100%);background-attachment:fixed}
+button,select,input{font:inherit;color:inherit}
+a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding:18px 24px 110px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.top h1{margin:0;font-size:22px;font-weight:650;letter-spacing:-.01em}
+.top p{margin:4px 0 0;font-size:13.5px;color:var(--slate);max-width:640px;line-height:1.45}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:8px;background:#fff;border:1px solid var(--line)}
+.seg button{font-size:13.5px;font-weight:550;border:0;background:transparent;color:var(--slate);padding:7px 14px;border-radius:6px;cursor:pointer;min-height:36px}
+.seg button.on{background:var(--ink);color:#fff}
+.pan{background:#fff;border:1px solid var(--line);border-radius:8px}
+.grid{display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start}
+.grid.reps{grid-template-columns:320px 1fr}
+.filters{padding:6px 0;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+.fg{padding:10px 16px;border-bottom:1px solid var(--line-2)}
+.fg:last-child{border-bottom:0}
+.fg h3{margin:0 0 7px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;min-height:32px}
+.chips button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.fg select,.fg input[type=text]{width:100%;height:36px;border:1px solid var(--line);border-radius:6px;padding:0 8px;background:#fff;font-size:13.5px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fg small{display:block;color:var(--slate);font-size:12px;margin-top:6px;line-height:1.4}
+.btn{font-size:13.5px;font-weight:550;height:36px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:0 12px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--tint)}
+.btn.p{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.p:hover{background:#1A3DB0}
+.btn:disabled{opacity:.45;cursor:default}
+.res .hd{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line-2)}
+.res .hd b{font-size:15px}
+.res .hd span{font-size:13px;color:var(--slate)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#map{height:340px;border-bottom:1px solid var(--line-2);position:relative}
+#map.off{display:none}
+.mapnote{position:absolute;left:10px;top:10px;z-index:2;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12.5px;max-width:70%}
+.list{max-height:none}
+.h{display:grid;grid-template-columns:28px 56px 1fr auto;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line-2);cursor:pointer}
+.h:hover{background:#FAFBFD}
+.h:last-child{border-bottom:0}
+.h input{width:18px;height:18px;margin:0}
+.sc{display:grid;place-items:center;width:52px;height:44px;border-radius:8px;background:var(--tint);font-weight:700;font-size:19px;line-height:1}
+.sc small{font-size:10px;font-weight:600;color:var(--slate);letter-spacing:.03em}
+.sc.hi{background:#E7EEFF;color:var(--blue)}
+.ad b{font-size:14.5px;font-weight:600}
+.ad p{margin:2px 0 0;font-size:13px;color:var(--ink-2);line-height:1.4}
+.ad .why{color:var(--slate);font-size:12.5px}
+.cf{font-size:11.5px;font-weight:600;border-radius:999px;padding:3px 9px;white-space:nowrap;border:1px solid var(--line)}
+.cf.high{background:#E6F4EC;border-color:#BFE3CE;color:var(--green)}
+.cf.medium{background:#FFF5E0;border-color:#F1DDB0;color:var(--amber)}
+.cf.low{background:#FFF0E6;border-color:#F3D2BC;color:#8A3B00}
+.cf.unknown{background:#F1F2F5;color:var(--slate)}
+.h.ml{grid-template-columns:56px 1fr auto auto}
+.h.ineligible{opacity:.55}
+.h.ineligible .sc{background:#EEF0F3;color:var(--grey)}
+.no{display:inline-block;margin-top:3px;font-size:12px;font-weight:600;color:#9B1C1C;background:#FDECEC;border-radius:4px;padding:1px 6px}
+.rep{display:inline-block;margin-left:6px;font-size:11.5px;font-weight:600;color:var(--blue);background:#E7EEFF;border-radius:4px;padding:1px 6px}
+.empty{padding:22px 16px;color:var(--slate);font-size:14px;line-height:1.5}
+.more{padding:10px 16px;font-size:12.5px;color:var(--slate)}
+.card{padding:14px 16px;border-bottom:1px solid var(--line-2);display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.card:last-child{border-bottom:0}
+.card h4{margin:0;font-size:15px;font-weight:600}
+.card p{margin:3px 0 0;font-size:13px;color:var(--slate);line-height:1.45}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2);cursor:pointer}
+.sw input{width:18px;height:18px}
+.blk{grid-template-columns:40px 1fr auto}
+.rk{font-weight:700;font-size:16px;color:var(--slate);text-align:center}
+.bar{display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--line-2);margin-top:7px;max-width:260px}
+.bar i{display:block;height:100%}
+.parts{display:none;font-size:12.5px;color:var(--ink-2);margin-top:6px;line-height:1.5}
+.card.open .parts{display:block}
+dialog{border:1px solid var(--line);border-radius:10px;padding:0;max-width:440px;width:calc(100% - 32px)}
+dialog .dh{padding:14px 16px;border-bottom:1px solid var(--line-2);font-weight:650}
+dialog .db{padding:14px 16px;display:grid;gap:10px;font-size:14px}
+dialog .df{padding:12px 16px;border-top:1px solid var(--line-2);display:flex;gap:8px;justify-content:flex-end}
+dialog label{display:grid;gap:4px;font-size:13px;color:var(--slate)}
+dialog input[type=text],dialog select{height:38px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-size:14px;color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:8px;padding:10px 14px;font-size:13.5px;z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.foot{margin:10px 2px 0;font-size:12px;color:var(--slate);line-height:1.5}
+.ftog{display:none}
+@media (max-width:860px){
+  .wrap{padding:12px 16px 110px}
+  .grid,.grid.reps{grid-template-columns:1fr}
+  .filters{position:static;max-height:none;display:none}
+  .filters.open{display:block}
+  .ftog{display:inline-flex}
+  .h{grid-template-columns:24px 48px 1fr;gap:10px;padding:10px 12px}
+  .h .cfw{grid-column:3;justify-self:start}
+  .h.ml{grid-template-columns:48px 1fr}
+  .h.ml .cf,.h.ml [data-un]{grid-column:2;justify-self:start}
+  .sc{width:46px;height:40px;font-size:17px}
+  #map{height:260px}
+  .top h1{font-size:20px}
+  .seg{width:100%;overflow-x:auto}
+  .seg button{flex:1 0 auto;padding:7px 10px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><h1>Find homes</h1><p>Search every house you cover by roof, storm, place and score. Save a search and it becomes a daily list. Give homes to a rep.</p></div>
+    <div class="seg" role="tablist" aria-label="Find homes">
+      <button type="button" role="tab" data-v="search" class="on" aria-selected="true">Search</button>
+      <button type="button" role="tab" data-v="saved" aria-selected="false">Saved searches</button>
+      <button type="button" role="tab" data-v="nb" aria-selected="false">Best blocks</button>
+      <button type="button" role="tab" data-v="reps" aria-selected="false">Rep lists</button>
+    </div>
+  </div>
+
+  <section id="vSearch">
+    <div class="grid">
+      <aside class="pan filters" id="filters" aria-label="Filters"></aside>
+      <section class="pan res">
+        <div class="hd">
+          <div><b id="count">Loading every house…</b> <span id="countSub"></span></div>
+          <div class="acts">
+            <button type="button" class="btn ftog" id="fTog" aria-expanded="false">Filters</button>
+            <button type="button" class="btn" id="mapTog" aria-pressed="true">Hide map</button>
+            <button type="button" class="btn" id="saveBtn">Save this search</button>
+            <button type="button" class="btn p" id="assignBtn" disabled>Give to a rep</button>
+          </div>
+        </div>
+        <div id="map"><div class="mapnote" id="mapNote" hidden></div></div>
+        <div class="list" id="list"></div>
+      </section>
+    </div>
+    <p class="foot" id="foot"></p>
+  </section>
+
+  <section id="vSaved" class="pan" hidden></section>
+  <section id="vNb" hidden>
+    <div class="pan res"><div class="hd"><div><b>Best blocks to work</b> <span>Ranked by strong homes close together, storm and replies, not by how many houses a street has.</span></div>
+      <div class="acts"><select id="nbCity" class="btn" aria-label="City"><option value="">All cities</option></select></div></div>
+      <div id="nbMap" style="height:340px;border-bottom:1px solid var(--line-2)"></div>
+      <div id="nbList"></div></div>
+  </section>
+  <section id="vReps" hidden>
+    <div class="grid reps">
+      <aside class="pan"><div class="fg"><h3>Reps</h3><div id="repList"></div>
+        <form id="repForm" style="display:flex;gap:8px;margin-top:10px"><input type="text" id="repName" placeholder="Add a rep, like Jake" aria-label="Rep name" style="flex:1;height:36px;border:1px solid var(--line);border-radius:6px;padding:0 8px"><button class="btn" type="submit">Add</button></form>
+        <small>Reps live in your settings. Each rep gets a My list of the homes you give them.</small></div></aside>
+      <section class="pan res"><div class="hd"><div><b id="mlTitle">My list</b> <span id="mlSub"></span></div><div class="acts"><button type="button" class="btn" id="prepBtn">Prepare assignments</button></div></div><div id="myList"></div></section>
+    </div>
+  </section>
+</div>
+<dialog id="dlg"><div class="dh" id="dlgT"></div><div class="db" id="dlgB"></div><div class="df" id="dlgF"></div></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+<script src="../vendor/maplibre-gl@4.7.1/maplibre-gl.js"></script>
+<script src="find.js"></script>
+</body>
+</html>

@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="lib/nimbus-shell.css">
 <link rel="stylesheet" href="lib/nimbus-assistant.css">
 <link rel="stylesheet" href="lib/nimbus-truck.css">
+<link rel="stylesheet" href="lib/nimbus-talk.css">
 <link rel="stylesheet" href="lib/rc-physical.css">
 <style>
 @font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;src:url(lib/st-fonts/inter-var-latin.woff2) format('woff2')}
@@ -78,6 +79,8 @@ main.phone .stage{width:390px;height:min(844px,100%);border-radius:28px}
 html[data-rc] body>header .wstorm .n{display:none}
 html[data-rc] body[data-screen="daily"]>header .wstorm{display:none}
 @media (max-width:1599px){ html[data-rc] body>header .sig{display:none} }
+/* six tabs since Find (10-26): tighter tabs on a phone so Results still fits at 375 */
+@media (max-width:480px){ html[data-rc] body>header nav button{padding:5px 8px;font-size:14px} }
 </style>
 <style>.rc-prop{flex:none;height:32px;display:inline-flex;align-items:center;padding:0 12px;border-radius:6px;background:#fff;border:1px solid #D5D9E0;color:#0B1020;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap}.rc-prop:hover{background:#F1F5FA;border-color:#0D6C99;color:#0D6C99}.rc-prop .ps{display:none}header{transition:opacity .5s ease}html.rc-opening header{opacity:0;pointer-events:none}@media (max-width:899px){.rc-prop{order:2;height:44px;padding:0 14px}}@media (max-width:599px){.rc-prop .pl{display:none}.rc-prop .ps{display:inline}}@media (max-width:430px){header .co>div{display:none}}</style>
 <script>(function(){var d=document.documentElement;function f(){var seen=false;try{seen=!!sessionStorage.getItem('rc.introSeen')}catch(e){}var h=location.hash;d.classList.toggle('rc-opening',/^#\/opening\/?$/.test(h)||(!h&&!seen&&!/[?&]nointro=1/.test(location.search)))}f();addEventListener('hashchange',f);setInterval(f,250)})()</script>
@@ -103,8 +106,9 @@ html[data-rc] body[data-screen="daily"]>header .wstorm{display:none}
 <script src="lib/rc-setup.js"></script><!-- Company setup, from the account menu -->
 <script src="lib/auth.js"></script>
 <script src="lib/st-meta.js"></script><!-- the county roll copies: the header search reads them on every screen -->
-<script src="lib/rc-find.js"></script><!-- header search: every home, street, ZIP, city, owner; results open in the CRM -->
-<script src="lib/nimbus-tools.js"></script><script src="lib/nimbus-brain.js"></script><script src="lib/nimbus-assistant.js"></script><script src="lib/nimbus-truck.js"></script><!-- Nimbus assistant: talk, he runs the app (tools ring what they touch; nothing sends) -->
+<script src="lib/rc-find.js"></script>
+<script src="lib/rc-scores.js"></script><!-- RCS: search, score, explain-evidence, save-segment, assign (for Nimbus; 10-26) --><!-- header search: every home, street, ZIP, city, owner; results open in the CRM -->
+<script src="lib/nimbus-tools.js"></script><script src="lib/nimbus-settings.js"></script><script src="lib/nimbus-data.js"></script><script src="lib/nimbus-brain.js"></script><script src="lib/nimbus-assistant.js"></script><script src="lib/nimbus-truck.js"></script><script src="lib/nimbus-talk.js"></script><!-- Nimbus assistant: talk, he runs the app (tools ring what they touch; nothing sends) -->
 <script>
 /* One shell, real routes. #/opening (About), #/storm, #/storm/<iso>, #/daily, #/daily/<n>, #/ask (?q=, opens the Nimbus panel), and the CRM:
    #/crm (inbox), #/crm/inbox/<id> (a thread open), #/crm/pipeline (the board), #/crm/home/<id> (one home's record).
@@ -117,6 +121,7 @@ const screens={
   storm:{label:'Storms',page:'1b-storm-theater.html'},
   daily:{label:'Today',page:'c4-command-deck/deck.html'},
   home:{label:'CRM',page:'c5-home/index.html',path:'crm'},   /* screen key stays 'home' (RC.go('home') everywhere); the URL says crm */
+  find:{label:'Find',page:'c10-find/index.html'},   /* Find homes (10-26): search + saved searches + best blocks + rep lists (lib/rc-scores.js) */
   seo:{label:'SEO',page:'c8-seo/index.html'},   /* the blog posts and service pages Wing published for the roofer (lib/seo-jackson.json, 10-26) */
   results:{label:'Results',page:'c9-results/index.html'}   /* leads, inspections, jobs won and revenue by lead source (lib/rc-results.js, migration 012, 10-26) */
   /* Weekly (c7-weekly) removed from the app (Jack 10-15); old #/weekly links land on Today via ALIAS */
@@ -124,7 +129,7 @@ const screens={
 /* Ask is no longer a tab (Jack 10-11): the Nimbus orb, bottom-right, opens the full Ask Nimbus page (c2-nimbus) as a panel.
    #/ask and RC.go('ask') open that panel on whatever screen is up. */
 const ALIAS={crm:'home',weekly:'daily'};
-const ORDER=['daily','storm','home','seo','results'];
+const ORDER=['daily','storm','home','find','seo','results'];
 const nav=document.getElementById('nav'),stage=document.getElementById('f'),main=document.getElementById('main');
 const PLACEHOLDER='<!doctype html><meta charset=utf-8><style>@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url(lib/st-fonts/inter-var-latin.woff2) format("woff2")}body{margin:0;height:100vh;display:grid;place-items:center;font-family:"Inter",system-ui,sans-serif;color:#0B1020;background:#F7F8FA}div{text-align:center;max-width:420px;padding:24px}h1{font-size:22px;font-weight:600;margin:0 0 8px}p{margin:0;color:#465065;line-height:1.5}</style><div><h1>The CRM screen is being built</h1><p>Every conversation, the pipeline and each home with its roof. Check back shortly.</p></div>';
 const q=new URLSearchParams(location.search);

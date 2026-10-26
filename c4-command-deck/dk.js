@@ -188,7 +188,8 @@
   // (data/build_dfw_route.py). People, phones and opt-ins are added by the page and labelled sample.
   const ABBR = { Avenue: 'Ave', Street: 'St', Drive: 'Dr', Lane: 'Ln', Boulevard: 'Blvd', Court: 'Ct', Parkway: 'Pkwy', Terrace: 'Ter', Road: 'Rd', Place: 'Pl', Circle: 'Cir' };
   const short = (s) => s.replace(/\b(Avenue|Street|Drive|Lane|Boulevard|Court|Parkway|Terrace|Road|Place|Circle)\b/g, (m) => ABBR[m]);
-  function roofAge(s) { return s.permit ? 'Reroof permit ' + s.permit.slice(0, 4) : s.year ? `Built ${s.year}, no reroof permit on file` : 'No reroof permit on file, year built not on file'; }
+  // the roof-age rule (RC.roofEvidence, 10-26): no permit outside a complete-permit city = roof age unknown, never an old roof
+  function roofAge(s) { return s.permit ? 'Reroof permit ' + s.permit.slice(0, 4) : RC.roofEvidence(s.city, s.year, null).text; }
   function homes(key) {
     const r = ROOFERS[key] || ROOFERS[DEFAULT_KEY]; key = dataKey(key); const route = (window.ROUTES || {})[key];
     const out = route.stops.map((s, i) => {
