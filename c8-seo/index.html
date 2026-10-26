@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEO | Roof Command</title>
+<script src="../lib/rc-frame-pause.js"></script><!-- parked by the shell = no drawing -->
+<!-- SEO: every blog post and service page Wing has published on the roofer's site. Data: ../lib/seo-jackson.json,
+     written by scripts/seo/build_seo_jackson.py from the site repo (origin/main) and checked live. Real pages only. -->
+<style>
+@font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;src:url(../lib/st-fonts/inter-var-latin.woff2) format('woff2')}
+:root{--ink:#0B1020;--ink-2:#2A3246;--slate:#5A6378;--line:#D5D9E0;--line-2:#E6E8ED;--tint:#F1F5FA;--blue:#1F47C9}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1;
+  background:radial-gradient(ellipse 60% 48% at 50% 40%,rgba(255,255,255,.95),rgba(255,255,255,0) 70%),linear-gradient(180deg,#B9BEC9 0%,#D5D9E0 30%,#ECEEF2 62%,#F7F8FA 100%);background-attachment:fixed}
+a{color:inherit}
+a:focus-visible,button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 24px 110px}
+.pan{background:#fff;border:1px solid var(--line);border-radius:8px}
+.hd{padding:18px 20px 14px;border-bottom:1px solid var(--line-2)}
+.hd h1{margin:0;font-size:18px;font-weight:600;letter-spacing:-.01em}
+.hd p{margin:4px 0 0;font-size:13px;color:var(--slate);line-height:1.45}
+.hd p a{color:var(--ink-2)}
+.sum{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line-2)}
+.sum div{flex:1 1 140px;padding:14px 20px;border-right:1px solid var(--line-2)}
+.sum div:last-child{border-right:0}
+.sum b{display:block;font-size:24px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.sum span{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--slate)}
+.tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--line-2)}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:8px;background:var(--tint);border:1px solid var(--line-2)}
+.seg button{font:inherit;font-size:13px;font-weight:500;border:0;background:transparent;color:var(--slate);padding:6px 12px;border-radius:6px;cursor:pointer;min-height:32px}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(11,16,32,.12)}
+.tools .n{font-size:12.5px;color:var(--slate);margin-left:auto}
+.cols,.row{display:grid;grid-template-columns:minmax(0,1fr) 110px minmax(0,.62fr) 104px 92px;gap:16px;align-items:center}
+.cols{padding:10px 20px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--slate);border-bottom:1px solid var(--line-2)}
+.list{list-style:none;margin:0;padding:0}
+.row{padding:13px 20px;border-bottom:1px solid var(--line-2);font-size:13.5px}
+.list li:last-child .row{border-bottom:0}
+.row .t{font-weight:600;line-height:1.35;color:var(--ink);text-decoration:none}
+.row .t:hover{text-decoration:underline}
+.row .ty,.row .d{color:var(--ink-2)}
+.row .k{color:var(--slate)}
+.row .op{justify-self:end;text-decoration:none;height:32px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:12.5px;font-weight:500;color:var(--ink);display:inline-flex;align-items:center;gap:6px;padding:0 10px;white-space:nowrap}
+.row .op:hover{background:var(--tint)}
+.row .op svg{width:12px;height:12px}
+.row .m{display:none}
+.nx{margin-top:16px}
+.nx .hd{border-bottom:1px solid var(--line-2)}
+.nx .hd h2{margin:0;font-size:15px;font-weight:600}
+.nx li{display:flex;gap:16px;justify-content:space-between;align-items:baseline;padding:12px 20px;border-bottom:1px solid var(--line-2);font-size:13.5px}
+.nx li:last-child{border-bottom:0}
+.nx li span{color:var(--slate);font-size:12.5px;text-align:right}
+.foot{margin:12px 2px 0;font-size:12px;color:var(--slate)}
+.err{padding:28px 20px;color:var(--slate);font-size:14px}
+@media (max-width:899px){
+  .cols{display:none}
+  .row{grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:14px 16px}
+  .row .ty,.row .k,.row .d{display:none}
+  .row .m{display:block;grid-column:1;font-size:12.5px;color:var(--slate);line-height:1.45}
+  .row .op{grid-column:2;grid-row:1 / span 2;align-self:center}
+}
+@media (max-width:599px){
+  .wrap{padding:12px 12px 120px}
+  .hd{padding:16px}
+  .sum div{flex:1 1 50%;padding:12px 16px;border-right:0;border-bottom:1px solid var(--line-2)}
+  .sum div:nth-child(odd){border-right:1px solid var(--line-2)}
+  .sum div:nth-last-child(-n+2){border-bottom:0}
+  .sum b{font-size:21px}
+  .tools{padding:10px 16px}
+  .tools .n{display:none}
+  .seg{width:100%}
+  .seg button{flex:1 1 auto;min-height:40px;white-space:nowrap;padding:6px 8px}
+  .row .op{height:40px;padding:0 12px}
+  .row .op .w{display:none}
+  .nx li{flex-direction:column;gap:3px;padding:12px 16px}
+  .nx li span{text-align:left}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="pan" aria-labelledby="h">
+    <div class="hd">
+      <h1 id="h">SEO work</h1>
+      <p id="sub">Every blog post and service page Wing has published on your website.</p>
+    </div>
+    <div class="sum" id="sum"></div>
+    <div class="tools">
+      <div class="seg" role="group" aria-label="Show">
+        <button type="button" data-f="all" class="on" aria-pressed="true">All</button>
+        <button type="button" data-f="blog" aria-pressed="false">Blog posts</button>
+        <button type="button" data-f="service" aria-pressed="false">Service pages</button>
+      </div>
+      <span class="n" id="n"></span>
+    </div>
+    <div class="cols" aria-hidden="true"><span>Page</span><span>Type</span><span>Target keyword</span><span>Published</span><span></span></div>
+    <ul class="list" id="list"></ul>
+  </section>
+  <section class="pan nx" id="nx" hidden aria-labelledby="hn">
+    <div class="hd"><h2 id="hn">Coming next</h2><p>Topics queued for your blog, written and published by Wing.</p></div>
+    <ul class="list" id="nxl"></ul>
+  </section>
+  <p class="foot" id="foot"></p>
+</main>
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const LONG=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const day=iso=>{const [y,m,d]=String(iso).split('-').map(Number);return y?`${MON[m-1]} ${d}, ${y}`:'';};
+  const TYPE={blog:'Blog post',service:'Service page'};
+  const ICON='<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 2H2v8h8V7.5M7 2h3v3M10 2 5.5 6.5"/></svg>';
+  let D=null,F='all';
+  function draw(){
+    const items=D.items.filter(i=>F==='all'||i.type===F);
+    $('n').textContent=`${items.length} ${items.length===1?'page':'pages'}, newest first`;
+    $('list').innerHTML=items.map(i=>{
+      const g=i.gsc?` · ${i.gsc.clicks} clicks`:'';
+      return `<li><div class="row">
+        <a class="t" href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title)}</a>
+        <span class="ty">${TYPE[i.type]}</span>
+        <span class="k">${esc(i.keyword)}</span>
+        <span class="d">${day(i.date)}</span>
+        <span class="m">${TYPE[i.type]} · ${day(i.date)}${i.keyword?` · ${esc(i.keyword)}`:''}${g}</span>
+        <a class="op" href="${esc(i.url)}" target="_blank" rel="noopener" aria-label="Open ${esc(i.title)} on your website">${ICON}<span class="w">Open page</span></a>
+      </div></li>`;}).join('');
+  }
+  function paint(d){
+    D=d; const c=d.counts, now=new Date(d.generated);
+    if(d.roofer) $('h').textContent='SEO work for '+d.roofer;
+    const host=d.site.replace(/^https?:\/\//,'').replace(/\/$/,'');
+    $('sub').innerHTML=`Every blog post and service page Wing has published on your website, <a href="${esc(d.site)}" target="_blank" rel="noopener">${esc(host)}</a>.`;
+    const tiles=[[c.total,'Pages published'],[c.blog,'Blog posts'],[c.service,'Service pages'],[c.this_month,'Published in '+LONG[now.getMonth()]]];
+    if(d.gsc&&c.clicks!=null) tiles.push([c.clicks,'Clicks from Google']);
+    $('sum').innerHTML=tiles.map(([v,l])=>`<div><b>${v}</b><span>${l}</span></div>`).join('');
+    if(d.next&&d.next.length){ $('nx').hidden=false; $('nxl').innerHTML=d.next.map(n=>`<li><b>${esc(n.title)}</b><span>${esc(n.keyword)}</span></li>`).join(''); }
+    $('foot').textContent=`Updated ${day(d.generated.slice(0,10))} from your live website.`;
+    draw();
+  }
+  document.querySelector('.seg').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return; F=b.dataset.f;
+    document.querySelectorAll('.seg button').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on);});
+    if(D) draw();
+  });
+  fetch('../lib/seo-jackson.json',{cache:'no-cache'}).then(r=>{if(!r.ok) throw 0; return r.json();}).then(paint)
+    .catch(()=>{ $('list').innerHTML='<li class="err">The SEO list did not load. Refresh to try again.</li>'; });
+  window.__ready=true;
+})();
+</script>
+</body>
+</html>

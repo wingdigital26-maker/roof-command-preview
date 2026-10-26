@@ -35,7 +35,7 @@
 .ma .x{position:absolute;top:4px;right:4px;min-height:28px;width:28px;padding:0;border:0;background:none;color:var(--c-slate,#5A6378);font-size:16px;line-height:1}
 .ma{position:relative}
 .ma .acts .lnk{border:0;background:none;color:var(--c-slate,#5A6378);font-weight:500;min-height:28px}
-.madlg{border:0;padding:0;border-radius:8px;background:#fff;color:var(--c-ink,#0B1020);width:min(560px,calc(100% - 24px));max-height:calc(100dvh - 60px);box-shadow:0 30px 60px -20px rgba(11,16,32,.4);font-family:inherit}
+.madlg{margin:auto;border:0;padding:0;border-radius:8px;background:#fff;color:var(--c-ink,#0B1020);width:min(560px,calc(100% - 24px));max-height:calc(100dvh - 60px);box-shadow:0 30px 60px -20px rgba(11,16,32,.4);font-family:inherit}
 .madlg::backdrop{background:rgba(11,16,32,.35)}
 .madlg .hd{display:flex;align-items:flex-start;gap:12px;padding:18px 20px 10px;border-bottom:1px solid var(--c-line-2,#E6E8ED)}
 .madlg .hd h3{margin:0;font-size:17px;font-weight:600;flex:1;line-height:1.3}
@@ -64,7 +64,11 @@
   .ma .acts button{flex:1 1 auto;min-height:40px}
   .ma .acts .lnk{flex:0 0 auto}
   .madlg{width:100%;max-width:none;margin:auto 0 0;border-radius:12px 12px 0 0;max-height:88dvh}
-  .madlg .bd{max-height:calc(88dvh - 170px)}
+  .madlg .bd{max-height:calc(88dvh - 200px)}
+  .madlg .ft{gap:6px;padding:10px 14px 14px}
+  .madlg .ft button{flex:1 1 40%;min-height:44px;padding:0 10px}
+  .madlg .ft button.pri{flex-basis:100%}
+  .ma .st,.ma .nums .n075{display:none}
 }`;
   document.head.appendChild(css);
 
@@ -90,7 +94,7 @@
     el.innerHTML = `<button type="button" class="x" data-ma="hide" aria-label="Hide this alert for today">&times;</button>
       <div><div class="k"><b>Morning after</b><span>${esc(wk(a.storm))}, ${esc(lbl(a.storm, false))} storm${today ? '' : ', ' + esc(lbl(a.alert_day, false)) + ' alert'}</span></div>
       <h2>Hail up to ${inch(a.max_in)} in hit ${fmt(a.homes_hit)} of your homes</h2>
-      <div class="nums"><span><b>${fmt(a.old_no_permit)}</b> old roofs, no re-roof permit</span><span><b>${fmt(a.homes_075)}</b> with 0.75 in+</span>${(a.cities || []).length ? `<span>${(a.cities || []).slice(0, 2).map(c => esc(c.city) + ' <b>' + fmt(c.homes) + '</b>').join(', ')}</span>` : ''}</div>
+      <div class="nums"><span><b>${fmt(a.old_no_permit)}</b> old roofs, no re-roof permit</span><span class="n075"><b>${fmt(a.homes_075)}</b> with 0.75 in+ hail</span>${(a.cities || []).length ? `<span>${(a.cities || []).slice(0, 2).map(c => esc(c.city) + ' <b>' + fmt(c.homes) + '</b>').join(', ')}</span>` : ''}</div>
       ${sts ? `<div class="st">Top streets: ${sts}</div>` : ''}</div>
       <div class="acts"><button type="button" class="pri" data-ma="route">Today's route is ready (${(a.route || []).length})</button><button type="button" class="lnk" data-ma="hist">Past alerts</button></div>`;
   }

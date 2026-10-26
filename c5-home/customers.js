@@ -24,14 +24,15 @@
     ['referral', 'Referral', [['asked', 'Asked'], ['replied', 'Replied'], ['done', 'Referral given']]],
     ['testimonial', 'Testimonial', [['asked', 'Asked'], ['replied', 'Replied'], ['done', 'Testimonial in']]]
   ];
-  const FIELDS = [['name', 'Name', /^(full ?)?name|customer|client|homeowner/i], ['phone', 'Phone', /phone|mobile|cell|tel/i], ['email', 'Email', /e-?mail/i],
-    ['addr', 'Address', /address|street|addr/i], ['city', 'City', /^city|town/i], ['zip', 'ZIP', /zip|postal/i], ['jobDate', 'Job date', /date|completed|installed|finished|when/i], ['jobType', 'Job type', /type|job|work|service|product|scope/i]];
+  const FIELDS = [['name', 'Name', /^(full ?)?name|customer|client|homeowner/i], ['first', 'First name', /first/i], ['last', 'Last name', /last|surname/i], ['phone', 'Phone', /phone|mobile|cell|tel/i], ['email', 'Email', /e-?mail/i],
+    ['addr', 'Address', /address|street|addr/i], ['city', 'City', /^city|town/i], ['zip', 'ZIP', /zip|postal/i], ['jobDate', 'Job date', /date|completed|installed|finished|when/i], ['jobType', 'Job type', /type|job|work|service|product|scope/i], ['ok', 'OK to contact', /ok.?to|consent|contact|opt/i]];
+  // the onboarding packet's template (tour/onboarding/past-customers-template.csv): first_name, last_name, ..., ok_to_contact
 
   // ---------- the list ----------
   const SEED = [
     { id: 'pc-s1', name: 'Alex Sample', phone: '(972) 555-0101', email: 'alex.sample@example.com', gi: 222352, addr: '3726 Navarro Way', city: 'Frisco', zip: '75034', jobDate: '2026-06-20', jobType: 'Full re-roof, architectural shingles', flows: { review: { s: 'done', at: '2026-07-02T15:00:00Z' }, referral: { s: 'asked', at: '2026-07-10T15:00:00Z' } } },
     { id: 'pc-s2', name: 'Jordan Sample', phone: '(972) 555-0102', email: 'jordan.sample@example.com', gi: 35368, addr: '8502 Holly St', city: 'Frisco', zip: '75034', jobDate: '2026-07-08', jobType: 'Full re-roof', flows: { review: { s: 'asked', at: '2026-07-15T15:00:00Z' } } },
-    { id: 'pc-s3', name: 'Casey Sample', phone: '(972) 555-0103', email: '', gi: 238844, addr: '821 Dublin Dr', city: 'Richardson', zip: '75080', jobDate: '2026-05-12', jobType: 'Hail repair and gutters', flows: { review: { s: 'done', at: '2026-05-20T15:00:00Z' }, referral: { s: 'done', at: '2026-06-01T15:00:00Z', note: 'Neighbor on Dublin Dr' }, testimonial: { s: 'done', at: '2026-06-03T15:00:00Z' } } },
+    { id: 'pc-s3', name: 'Casey Sample', phone: '(972) 555-0103', email: '', gi: 243978, addr: '202 Dublin Dr', city: 'Richardson', zip: '75080', jobDate: '2026-05-12', jobType: 'Hail repair and gutters', flows: { review: { s: 'done', at: '2026-05-20T15:00:00Z' }, referral: { s: 'done', at: '2026-06-01T15:00:00Z', note: 'Neighbor on Dublin Dr' }, testimonial: { s: 'done', at: '2026-06-03T15:00:00Z' } } },
     { id: 'pc-s4', name: 'Morgan Sample', phone: '(972) 555-0104', email: 'morgan.sample@example.com', gi: 259636, addr: '174 Lakeside Dr', city: 'Rockwall', zip: '75032', jobDate: '2026-08-02', jobType: 'Full re-roof, impact-rated shingles', flows: {} },
     { id: 'pc-s5', name: 'Riley Sample', phone: '(972) 555-0105', email: 'riley.sample@example.com', gi: 34209, addr: '5706 Grosseto Dr', city: 'Frisco', zip: '75034', jobDate: '2026-09-15', jobType: 'Full re-roof', flows: { testimonial: { s: 'replied', at: '2026-09-25T15:00:00Z' } } }
   ].map(c => Object.assign(c, { sample: true }));
@@ -62,7 +63,7 @@
       testimonial: [`${hi}, it's ${me}. Would you share a sentence or two about how your roof job went? A short text back is perfect, or a 20 second phone video if you are up for it. With your OK we would share it, first name only.`,
         'Two sentences about your roof job?', `${hi},\n\nIt's ${me}. Would you share a sentence or two about how your roof job went? A short reply to this email is perfect, or a 20 second phone video if you are up for it.\n\nWith your OK we would share it on our site and pages, first name only.\n\nThank you,\n${OWN || CO}`]
     }[k];
-    if (ch === 'sms') return { body: T[0] + ' Reply STOP to opt out.' };
+    if (ch === 'sms') return { body: T[0] + '\n\nReply STOP to opt out.' };
     return { subject: T[1], body: T[2] + "\n\nIf you would rather not hear from us, just reply and say so." };
   }
 
@@ -97,8 +98,8 @@
   function row(c) {
     const fl = FLOWS.map(([k, name]) => { const f = flowOf(c, k), s = f.s;
       return `<div class="pcf"><div class="t"><span>${name}</span>${f.at && s ? `<span>${esc(day(f.at))}</span>` : ''}</div><div class="s ${s === 'done' ? 'done' : s ? '' : 'off'}">${esc(stLabel(k, s))}</div>
-        <div class="b"><button type="button" class="pcb sm" data-p="ask" data-k="${k}" data-id="${esc(c.id)}">${s ? 'Again' : 'Ask'}</button><button type="button" class="pcb sm" data-p="status" data-k="${k}" data-id="${esc(c.id)}" aria-label="${name} status">Status</button></div></div>`; }).join('');
-    return `<div class="pcrow" role="listitem"><div class="who"><b>${esc(c.name || 'No name')}${c.sample ? '<span class="tag">Sample</span>' : ''}</b><span>${esc([c.addr, c.city].filter(Boolean).join(', ') || 'No address')}</span><span>${esc([jobDay(c.jobDate), c.jobType].filter(Boolean).join(', '))}</span></div>
+        <div class="b"><button type="button" class="pcb sm" data-p="ask" data-k="${k}" data-id="${esc(c.id)}"${c.noContact ? ' disabled title="Marked not OK to contact"' : ''}>${s ? 'Again' : 'Ask'}</button><button type="button" class="pcb sm" data-p="status" data-k="${k}" data-id="${esc(c.id)}" aria-label="${name} status">Status</button></div></div>`; }).join('');
+    return `<div class="pcrow" role="listitem"><div class="who"><b>${esc(c.name || 'No name')}${c.sample ? '<span class="tag">Sample</span>' : ''}${c.noContact ? '<span class="tag">Not OK to contact</span>' : ''}</b><span>${esc([c.addr, c.city].filter(Boolean).join(', ') || 'No address')}</span><span>${esc([jobDay(c.jobDate), c.jobType].filter(Boolean).join(', '))}</span></div>
       <div class="pcflows">${fl}</div>
       <div class="more"><button type="button" class="pcb sm" data-p="nbrs" data-id="${esc(c.id)}"${c.addr ? '' : ' disabled'}>Knock the neighbors</button><button type="button" class="pcb sm" data-p="edit" data-id="${esc(c.id)}">Edit</button></div></div>`;
   }
@@ -223,11 +224,14 @@
     open(hd('Import past customers', `${esc(fname)}: ${fmt(body.length)} rows. Match your columns, then import.`) +
       `<div class="bd"><div class="two">${FIELDS.map(([k, l]) => `<label>${l}<select data-f="${k}">${opt(k)}</select></label>`).join('')}</div>
       <div class="grp"><span>First rows, as they will import</span></div><div id="pcPrev"></div>
-      <p class="note">Rows with no name and no address are skipped. A row whose phone, email or address is already on your list is skipped too. Kept on this device only.</p></div>
+      <p class="note">Rows with no name and no address are skipped. A row marked not OK to contact comes in with its asks turned off. A row whose phone, email or address is already on your list is skipped too. Kept on this device only.</p></div>
       <div class="ft"><button type="button" class="pcb pri" id="pcImp">Import</button><button type="button" class="pcb" data-x>Cancel</button></div>`, d => {
       const map = () => { const m = {}; d.querySelectorAll('[data-f]').forEach(s => m[s.dataset.f] = +s.value); return m; };
-      const recOf = (r, m) => { const o = {}; FIELDS.forEach(([k]) => o[k] = m[k] >= 0 ? String(r[m[k]] || '').trim() : ''); const dd = o.jobDate && new Date(o.jobDate); if (dd && isFinite(dd) && !/^\d{4}-\d\d-\d\d$/.test(o.jobDate)) o.jobDate = dd.toISOString().slice(0, 10); return o; };
-      const prev = () => { const m = map(); d.querySelector('#pcPrev').innerHTML = `<table><tr>${FIELDS.map(f => `<th>${f[1]}</th>`).join('')}</tr>${body.slice(0, 3).map(r => { const o = recOf(r, m); return `<tr>${FIELDS.map(([k]) => `<td>${esc(o[k])}</td>`).join('')}</tr>`; }).join('')}</table>`; };
+      const recOf = (r, m) => { const o = {}; FIELDS.forEach(([k]) => o[k] = m[k] >= 0 ? String(r[m[k]] || '').trim() : ''); if (!o.name && (o.first || o.last)) o.name = (o.first + ' ' + o.last).trim(); delete o.first; delete o.last;
+        o.noContact = /^(no|n|false|0)$/i.test(o.ok || ''); delete o.ok; if (!o.noContact) delete o.noContact;
+        const dd = o.jobDate && new Date(o.jobDate); if (dd && isFinite(dd) && !/^\d{4}-\d\d-\d\d$/.test(o.jobDate)) o.jobDate = dd.toISOString().slice(0, 10); return o; };
+      const prev = () => { const m = map(); const PV = [['name', 'Name'], ['phone', 'Phone'], ['addr', 'Address'], ['city', 'City'], ['jobDate', 'Job date'], ['jobType', 'Job type']];
+        d.querySelector('#pcPrev').innerHTML = `<table><tr>${PV.map(f => `<th>${f[1]}</th>`).join('')}<th>Contact</th></tr>${body.slice(0, 3).map(r => { const o = recOf(r, m); return `<tr>${PV.map(([k]) => `<td>${esc(o[k])}</td>`).join('')}<td>${o.noContact ? 'No' : 'OK'}</td></tr>`; }).join('')}</table>`; };
       d.querySelectorAll('[data-f]').forEach(s => s.onchange = prev); prev();
       d.querySelector('#pcImp').onclick = () => {
         const m = map(), l = list(), key = x => [String(x.phone || '').replace(/\D/g, '').slice(-10), String(x.email || '').toLowerCase(), String(x.addr || '').toLowerCase()];
@@ -259,9 +263,12 @@
       const R = 250, mx = 111320 * Math.cos(lat * Math.PI / 180), my = 111320, near = [];
       for (let i = 0; i < n; i++) { if (i === gi || (type[i] & 127) > 4) continue; const dx = (xy[i * 2] - lon) * mx; if (dx > R || dx < -R) continue; const dy = (xy[i * 2 + 1] - lat) * my; if (dy > R || dy < -R) continue; const dd = Math.hypot(dx, dy); if (dd <= R) near.push([dd, i]); }
       near.sort((a, b) => a[0] - b[0]);
-      const pick = near.slice(0, 24);
+      // one stop per address, never the job's own address: a county roll can list a multi-unit building once per unit
+      const key = i => xy[i * 2] + ',' + xy[i * 2 + 1], cnt = new Map(); near.forEach(([, i]) => cnt.set(key(i), (cnt.get(key(i)) || 0) + 1));
+      const pick = near.filter(([dd, i]) => dd > 3 && cnt.get(key(i)) <= 4).slice(0, 80);
       return Promise.all(pick.map(([dd, i]) => STM.meta(i).then(m => m && m.addr ? { id: 'm' + i, gi: i, dist: dd, addr: m.addr, street: m.street, no: m.houseNo || 0, city: m.city, zip: m.zip, year: m.year } : null))).then(hs => {
-        hs = hs.filter(Boolean);
+        const seenA = new Set([String(c.addr || '').toLowerCase()]);
+        hs = hs.filter(h => h && !seenA.has(h.addr.toLowerCase()) && seenA.add(h.addr.toLowerCase())).slice(0, 24);
         const groups = new Map(); hs.forEach(h => { const k = h.street + '|' + h.city; if (!groups.has(k)) groups.set(k, { street: h.street, city: h.city, d: h.dist, homes: [] }); const g = groups.get(k); g.homes.push(h); g.d = Math.min(g.d, h.dist); });
         const gl = [...groups.values()].sort((a, b) => a.d - b.d); let stop = 0; const ordered = [];
         const html = gl.map(g => { g.homes.sort((a, b) => (a.no % 2) - (b.no % 2) || a.no - b.no);

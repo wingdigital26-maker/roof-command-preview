@@ -7,7 +7,7 @@ body[data-view="customers"] .pc{display:block;margin:14px 24px 96px;background:#
 .pch{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 18px 12px;border-bottom:1px solid var(--c-line-2,#E6E8ED)}
 .pch h2{margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em;flex:1;min-width:180px}
 .pch h2 small{display:block;font-size:12.5px;font-weight:400;color:var(--slate,#5A6378);margin-top:2px;letter-spacing:0}
-.pcb{height:36px;border-radius:6px;border:1px solid var(--c-line,#D5D9E0);background:#fff;font:inherit;font-size:13px;font-weight:600;color:var(--ink,#0B1020);display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;cursor:pointer;white-space:nowrap}
+.pcb{text-decoration:none;height:36px;border-radius:6px;border:1px solid var(--c-line,#D5D9E0);background:#fff;font:inherit;font-size:13px;font-weight:600;color:var(--ink,#0B1020);display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;cursor:pointer;white-space:nowrap}
 .pcb:hover{background:var(--c-tint,#F1F5FA)}
 .pcb.pri{background:var(--ink,#0B1020);border-color:var(--ink,#0B1020);color:#fff}
 .pcb.pri:hover{background:var(--ink-2,#1d2436)}
@@ -44,7 +44,7 @@ body[data-view="customers"] .pc{display:block;margin:14px 24px 96px;background:#
 .pcempty ol{text-align:left;margin:22px auto 0;padding:0;list-style:none;display:grid;gap:10px;max-width:440px;font-size:13px;color:var(--slate,#5A6378)}
 .pcempty ol li b{display:inline;font-size:13px;color:var(--ink,#0B1020)}
 /* dialogs */
-.pcd{border:0;padding:0;border-radius:8px;background:#fff;color:var(--ink,#0B1020);width:min(600px,calc(100% - 24px));max-height:calc(100dvh - 48px);box-shadow:0 30px 60px -20px rgba(11,16,32,.4);font-family:inherit}
+.pcd{margin:auto;border:0;padding:0;border-radius:8px;background:#fff;color:var(--ink,#0B1020);width:min(600px,calc(100% - 24px));max-height:calc(100dvh - 48px);box-shadow:0 30px 60px -20px rgba(11,16,32,.4);font-family:inherit}
 .pcd::backdrop{background:rgba(11,16,32,.35)}
 .pcd .hd{display:flex;gap:12px;align-items:flex-start;padding:18px 20px 12px;border-bottom:1px solid var(--c-line-2,#E6E8ED)}
 .pcd .hd h3{margin:0;font-size:17px;font-weight:600;flex:1;line-height:1.3}
