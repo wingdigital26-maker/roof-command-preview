@@ -120,7 +120,7 @@ dialog input[type=text],dialog select{height:38px;border:1px solid var(--line);b
 <body>
 <div class="wrap">
   <div class="top">
-    <div><h1>Find homes</h1><p>Search every house you cover by roof, storm, place and score. Save a search and it becomes a daily list. Give homes to a rep.</p></div>
+    <div><h1>Find homes</h1><p>Find any group of homes, like 15+ year roofs hit by hail in Allen, save it as a daily list, and hand it to a rep.</p></div>
     <div class="seg" role="tablist" aria-label="Find homes">
       <button type="button" role="tab" data-v="search" class="on" aria-selected="true">Search</button>
       <button type="button" role="tab" data-v="saved" aria-selected="false">Saved searches</button>
@@ -169,5 +169,6 @@ dialog input[type=text],dialog select{height:38px;border:1px solid var(--line);b
 <div class="toast" id="toast" role="status" hidden></div>
 <script src="../vendor/maplibre-gl@4.7.1/maplibre-gl.js"></script>
 <script src="find.js"></script>
+<script src="../lib/rc-plain.js"></script><script>/* plain words and short roof ages on the result rows (Jack 10-26: no years everywhere) */ RCPLAIN.watch(document.body);</script>
 </body>
 </html>

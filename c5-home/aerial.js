@@ -7,8 +7,7 @@
   'use strict';
   const stage = document.getElementById('stage'), report = document.getElementById('report'), dock = document.getElementById('dock');
   if (!stage || !report || !dock) return;
-  const KEY = 'rc-recview';
-  let view = (() => { try { return localStorage.getItem(KEY) || 'aerial'; } catch (e) { return 'aerial'; } })();
+  let view = '3d';   // Jack 10-26 round 2: 3D is the default on every load; the photo is one tap away and not remembered (KEY unused)
   const css = document.createElement('style');
   css.textContent = `
 #stage .aer{position:absolute;left:16px;right:16px;top:96px;display:none;flex-direction:column;align-items:center;gap:6px;z-index:3}
@@ -43,7 +42,7 @@ aside.col{padding-bottom:96px}
   // for his corner so its last line can always be scrolled clear of him
   document.querySelectorAll('aside.col').forEach(el => el.setAttribute('data-nb-clear', ''));
   const seg = document.createElement('div'); seg.className = 'aseg'; seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Roof view'); seg.hidden = true;
-  seg.innerHTML = '<button type="button" data-rv="aerial" aria-pressed="false">Aerial photo</button><button type="button" data-rv="3d" aria-pressed="false">3D model</button>';
+  seg.innerHTML = '<button type="button" data-rv="3d" aria-pressed="false">3D</button><button type="button" data-rv="aerial" aria-pressed="false">Photo</button>';
   dock.insertBefore(seg, dock.firstChild);
   // the photo view's own plain heading ("Big roof, about 44 squares. Steep."); the measured numbers stay in its tooltip
   const ah = document.createElement('h2'); ah.className = 'aer-h'; ah.setAttribute('aria-live', 'polite');
@@ -75,7 +74,7 @@ aside.col{padding-bottom:96px}
       top = Math.max(top, r.bottom - s.top);
     });
     top = Math.round(top + 10);
-    const w = Math.floor(s.width - 2 * side);
+    let w = Math.floor(s.width - 2 * side);
     if (!(w > 40)) { if ((place.retry = (place.retry || 0) + 1) < 25) setTimeout(place, 300); return; }   // stage not laid out yet (slow render, hidden tab): never draw a negative-size SVG, try again shortly
     place.retry = 0;
     const capEl = aer.querySelector('.aer-cap'); if (capEl) capEl.style.width = w + 'px';
@@ -83,6 +82,7 @@ aside.col{padding-bottom:96px}
     let h;
     if (ph) { h = Math.round(w * 0.95); stage.style.height = Math.round(top + h + capH + dockH) + 'px'; }
     else h = Math.floor(Math.max(260, s.height - top - capH - dockH));
+    if (!ph) w = Math.min(w, Math.round(h * 1.3));   // the house's own box, not the whole street (Jack 10-26)
     aer.style.top = top + 'px';
     const key = Math.round(w / 24) + 'x' + Math.round(h / 24) + ':' + last;   // (the stage height above is re-set every time)
     if (key === drawn) return; drawn = key;
@@ -103,13 +103,14 @@ aside.col{padding-bottom:96px}
     has = !!(svg && svg.querySelector('image'));   // the photo drawing only (a passed model's line diagram has no photo)
     const html = has ? svg.outerHTML : '';
     if (html !== last) { last = html; drawn = '';
-      aer.innerHTML = has ? `<div class="aer-ph"></div><div class="aer-cap"><span>The roof from above. The yellow lines are its edges, in feet. <button type="button" class="aer-tog" aria-pressed="false">Hide lines</button></span>${cr ? cr.outerHTML : ''}</div>` : ''; }
+      aer.innerHTML = has ? `<div class="aer-ph"></div><div class="aer-cap"><span>The roof from above. <button type="button" class="aer-tog" aria-pressed="false">Show outline</button></span>${cr ? cr.outerHTML : ''}</div>` : '';
+      aer.classList.add('noline'); }   // Jack 10-26: a clean photo, no lines drawn over the house; the outline is one tap away
     heading(); apply();
   }
   // the outline comes from public building maps and can sit a few feet off the roof: one tap shows the photo alone
   aer.addEventListener('click', e => { const b = e.target.closest('.aer-tog'); if (!b) return; const off = !aer.classList.contains('noline');
-    aer.classList.toggle('noline', off); b.textContent = off ? 'Show lines' : 'Hide lines'; b.setAttribute('aria-pressed', String(off)); });
-  seg.onclick = e => { const b = e.target.closest('[data-rv]'); if (!b) return; view = b.dataset.rv; try { localStorage.setItem(KEY, view); } catch (er) { }
+    aer.classList.toggle('noline', off); b.textContent = off ? 'Show outline' : 'Hide outline'; b.setAttribute('aria-pressed', String(!off)); });
+  seg.onclick = e => { const b = e.target.closest('[data-rv]'); if (!b) return; view = b.dataset.rv;
     apply(); if (view === '3d') dispatchEvent(new Event('resize')); };
   new MutationObserver(sync).observe(report, { childList: true, subtree: true });
   addEventListener('resize', () => { if (stage.classList.contains('aerial')) place(); });

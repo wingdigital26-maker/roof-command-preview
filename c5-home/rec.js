@@ -260,7 +260,7 @@
     const r = C ? C.next(f, 0, optin ? 'optin' : 'cold', 'email') : { blocked: 'no outreach library' };
     const ok = !!r.body && !r.blocked;
     const why = r.blocked === 'opted out' ? 'This homeowner opted out. No more emails.' : r.missing && r.missing.includes('mailingAddress') ? 'Add your mailing address to send emails.' : r.blocked ? 'Email is held back: ' + r.blocked + '.' : '';
-    open('Email draft', `<p class="dl">Your mail app opens with the draft. Type the homeowner's address there.</p>
+    open('Email draft', `<p class="dl">Your email opens with the draft. Type the homeowner's address there.</p>
       ${r.body ? `<input id="mSubj" class="draft" value="${esc(r.subject || '')}" aria-label="Subject"><textarea id="mBody" rows="7" class="draft" aria-label="Email">${esc(r.body)}</textarea>` : ''}
       ${why ? `<p class="dl">${esc(why)}</p>` : ''}
       <div class="drow">${ok ? `<a class="pbtn" id="mGo" href="#">${ic('mail')}Open in Mail</a>` : `<button type="button" class="pbtn" disabled>${ic('mail')}Open in Mail</button>`}</div>`, body => {
@@ -333,13 +333,23 @@
   document.querySelectorAll('[data-act="book"]').forEach(b => b.onclick = () => book());
 
   // ---------- more ----------
+  // Jack 10-26: Text is the one action on the record; Email, Book, Proof page and Proposal live here
   $('#bMore').onclick = () => open('More', `<div class="menu">
+      <button type="button" data-m="email">${ic('mail')}Email</button>
+      <button type="button" data-m="book">${ic('cal')}${RC.booking(id) ? 'Reschedule' : 'Book an inspection'}</button>
+      <button type="button" data-m="proof">${ic('doc')}Send the Proof page</button>
+      <button type="button" data-m="proposal">${ic('doc')}Proposal</button>
       <button type="button" data-m="note">${ic('note')}Add a note</button>
       ${/^m\d+$/.test(rawId || '') ? `<a href="hail-report.html?id=${encodeURIComponent(rawId)}${/[?&]dev=1/.test(location.search) ? '&dev=1' : ''}" target="_blank" rel="noopener">${ic('doc')}Storm report for the homeowner</a>` : ''}
       ${/^m\d+$/.test(rawId || '') ? `<a href="walk-sheet.html?id=${encodeURIComponent(rawId)}${/[?&]dev=1/.test(location.search) ? '&dev=1' : ''}" target="_blank" rel="noopener">${ic('roof')}Walk sheet for this street</a>` : ''}
       <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rec.addr + ', ' + place)}" target="_blank" rel="noopener">${ic('roof')}Directions in Maps</a>
       ${kind === 'daily' ? `<button type="button" data-go="daily">${ic('back')}Back to Daily 50</button>` : ''}</div>`, body => {
       body.querySelector('[data-m="note"]').onclick = () => { dlg.close(); setTab('notes'); openNote(); };
+      const fire = sel => () => { dlg.close(); const b = document.querySelector(sel); if (b) setTimeout(() => b.click(), 0); };
+      body.querySelector('[data-m="email"]').onclick = fire('.acts [data-act="email"]');
+      body.querySelector('[data-m="book"]').onclick = fire('.acts [data-act="book"]');
+      body.querySelector('[data-m="proof"]').onclick = fire('.acts [data-act="proof"]');
+      body.querySelector('[data-m="proposal"]').onclick = fire('#bProposal');
     });
 
   // ---------- stage stepper ----------
@@ -382,7 +392,7 @@
     const row = r => `<div><span>${r[0]}</span><b>${r[1]}</b></div>`;
     $('#kv').innerHTML = kv.map(row).join('') + (RC.tracedRows ? RC.tracedRows(rec.addr, rec.zip) : '');
     keyFacts();
-    const fx = $('#facts'); if (fx) fx.innerHTML = [kv.find(r => r[0] === 'Hail here')].concat(houseFacts()).map(row).join('');
+    const fx = $('#facts'); if (fx) fx.innerHTML = [kv[0], kv.find(r => r[0] === 'Hail here')].concat(houseFacts()).map(row).join('');   // owner (initials) first (Jack 10-26)
   }
   // ---------- key facts first (Jack 10-23): the row under the address, every figure from its source ----------
   let lastHail = { id: null, v: undefined };

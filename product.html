@@ -2,6 +2,9 @@
 <html lang="en" data-rc="shell">
 <head><meta name="robots" content="noindex, nofollow">
 <meta charset="utf-8">
+<script>/* local dev only: the laptop's Esri key (git-ignored lib/rc-local-keys.json) goes into localStorage for lib/rc-imagery.js and st-mapview.js. Never on a hosted page. */
+if(/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){try{var x=new XMLHttpRequest();x.open("GET","lib/rc-local-keys.json",false);x.send();if(x.status===200){var j=JSON.parse(x.responseText);if(j&&j.esri)localStorage.setItem("rc-esri-key",j.esri)}}catch(e){}}
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Roof Command</title>
 <link rel="preload" href="lib/st-fonts/montserrat-400.woff2" as="font" type="font/woff2" crossorigin>

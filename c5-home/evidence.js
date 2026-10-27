@@ -36,7 +36,7 @@
   const giNow = () => { const H = window.HOME; if (!H || !H.rec) return null; const g = H.rec.gi != null ? +H.rec.gi : /^m(\d+)$/.test(H.rawId || '') ? +H.rawId.slice(1) : null; return g >= 0 ? g : null; };
 
   function render(E) {
-    if (!E) { host.innerHTML = '<div class="ph"><h3>Why this home</h3></div><p class="note">Reading the score and its evidence…</p>'; return; }
+    if (!E) { host.innerHTML = '<div class="ph"><h3>Score details</h3></div><p class="note">Reading the score and its evidence…</p>'; return; }
     const P = E.parts, part = (k, extra) => {
       const p = P[k], w = p.max ? Math.round(100 * p.pts / p.max) : 0;
       return `<details data-k="${k}"${open[k] ? ' open' : ''}><summary><b>${NAMES[k]}</b><span>${esc(p.plain)}</span><em>${Math.round(p.pts * 10) / 10} of ${p.max}</em><i><u style="width:${w}%"></u></i></summary>
@@ -45,7 +45,7 @@
     const storms = E.storms.length ? `<ul>${E.storms.map(s => `<li>${esc(s.label)}: ${s.inches.toFixed(2)} in${s.inches >= 1 ? '' : ' (under 1 in)'}</li>`).join('')}</ul><div>Source: NOAA MRMS radar hail, about 1 km grid. An estimate, not an inspection.</div>` : '';
     const crm = E.crm && E.crm.touches ? `<div>Stage: ${esc(E.crm.stage || 'new')}. ${E.crm.touches} touch${E.crm.touches > 1 ? 'es' : ''} on this device.</div>` : '';
     host.hidden = false;
-    host.innerHTML = `<div class="ph"><h3>Why this home</h3><span class="pill">Opportunity score</span></div>
+    host.innerHTML = `<div class="ph"><h3>Score details</h3><span class="pill">Opportunity score</span></div>
       ${E.eligibility.ok ? '' : `<p class="evno">Do not contact: ${esc(E.eligibility.reason)}. This always wins over the score.</p>`}
       <div class="evtop"><div class="evs">${E.score}<small>of 100</small></div>
         <div class="evsum"><span class="evc ${E.conf}">Evidence: ${esc(E.confWord)}</span>${E.eligibility.ok ? '<span class="evok">OK to contact</span>' : ''}<br>${esc(P.roofAge.plain)}. ${esc(P.storm.plain)}.</div></div>

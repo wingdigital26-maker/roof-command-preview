@@ -440,10 +440,7 @@
     if (a === 'tothread') { crm.dataset.screen = 'thread'; return; }
     if (a === 'house') {   // phone: the house sheet; desktop: show or hide the home pane so the conversation breathes
       if (isPhone()) { crm.dataset.screen = 'home'; return; }
-      const off = crm.dataset.home !== 'off'; if (off) crm.dataset.home = 'off'; else delete crm.dataset.home;
-      try { localStorage.setItem(HK, off ? 'off' : 'on'); } catch (er) { }
-      cvh.__h = null; paint(); if (!off) { requestAnimationFrame(() => { if (window.__refit) window.__refit(); }); const ch = $('#ch'); ch.classList.remove('flash'); void ch.offsetWidth; ch.classList.add('flash'); }
-      return;
+      toggleHomePane(); return;
     }
     if (a === 'record') { if (id) window.crmOpenHome(id); return; }
     if (a === 'hailrep') { if (id) window.open('hail-report.html?id=' + encodeURIComponent(id) + (/[?&]dev=1/.test(location.search) ? '&dev=1' : ''), '_blank'); return; }   // the printable Storm report (10-19)
@@ -485,6 +482,29 @@
     }
   }
   cvh.addEventListener('click', onAct); cvf.addEventListener('click', onAct); chh.addEventListener('click', onAct); chf.addEventListener('click', onAct);
+  // Jack 10-26: the house panel folds away with a button you can see ("Hide panel" on it, "Show house" when it is gone),
+  // with or without a thread open; the choice is kept on this device (HK)
+  function toggleHomePane() {
+    const off = crm.dataset.home !== 'off'; if (off) crm.dataset.home = 'off'; else delete crm.dataset.home;
+    try { localStorage.setItem(HK, off ? 'off' : 'on'); } catch (er) { }
+    cvh.__h = null; paint(); if (!off) { requestAnimationFrame(() => { if (window.__refit) window.__refit(); }); const ch = $('#ch'); ch.classList.remove('flash'); void ch.offsetWidth; ch.classList.add('flash'); }
+  }
+  {
+    const st = document.createElement('style');
+    st.textContent = `#crm .chide,#crm .chshow{display:none;font:inherit;font-size:13px;font-weight:600;align-items:center;gap:6px;border:1px solid var(--ib-line,#D5D9E0);background:#fff;color:var(--ink,#0B1020);border-radius:8px;min-height:34px;padding:0 12px;cursor:pointer}
+@media (min-width:641px){
+  body[data-view="inbox"] #crm .chide{display:inline-flex;position:absolute;top:10px;right:10px;z-index:6}
+  body[data-view="inbox"] #crm[data-home="off"] .chshow{display:inline-flex;position:absolute;top:50%;right:-1px;transform:translateY(-50%);border-radius:8px 0 0 8px;writing-mode:vertical-rl;min-height:0;padding:12px 7px;z-index:6}
+  body[data-view="inbox"] #crm #ch,body[data-view="inbox"] #crm #cv{position:relative}
+  body[data-view="inbox"] #crm .chide:hover,body[data-view="inbox"] #crm .chshow:hover{border-color:var(--edge,#9AA3B2)}
+}
+#crm .chide .ic,#crm .chshow .ic{width:15px;height:15px}`;
+    document.head.appendChild(st);
+    const hide = document.createElement('button'); hide.type = 'button'; hide.className = 'chide'; hide.innerHTML = 'Hide panel <span aria-hidden="true">&rsaquo;</span>'; hide.setAttribute('aria-label', 'Hide the house panel');
+    const show = document.createElement('button'); show.type = 'button'; show.className = 'chshow'; show.innerHTML = '<span aria-hidden="true">&lsaquo;</span> Show house'; show.setAttribute('aria-label', 'Show the house panel');
+    hide.onclick = show.onclick = toggleHomePane;
+    $('#ch').appendChild(hide); $('#cv').appendChild(show);
+  }
   chf.addEventListener('toggle', e => { if (e.target.classList.contains('cmore')) chf.__more = e.target.open; }, true);   // More stays open across repaints
   // the header's More menu closes on a click elsewhere or Escape
   document.addEventListener('click', e => { document.querySelectorAll('#crm details[open]').forEach(d => { if (!d.contains(e.target) && !d.classList.contains('cmore')) d.open = false; }); });

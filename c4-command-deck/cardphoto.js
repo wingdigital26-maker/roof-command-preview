@@ -5,8 +5,7 @@
 (function () {
   'use strict';
   if (!window.RCIMG) return;
-  const KEY = 'rc-cardview';
-  let view = (() => { try { return localStorage.getItem(KEY) === '3d' ? '3d' : 'photo'; } catch (e) { return 'photo'; } })();
+  let view = '3d';   // Jack 10-26 round 2: "I never want the photo to be the default": 3D on every load, the photo one tap away (not remembered)
   const css = document.createElement('style');
   css.textContent = `
 .ph .phot{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1;pointer-events:none;background:#D9DEE6}
@@ -31,7 +30,7 @@ html.cardphoto .ph .rlink{z-index:2}
     img.src = p.src; if (p.fallback) img.onerror = () => { img.onerror = null; img.src = p.fallback; cr.textContent = RCIMG.NAIP_CREDIT; };
     const cr = document.createElement('span'); cr.className = 'phcred'; cr.textContent = p.credit;
     const seg = document.createElement('div'); seg.className = 'phseg'; seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Roof picture');
-    seg.innerHTML = '<button type="button" data-cv="photo">Photo</button><button type="button" data-cv="3d">3D</button>';
+    seg.innerHTML = '<button type="button" data-cv="3d">3D</button><button type="button" data-cv="photo">Photo</button>';
     ph.prepend(img); ph.append(cr, seg); mark();
   }
   function mark() {
@@ -39,7 +38,7 @@ html.cardphoto .ph .rlink{z-index:2}
     document.querySelectorAll('.ph .phseg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cv === view)));
   }
   document.addEventListener('click', e => { const b = e.target.closest('.ph .phseg [data-cv]'); if (!b) return; e.preventDefault(); e.stopPropagation();
-    view = b.dataset.cv; try { localStorage.setItem(KEY, view); } catch (er) { } mark(); if (view === '3d') dispatchEvent(new Event('resize')); }, true);
+    view = b.dataset.cv; mark(); if (view === '3d') dispatchEvent(new Event('resize')); }, true);
   let t = null;
   const run = () => { t = null; document.querySelectorAll('#deck .card[data-id]').forEach(c => { if (+c.dataset.d <= 2 || c.dataset.d == null) dress(c); }); };
   const deck = document.getElementById('deck');

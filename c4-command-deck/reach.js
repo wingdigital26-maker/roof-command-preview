@@ -230,6 +230,16 @@
       const p = c.pts; g.beginPath(); g.moveTo(p[0], p[1]); for (let j = 1; j < m; j++) g.lineTo(p[j * 2], p[j * 2 + 1]); g.lineTo(hx, hy);
       g.strokeStyle = 'rgba(31,111,224,.09)'; g.lineWidth = 5; g.stroke();
       g.strokeStyle = gradOf(g, c); g.lineWidth = 1.3; g.stroke();
+      if (m >= FAN.n) arrow(g, p);
+    }
+    // the direction cue (Jack 10-26 round 2): a small arrowhead on each landed line, stopped just short of the home's pin
+    function arrow(g, p) {
+      const n = p.length / 2 - 1, ex = p[n * 2], ey = p[n * 2 + 1]; let j = n, d = 0;
+      while (j > 1 && d < 15) { j--; d = Math.hypot(ex - p[j * 2], ey - p[j * 2 + 1]); }
+      if (d < 8) return;
+      const tx = p[j * 2], ty = p[j * 2 + 1], bx = p[(j - 1) * 2], by = p[(j - 1) * 2 + 1], L = Math.hypot(tx - bx, ty - by) || 1, ux = (tx - bx) / L, uy = (ty - by) / L, s = 6;
+      g.beginPath(); g.moveTo(tx, ty); g.lineTo(tx - ux * s - uy * s * .6, ty - uy * s + ux * s * .6); g.lineTo(tx - ux * s + uy * s * .6, ty - uy * s - ux * s * .6); g.closePath();
+      g.fillStyle = 'rgba(13,108,153,.78)'; g.fill();
     }
     // landed arcs live on this offscreen canvas; it is rebuilt only when the geometry changes, and grows by one arc as each lands
     const still = document.createElement('canvas'); let stillGeo = '', stillIds = new Set();

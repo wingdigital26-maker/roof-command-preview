@@ -47,7 +47,7 @@ html[data-rc] .app .qrow .mt{-webkit-line-clamp:1;line-clamp:1;white-space:nowra
 html[data-rc] .app .qrow{padding-top:8px;padding-bottom:8px}
 
 /* ---- 4. map ---- */
-html[data-rc] .app .mapwrap canvas.fan,html[data-rc] .app .mapwrap .reach .chn,html[data-rc] .app .mapwrap .reach .chc{display:none}   /* 10-26: no spokes from the office to every home (a sent message still draws its own line) */
+html[data-rc] .app .mapwrap .reach .chn,html[data-rc] .app .mapwrap .reach .chc{display:none}   /* the old dashed chain stays off; the office-to-home lines are back (Jack 10-26 round 2: "we aren't showing arrows for where everything's going") */
 html[data-rc] .app #mLeg{display:none}   /* "6,546 homes hit Jun 2" is the hero's headline */
 html[data-rc]:not(.mapbig) .app .hqm .hql{display:none}
 html[data-rc]:not(.mapbig) .app .hqm:hover .hql{display:block}

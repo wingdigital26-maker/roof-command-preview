@@ -650,7 +650,7 @@ label.dlab{display:block}
 
   <main class="main">
     <aside class="queue" aria-label="Today's list and inbox" id="lpanel">
-      <div class="qh"><div class="ltabs" role="tablist" aria-label="Left panel"><button type="button" role="tab" id="tabNext" data-tab="next" aria-selected="true" aria-controls="paneNext">Up next</button><button type="button" role="tab" id="tabInbox" data-tab="inbox" aria-selected="false" aria-controls="paneInbox">Inbox<i id="inN" hidden></i></button><button type="button" role="tab" id="tabRadar" data-tab="radar" aria-selected="false" aria-controls="paneRadar" title="Streets where roofs are being replaced right now">Radar</button></div><small id="qLeft"></small></div>
+      <div class="qh"><div class="ltabs" role="tablist" aria-label="Left panel"><button type="button" role="tab" id="tabNext" data-tab="next" aria-selected="true" aria-controls="paneNext">Up next</button><button type="button" role="tab" id="tabInbox" data-tab="inbox" aria-selected="false" aria-controls="paneInbox">Inbox<i id="inN" hidden></i></button></div><small id="qLeft"></small></div>
       <div class="lpane on" id="paneNext" role="tabpanel" aria-labelledby="tabNext">
         <div class="qlist" id="qlist"></div>
         <div class="qfoot" id="qfoot">The homes most likely to say yes today come first.</div>
@@ -924,7 +924,9 @@ function cbHTML(h,i){
   const ph = h.phone ? pretty(h.phone) : '';
   // a no-permit claim only where the city's re-roof list is complete (McKinney about 2015 on, Allen about 2017 on), 10-23
   const fullList = /^mckinney$/i.test(h.city || '') ? '2015' : /^allen$/i.test(h.city || '') ? '2017' : '';
-  const roof = h.permit ? `New roof ${esc(String(h.permit).slice(0,4))}<i>on record</i>` : h.year ? `Built ${esc(String(h.year))}<i>${fullList ? 'no new roof since ' + fullList : (new Date().getFullYear() - h.year) + ' years ago'}</i>` : `Not known<i>year not on file</i>`;   // plain words (Jack 10-26)
+  // roof age once, short (Jack 10-26 voice notes: no years everywhere): "~37 yrs, likely"; the years stay on the record
+  const NOWY = new Date().getFullYear();
+  const roof = h.permit ? `${NOWY - +String(h.permit).slice(0,4)} yrs<i>permit on file</i>` : h.year ? (fullList ? `~${NOWY - h.year} yrs<i>likely</i>` : `Not sure<i>no permit list</i>`) : `Not sure<i>not on file</i>`;
   return `<div class="addr"><div><h2>${phone ? esc(h.addr) : `<a class="hl" href="${homeHref(h)}" data-a="home">${esc(h.addr)}</a>`}</h2><p>${esc(h.city)}${h.zip?', '+DSTATE+' '+h.zip:''}. ${who}${ph?'. '+ph:''}${/\.$/.test(ph || who) ? '' : '.'}</p></div><span class="pill acc">${RC.stageName(RC.stage(h.id))}</span></div>
     <div class="facts">
       <div title="${hailOk(h.hail)?esc(h.hail+' in, NOAA radar estimate for this home'):'No hail on file for this home'}"><small>Hail</small><b>${hailOk(h.hail)?RCPLAIN.hail(h.hail):'None on file'}</b></div>
@@ -978,7 +980,7 @@ function rowMeta(h, d, sk, stg){
   if (!h.pick){ if (h.permit) p.push('Re-roof permit '+String(h.permit).slice(0,4)); else if (h.year) p.push('Built '+h.year); }   // never assume the roof is as old as the house (10-22)
   return p.length ? p.join(' · ') : (hailOk(h.hail) ? h.hail+' in hail' : 'On the list');
 }
-const rowShort = s => RCPLAIN.words(String(s).split(' · ')[0].replace(/no re-roof permit on file since/, 'no new roof since').replace(/ re-roofed nearby \(90 days\)/, ' new roofs nearby'));
+const rowShort = s => RCPLAIN.age(RCPLAIN.words(String(s).split(' · ')[0].replace(/no re-roof permit on file since/, 'no new roof since').replace(/ re-roofed nearby \(90 days\)/, ' new roofs nearby')));
 function renderQueue(anim){
   const q = document.getElementById('qlist'), m = query.trim().toLowerCase();
   if (!QREADY){ const html = `<div class="qnone qload">${QERR ? "Today's list could not be built: "+esc(QERR)+'.' : "Picking today's 50 homes most likely to say yes..."}</div>`; if (q.__html !== html){ q.innerHTML = html; q.__html = html; } return; }
@@ -1069,7 +1071,7 @@ function paintCount(){
   const pk = document.getElementById('peekIn'); if (pk) pk.textContent = THREADS ? THREADS : '';
 }
 function setTab(t, keep){
-  TAB = t === 'inbox' ? 'inbox' : t === 'radar' ? 'radar' : 'next';
+  TAB = t === 'inbox' ? 'inbox' : 'next';   // Radar left Today (Jack 10-26 round 2): Up next and Inbox only
   document.querySelectorAll('.ltabs [data-tab]').forEach(b=>{ const on = b.dataset.tab === TAB; b.setAttribute('aria-selected', on?'true':'false'); b.classList.toggle('on', on); b.tabIndex = on ? 0 : -1; });
   document.getElementById('paneNext').classList.toggle('on', TAB==='next');
   document.getElementById('paneInbox').classList.toggle('on', TAB==='inbox');
