@@ -16,7 +16,9 @@
 html.cardphoto .ph .rlink svg,html.cardphoto .ph .rlink canvas,html.cardphoto .ph .rlink::before,html.cardphoto .ph .rlink::after{visibility:hidden}
 html:not(.cardphoto) .ph .phot,html:not(.cardphoto) .ph .phcred{display:none}
 html.cardphoto .ph .rlink{z-index:2}
-@media (max-width:640px){ .ph .phseg{top:auto;bottom:12px;left:12px} .ph .phseg button{min-height:40px;padding:0 12px;font-size:13px} .ph .phcred{bottom:4px;right:8px;max-width:55%;font-size:8.5px} }`;
+@media (max-width:640px){ .ph .phseg{top:auto;bottom:12px;left:12px} .ph .phseg button{min-height:40px;padding:0 12px;font-size:13px} .ph .phcred{bottom:4px;right:8px;max-width:55%;font-size:8.5px}
+  /* the roof-size pill sat in the same bottom-left corner as 3D | Photo (10-27): it moves to the free top-left, one line */
+  html .app .deck .card .ph:has(.phseg) .bl,.ph:has(.phseg) .bl{top:12px!important;bottom:auto!important;white-space:nowrap!important;max-width:calc(100% - 150px)!important;overflow:hidden;text-overflow:ellipsis;display:block!important} }`;
   document.head.appendChild(css);
 
   const homeOf = id => { try { return (typeof HOMES !== 'undefined' ? HOMES : []).find(h => h.id === id) || null; } catch (e) { return null; } };

@@ -298,11 +298,13 @@ export function create(opts) {
   function fit() {
     if (!fitPts.length || !canvas.clientWidth || !canvas.clientHeight) return;
     camera.aspect = canvas.clientWidth / canvas.clientHeight; camera.updateProjectionMatrix();
-    const y0 = yaw; let best = dist;
+    // the CLOSEST view that keeps everything in frame (10-27: it used to start at a fixed distance and only back off, so a
+    // small house sat tiny in the band): from close in, step out 3% at a time, per angle, keep the farthest angle's answer
+    const y0 = yaw; let best = 0;
     for (let a = 0; a < 8; a++) {
-      yaw = y0 + a * Math.PI / 4; radius = dist;
-      for (let i = 0; i < 40; i++) { setYaw(); camera.updateMatrixWorld();
-        if (fitPts.every(p => { const q = p.clone().project(camera); return Math.abs(q.x) < .97 && Math.abs(q.y) < .9; })) break; radius *= 1.05; }
+      yaw = y0 + a * Math.PI / 4; radius = dist * .15;
+      for (let i = 0; i < 200; i++) { setYaw(); camera.updateMatrixWorld();
+        if (fitPts.every(p => { const q = p.clone().project(camera); return Math.abs(q.x) < .94 && Math.abs(q.y) < .86; })) break; radius *= 1.03; }
       best = Math.max(best, radius);
     }
     yaw = y0; radius = best; setYaw();

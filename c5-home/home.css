@@ -752,10 +752,22 @@ body.pdrag .pcols{scroll-snap-type:none}   /* edge scrolling while dragging a ca
   .phail,.psq{height:24px;font-size:13px}
 }
 /* 3D view chips on a phone: never narrower than their label (min-width:44px let "Dimensions" spill over "Edges") */
+.chip .sml{display:none}
+.dock .chip{white-space:nowrap}   /* one line per chip (10-27: 'aerial scan measurements' wrapped beside 3D | Photo) */
+@media (max-width:1100px){ .dock .chip .lgl{display:none} .dock .chip .sml{display:inline} }
+.dock:has(.aseg:not([hidden])) .chip .lgl{display:none}.dock:has(.aseg:not([hidden])) .chip .sml{display:inline}   /* beside 3D | Photo the long label pushed Explode off the stage */
 @media (max-width:640px){
   .dock .chips{gap:2px}
   .dock .chip{flex:1 0 auto;padding:0 7px}
   .dock .ctl button{padding:0 10px}
+  /* every control fully visible, no sideways scroll (10-27): 3D | Photo and Explode on the first row, the five view chips
+     on their own full-width row; the measurements chip says "Lengths" here */
+  .dock{flex-wrap:wrap;row-gap:6px}
+  .dock .ctl{margin-left:auto}
+  .dock .chips{order:2;flex:1 1 100%;overflow:visible}
+  .dock .chip{flex:1 1 auto;padding:0 5px;font-size:12.5px;white-space:nowrap}
+  .dock .chip .lgl{display:none}.dock .chip .sml{display:inline}
+  .stage{height:calc(52dvh + 58px);min-height:438px}   /* room for the second control row, so it never sits on the model */
 }
 
 /* ---------- Jack 10-17: pipeline cards at a glance ----------
